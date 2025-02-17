@@ -6,9 +6,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {handle} = req.query;
+    const { handle } = req.query;
     const endpoint =
-      'https://api.tinybird.co/v0/pipes/libre_device_tracking.json';
+      'https://api.us-east.tinybird.co/v0/pipes/Device_Tracking_pipe_1352.json';
 
     if (!handle || typeof handle !== 'string') {
       return res.status(404).end();

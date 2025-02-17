@@ -7,7 +7,8 @@ export default async function handler(req, res) {
 
   try {
     const { handle, filter } = req.query;
-    const endpoint = 'https://api.tinybird.co/v0/pipes/libre_page_views.json';
+    const endpoint =
+      'https://api.us-east.tinybird.co/v0/pipes/Page_View_pipe_7265.json';
 
     if (!handle || typeof handle !== 'string') {
       return res.status(404).end();
