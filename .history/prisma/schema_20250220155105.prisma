@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -53,28 +54,19 @@ model Account {
 
 
 model Link {
-  id         String     @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
-  url        String
-  archived   Boolean    @default(false)
-  order       Int
-  isSocial   Boolean    @default(false)
-  clicks      Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  userId      String    @db.ObjectId
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Iframely data
-  type        String?   // video, link, etc
-  providerName String?  // YouTube, Spotify, etc
-  embedHtml   String?   // The iframe HTML
-  thumbnails  Json?     // Array of thumbnail objects
-  authorName  String?   // Content author
-  authorUrl   String?   // Author profile URL
-  iframelyMeta Json?   // Additional metadata
-
-  @@index(userId)
+      id         String     @id @default(auto()) @map("_id") @db.ObjectId
+      title      String
+      url        String
+      archived   Boolean    @default(false)
+      order       Int
+      isSocial   Boolean    @default(false)
+      // Link metadata
+      clicks      Int       @default(0) // number of clicks
+      createdAt   DateTime  @default(now())
+      updatedAt   DateTime  @updatedAt
+      userId      String    @db.ObjectId
+      user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+      @@index(userId)
 }
 
 
