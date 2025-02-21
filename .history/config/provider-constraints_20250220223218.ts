@@ -53,7 +53,7 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderConstraints> = {
     aspectRatio: {
       mobile: 'aspect-video',
       tablet: 'aspect-video',
-      desktop: 'aspect-video'
+      desktop: '16/16'
     },
     padding: {
       mobile: '0',
@@ -122,8 +122,8 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderConstraints> = {
   Generic: {
     maxWidth: {
       mobile: '50%',
-      tablet: '352px',
-      desktop: '352px'
+      tablet: '300px',
+      desktop: '300px'
     },
     aspectRatio: {
       mobile: '4/4',

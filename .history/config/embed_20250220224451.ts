@@ -76,15 +76,15 @@ export const EMBED_CONFIGS: EmbedProviderConfig = {
   },
   Generic: {
     aspectRatio: {
-      mobile: 'aspect-[4/4]',
-      tablet: 'aspect-[4/4]',
-      desktop: 'aspect-[4/4]'
+      mobile: 'aspect-[4/3]',
+      tablet: 'aspect-[4/3]',
+      desktop: 'aspect-[16/9]'
     },
     containerClass: 'generic-embed-container w-full overflow-hidden rounded-lg',
     processHtml: (html: string) => {
       // Make generic embeds responsive
       return html.replace(/width="(\d+)"/, 'width="10%"')
-                .replace(/height="(\d+)"/, 'height="100%"');
+                .replace(/height="(\d+)"/, 'height="120%"');
     }
   }
 }; 

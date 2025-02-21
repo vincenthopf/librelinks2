@@ -123,7 +123,7 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderConstraints> = {
     maxWidth: {
       mobile: '50%',
       tablet: '352px',
-      desktop: '352px'
+      desktop: '350px'
     },
     aspectRatio: {
       mobile: '4/4',

@@ -78,7 +78,7 @@ export const EMBED_CONFIGS: EmbedProviderConfig = {
     aspectRatio: {
       mobile: 'aspect-[4/4]',
       tablet: 'aspect-[4/4]',
-      desktop: 'aspect-[4/4]'
+      desktop: 'aspect-[16/9]'
     },
     containerClass: 'generic-embed-container w-full overflow-hidden rounded-lg',
     processHtml: (html: string) => {

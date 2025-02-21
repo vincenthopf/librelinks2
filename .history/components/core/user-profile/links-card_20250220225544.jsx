@@ -31,27 +31,26 @@ const LinkCard = (props) => {
 
   return (
     <div className="w-full mb-4 transition-all duration-300">
-      <div className="relative">
-        <a
-          href={props.url}
-          onClick={props.registerClicks}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`block w-full rounded-lg p-4 ${props.buttonStyle} transition-all duration-300`}
-          style={style}
-        >
+    <div className="relative">
+      <a
+        href={props.url}
+        onClick={props.registerClicks}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`block w-full rounded-lg p-4 ${props.buttonStyle} transition-all duration-300`}
+        style={style}
+      >
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 flex-grow pr-8">
-              <div className="h-8 w-8">
-                <img
-                  src={`${GOOGLE_FAVICON_URL}${getApexDomain(props.url)}`}
-                  alt={props.title}
-                  className="h-8 w-8 rounded-full"
-                  loading="lazy"
-                />
-              </div>
-              <h2 className="font-medium">{props.title}</h2>
+            <div className="h-8 w-8">
+              <img
+                src={`${GOOGLE_FAVICON_URL}${getApexDomain(props.url)}`}
+                alt={props.title}
+                className="h-8 w-8 rounded-full"
+                loading="lazy"
+              />
             </div>
+            <h2 className="font-medium">{props.title}</h2>
           </div>
           {hasPreview && (
             <button
@@ -60,7 +59,7 @@ const LinkCard = (props) => {
                 e.stopPropagation();
                 setShowPreview(!showPreview);
               }}
-              className="absolute right-[10px] top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
               aria-label={showPreview ? "Hide preview" : "Show preview"}
             >
               {showPreview ? (
@@ -70,8 +69,9 @@ const LinkCard = (props) => {
               )}
             </button>
           )}
-        </a>
-      </div>
+        </div>
+      </a>
+    </div>
       
       <div className={`transition-all duration-300 ${showPreview ? 'max-h-[600px] opacity-100 mt-2' : 'max-h-0 opacity-0 overflow-hidden'}`}>
         <RichMediaPreview link={iframelyData} />
