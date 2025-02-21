@@ -8,7 +8,7 @@ const ASPECT_RATIOS = {
 };
 
 const PROVIDER_HEIGHTS = {
-  Spotify: '352px',
+  Spotify: '200px',
   YouTube: '100%',
   Reddit: 'auto',
 };

@@ -17,65 +17,69 @@ const RichMediaPreview = ({ link }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isIframelyReady, setIsIframelyReady] = useState(false);
 
+  // Debug the incoming link data
+  useEffect(() => {
+    console.log('RichMediaPreview - Full link data:', {
+      ...link,
+      thumbnails: link.thumbnails ? JSON.stringify(link.thumbnails) : null
+    });
+  }, [link]);
+
+  // Load Iframely script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = '//cdn.iframe.ly/embed.js';
+    script.async = true;
+    script.onload = () => {
+      console.log('Iframely script loaded successfully');
+      if (window.iframely) {
+        window.iframely.load();
+      }
+    };
+    script.onerror = (error) => {
+      console.error('Failed to load Iframely script:', error);
+      setHasError(true);
+      setErrorMessage('Failed to load preview service');
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  // Initialize embeds when content changes
   useEffect(() => {
     // Reset states when link changes
     setIsLoading(true);
     setHasError(false);
     setErrorMessage('');
-    setIsIframelyReady(false);
 
     // Debug logging
-    console.log('RichMediaPreview - Link data:', {
+    console.log('RichMediaPreview - Processing link:', {
       hasEmbedHtml: !!link.embedHtml,
       hasThumbnails: !!(link.thumbnails && link.thumbnails.length > 0),
+      thumbnailData: link.thumbnails,
       type: link.type,
       providerName: link.providerName
     });
 
-    // Initialize Iframely
-    if (link.embedHtml?.includes('iframely-embed')) {
-      // Check if script is already loaded
-      const existingScript = document.querySelector('script[src*="cdn.iframe.ly/embed.js"]');
-      
-      if (!existingScript) {
-        const script = document.createElement('script');
-        script.src = '//cdn.iframe.ly/embed.js';
-        script.async = true;
-        script.onload = () => {
-          console.log('Iframely script loaded');
-          setIsIframelyReady(true);
-        };
-        script.onerror = (error) => {
-          console.error('Failed to load Iframely script:', error);
-          setHasError(true);
-          setErrorMessage('Failed to load preview');
-          setIsLoading(false);
-        };
-        document.body.appendChild(script);
-      } else {
-        setIsIframelyReady(true);
-      }
+    // Initialize embeds if script is already loaded
+    if (window.iframely) {
+      window.iframely.load();
     }
 
-    return () => {
-      // Cleanup if component unmounts during script load
-      setIsIframelyReady(false);
-    };
+    // Set loading to false after a short delay to allow initialization
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [link.embedHtml]);
 
-  // Effect to initialize embeds when script is ready
-  useEffect(() => {
-    if (isIframelyReady && window.iframely) {
-      console.log('Initializing Iframely embeds');
-      window.iframely.load();
-      setIsLoading(false);
-    }
-  }, [isIframelyReady]);
-
   // Early return if no embed data
-  if (!link.embedHtml && (!link.thumbnails || link.thumbnails.length === 0)) {
+  if (!link.embedHtml && (!link.thumbnails || !Array.isArray(link.thumbnails) || link.thumbnails.length === 0)) {
     console.log('RichMediaPreview - No preview content available');
     return null;
   }
@@ -83,17 +87,29 @@ const RichMediaPreview = ({ link }) => {
   const aspectRatioClass = ASPECT_RATIOS[link.type || 'link'];
   const heightStyle = PROVIDER_HEIGHTS[link.providerName] || '100%';
 
-  const handleIframeLoad = () => {
-    console.log('RichMediaPreview - Iframe loaded successfully');
-    setIsLoading(false);
-  };
-
   const handleIframeError = (error) => {
     console.error('RichMediaPreview - Iframe error:', error);
     setIsLoading(false);
     setHasError(true);
     setErrorMessage(error?.message || 'Failed to load preview');
   };
+
+  const handleImageLoad = () => {
+    console.log('Image loaded successfully');
+    setIsLoading(false);
+  };
+
+  const handleImageError = (error) => {
+    console.error('Failed to load image:', error);
+    setIsLoading(false);
+    setHasError(true);
+    setErrorMessage('Failed to load preview image');
+  };
+
+  // Get the first valid thumbnail URL
+  const thumbnailUrl = link.thumbnails && Array.isArray(link.thumbnails) && link.thumbnails.length > 0
+    ? (link.thumbnails[0].href || link.thumbnails[0].url)
+    : null;
 
   return (
     <div className="w-full overflow-hidden rounded-lg bg-gray-50">
@@ -118,16 +134,15 @@ const RichMediaPreview = ({ link }) => {
                 className="w-full h-full"
                 style={{ minHeight: heightStyle }}
                 dangerouslySetInnerHTML={{ __html: link.embedHtml }}
-                onLoad={handleIframeLoad}
                 onError={handleIframeError}
               />
-            ) : link.thumbnails?.[0]?.href ? (
+            ) : thumbnailUrl ? (
               <img
-                src={link.thumbnails[0].href}
+                src={thumbnailUrl}
                 alt={link.title || 'Content preview'}
                 className="w-full h-full object-cover"
-                onLoad={handleIframeLoad}
-                onError={handleIframeError}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
               />
             ) : null}
           </>

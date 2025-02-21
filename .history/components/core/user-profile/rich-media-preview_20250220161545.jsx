@@ -17,14 +17,32 @@ const RichMediaPreview = ({ link }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isIframelyReady, setIsIframelyReady] = useState(false);
 
+  // Load Iframely script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = '//cdn.iframe.ly/embed.js';
+    script.async = true;
+    script.onload = () => {
+      // Once script is loaded, initialize any embeds
+      if (window.iframely) {
+        window.iframely.load();
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup script on unmount
+      document.body.removeChild(script);
+    };
+  }, []); // Run once on mount
+
+  // Initialize embeds when content changes
   useEffect(() => {
     // Reset states when link changes
     setIsLoading(true);
     setHasError(false);
     setErrorMessage('');
-    setIsIframelyReady(false);
 
     // Debug logging
     console.log('RichMediaPreview - Link data:', {
@@ -34,45 +52,18 @@ const RichMediaPreview = ({ link }) => {
       providerName: link.providerName
     });
 
-    // Initialize Iframely
-    if (link.embedHtml?.includes('iframely-embed')) {
-      // Check if script is already loaded
-      const existingScript = document.querySelector('script[src*="cdn.iframe.ly/embed.js"]');
-      
-      if (!existingScript) {
-        const script = document.createElement('script');
-        script.src = '//cdn.iframe.ly/embed.js';
-        script.async = true;
-        script.onload = () => {
-          console.log('Iframely script loaded');
-          setIsIframelyReady(true);
-        };
-        script.onerror = (error) => {
-          console.error('Failed to load Iframely script:', error);
-          setHasError(true);
-          setErrorMessage('Failed to load preview');
-          setIsLoading(false);
-        };
-        document.body.appendChild(script);
-      } else {
-        setIsIframelyReady(true);
-      }
-    }
-
-    return () => {
-      // Cleanup if component unmounts during script load
-      setIsIframelyReady(false);
-    };
-  }, [link.embedHtml]);
-
-  // Effect to initialize embeds when script is ready
-  useEffect(() => {
-    if (isIframelyReady && window.iframely) {
-      console.log('Initializing Iframely embeds');
+    // Initialize embeds if script is already loaded
+    if (window.iframely) {
       window.iframely.load();
-      setIsLoading(false);
     }
-  }, [isIframelyReady]);
+
+    // Set loading to false after a short delay to allow initialization
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [link.embedHtml]);
 
   // Early return if no embed data
   if (!link.embedHtml && (!link.thumbnails || link.thumbnails.length === 0)) {
@@ -82,11 +73,6 @@ const RichMediaPreview = ({ link }) => {
 
   const aspectRatioClass = ASPECT_RATIOS[link.type || 'link'];
   const heightStyle = PROVIDER_HEIGHTS[link.providerName] || '100%';
-
-  const handleIframeLoad = () => {
-    console.log('RichMediaPreview - Iframe loaded successfully');
-    setIsLoading(false);
-  };
 
   const handleIframeError = (error) => {
     console.error('RichMediaPreview - Iframe error:', error);
@@ -118,7 +104,6 @@ const RichMediaPreview = ({ link }) => {
                 className="w-full h-full"
                 style={{ minHeight: heightStyle }}
                 dangerouslySetInnerHTML={{ __html: link.embedHtml }}
-                onLoad={handleIframeLoad}
                 onError={handleIframeError}
               />
             ) : link.thumbnails?.[0]?.href ? (
@@ -126,7 +111,7 @@ const RichMediaPreview = ({ link }) => {
                 src={link.thumbnails[0].href}
                 alt={link.title || 'Content preview'}
                 className="w-full h-full object-cover"
-                onLoad={handleIframeLoad}
+                onLoad={() => setIsLoading(false)}
                 onError={handleIframeError}
               />
             ) : null}
