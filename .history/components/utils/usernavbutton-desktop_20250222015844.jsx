@@ -1,4 +1,4 @@
-import { HeaderAvatar } from './header-avatar';
+import { UserAvatar } from './avatar';
 import * as Popover from '@radix-ui/react-popover';
 import { useSession } from 'next-auth/react';
 import { signOut } from 'next-auth/react';
@@ -34,13 +34,13 @@ const UserAccountNavDesktop = () => {
         {isMobile ? (
           <Drawer.Root shouldScaleBackground>
             <Drawer.Trigger>
-              <HeaderAvatar />
+              <UserAvatar size={35} />
             </Drawer.Trigger>
             <UserNavButtonMobile data={data} logout={handleLogout} />
           </Drawer.Root>
         ) : (
           <Popover.Trigger className="">
-            <HeaderAvatar />
+            <UserAvatar size={35} />
           </Popover.Trigger>
         )}
 
