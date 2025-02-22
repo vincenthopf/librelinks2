@@ -16,7 +16,7 @@ const items = [
   },
 
   {
-    title: 'Customize',
+    title: 'Customization',
     href: '/admin/customize',
     icon: <CircleDot size={18} />,
   },

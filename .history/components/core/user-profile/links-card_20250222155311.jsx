@@ -76,9 +76,9 @@ const LinkCard = (props) => {
               aria-label={showPreview ? "Hide preview" : "Show preview"}
             >
               {showPreview ? (
-                <ChevronUp className="w-5 h-5" style={{ color: props.theme.accent }} />
+                <ChevronUp className="w-5 h-5 text-gray-600" />
               ) : (
-                <ChevronDown className="w-5 h-5" style={{ color: props.theme.accent }} />
+                <ChevronDown className="w-5 h-5 text-gray-600" />
               )}
             </button>
           )}
