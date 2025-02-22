@@ -137,21 +137,15 @@ const ProfilePage = () => {
             </Avatar.Fallback>
           </Avatar.Root>
           <p
-            style={{ 
-              color: theme.accent,
-              fontSize: `${fetchedUser?.profileNameFontSize || 16}px`
-            }}
-            className="font-bold text-white text-center mt-4 mb-2 lg:mt-4"
+            style={{ color: theme.accent }}
+            className="font-bold text-white text-center text-sm mt-4 mb-2 lg:text-xl lg:mt-4"
           >
             {fetchedUser?.name}
           </p>
           {fetchedUser?.bio && (
             <p
-              style={{ 
-                color: theme.accent,
-                fontSize: `${fetchedUser?.bioFontSize || 14}px`
-              }}
-              className="w-[150px] truncate text-center mt-1 mb-4 lg:mb-4 lg:w-[600px]"
+              style={{ color: theme.accent }}
+              className="w-[150px] truncate text-center text-sm mt-1 mb-4 lg:text-xl lg:mb-4 lg:w-[600px] "
             >
               {fetchedUser?.bio}
             </p>
@@ -179,7 +173,6 @@ const ProfilePage = () => {
                 theme={theme}
                 id={id}
                 key={id}
-                fontSize={fetchedUser?.linkTitleFontSize || 14}
                 {...link}
                 registerClicks={() => handleRegisterClick(id)}
               />

@@ -8,13 +8,7 @@ export default async function handler(req, res) {
 
   try {
     const { currentUser } = await serverAuth(req, res);
-    const {
-      buttonStyle,
-      themePalette,
-      profileNameFontSize,
-      bioFontSize,
-      linkTitleFontSize,
-    } = req.body;
+    const { buttonStyle, themePalette } = req.body;
 
     const updatedCustomizations = await db.user.update({
       where: {
@@ -23,9 +17,6 @@ export default async function handler(req, res) {
       data: {
         buttonStyle: buttonStyle,
         themePalette: themePalette,
-        ...(profileNameFontSize !== undefined && { profileNameFontSize }),
-        ...(bioFontSize !== undefined && { bioFontSize }),
-        ...(linkTitleFontSize !== undefined && { linkTitleFontSize }),
       },
     });
 

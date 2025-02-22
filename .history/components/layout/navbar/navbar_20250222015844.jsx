@@ -16,15 +16,9 @@ const items = [
   },
 
   {
-    title: 'Themes',
+    title: 'Customize',
     href: '/admin/customize',
     icon: <CircleDot size={18} />,
-  },
-
-  {
-    title: 'Profile & Bio',
-    href: '/admin/settings',
-    icon: <Settings2 color="black" size={18} />,
   },
 
   {
@@ -32,7 +26,11 @@ const items = [
     href: '/admin/analytics',
     icon: <BarChart color="black" size={18} />,
   },
-
+  {
+    title: 'Settings',
+    href: '/admin/settings',
+    icon: <Settings2 color="black" size={18} />,
+  },
 ];
 
 const Navbar = ({ showName = false, isHomePage = true }) => {

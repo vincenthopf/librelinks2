@@ -114,7 +114,7 @@ const AddLinkModal = () => {
                 title="Twitter, Instagram, LinkedIn, etc"
                 component={
                   <h3 className="text-md lg:text-lg">
-                    Add as a social media icon?
+                    Add as a social media link?
                   </h3>
                 }
               />
