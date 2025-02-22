@@ -58,9 +58,9 @@ const PaddingSelector = () => {
   const paddingOptions = Array.from({ length: 41 }, (_, i) => i * 5);
 
   return (
-    <div className="max-w-[690px] mx-auto my-4">
-      
-      <div className="mt-4 rounded-2xl border bg-white p-4 w-full h-auto">
+    <div className="max-w-[640px] mx-auto my-4">
+      <h3 className="text-xl font-semibold">Padding</h3>
+      <div className="mt-4 rounded-2xl border bg-white p-6 w-full h-auto">
         <div className="space-y-6">
           {/* Head to Profile Picture */}
           <div>

@@ -59,7 +59,7 @@ const PaddingSelector = () => {
 
   return (
     <div className="max-w-[690px] mx-auto my-4">
-      
+      <h3 className="text-xl font-semibold">Padding</h3>
       <div className="mt-4 rounded-2xl border bg-white p-4 w-full h-auto">
         <div className="space-y-6">
           {/* Head to Profile Picture */}

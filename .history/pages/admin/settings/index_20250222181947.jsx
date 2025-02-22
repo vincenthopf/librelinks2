@@ -177,7 +177,7 @@ const Settings = () => {
           </div>
 
           <div className="max-w-[690px] mx-auto my-10">
-            <h3 className="text-xl font-semibold">Padding</h3>
+            
             <PaddingSelector />
           </div>
 
