@@ -54,16 +54,15 @@ const ProfilePage = () => {
   };
 
   useEffect(() => {
-    window.addEventListener('message', () => {
+    const handleMessage = () => {
       queryClient.invalidateQueries({ queryKey: ['links'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
-    });
+    };
+
+    window.addEventListener('message', handleMessage);
 
     return () => {
-      window.removeEventListener('message', () => {
-        queryClient.invalidateQueries({ queryKey: ['links'] });
-        queryClient.invalidateQueries({ queryKey: ['users'] });
-      });
+      window.removeEventListener('message', handleMessage);
     };
   }, [queryClient]);
 
@@ -106,15 +105,9 @@ const ProfilePage = () => {
       )}
       <section
         style={{ background: theme.primary }}
-        className="h-[100vh] w-[100vw] overflow-auto"
+        className="h-[100vh] w-[100vw] no-scrollbar overflow-auto"
       >
-        <div 
-          className="flex items-center w-full flex-col mx-auto max-w-3xl justify-center px-8"
-          style={{ 
-            paddingTop: `${fetchedUser?.headToPicturePadding || 40}px`,
-            paddingBottom: `${fetchedUser?.headToPicturePadding || 40}px`
-          }}
-        >
+        <div className="flex items-center w-full mt-4 flex-col mx-auto max-w-3xl justify-center px-8 lg:mt-16">
           {(isLinksFetching || isUserFetching) && (
             <div className="absolute -top-5 left-2">
               <Loader
@@ -149,10 +142,9 @@ const ProfilePage = () => {
           <p
             style={{ 
               color: theme.accent,
-              fontSize: `${fetchedUser?.profileNameFontSize || 16}px`,
-              marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`
+              fontSize: `${fetchedUser?.profileNameFontSize || 16}px`
             }}
-            className="font-bold text-white text-center mb-2 lg:mt-4"
+            className="font-bold text-white text-center mt-4 mb-2 lg:mt-4"
           >
             {fetchedUser?.name}
           </p>
@@ -182,22 +174,19 @@ const ProfilePage = () => {
                 );
               })}
           </div>
-          <div className="w-full flex flex-col" style={{ gap: `${fetchedUser?.betweenCardsPadding || 16}px` }}>
-            {userLinks
-              ?.filter((link) => !link.isSocial)
-              .map(({ id, ...link }) => (
-                <LinkCard
-                  buttonStyle={buttonStyle}
-                  theme={theme}
-                  id={id}
-                  key={id}
-                  fontSize={fetchedUser?.linkTitleFontSize || 14}
-                  cardHeight={fetchedUser?.linkCardHeight || 16}
-                  {...link}
-                  registerClicks={() => handleRegisterClick(id)}
-                />
-              ))}
-          </div>
+          {userLinks
+            ?.filter((link) => !link.isSocial)
+            .map(({ id, ...link }) => (
+              <LinkCard
+                buttonStyle={buttonStyle}
+                theme={theme}
+                id={id}
+                key={id}
+                fontSize={fetchedUser?.linkTitleFontSize || 14}
+                {...link}
+                registerClicks={() => handleRegisterClick(id)}
+              />
+            ))}
 
           {userLinks?.length === 0 && (
             <div className="flex justify-center">

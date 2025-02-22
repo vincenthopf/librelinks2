@@ -182,22 +182,19 @@ const ProfilePage = () => {
                 );
               })}
           </div>
-          <div className="w-full flex flex-col" style={{ gap: `${fetchedUser?.betweenCardsPadding || 16}px` }}>
-            {userLinks
-              ?.filter((link) => !link.isSocial)
-              .map(({ id, ...link }) => (
-                <LinkCard
-                  buttonStyle={buttonStyle}
-                  theme={theme}
-                  id={id}
-                  key={id}
-                  fontSize={fetchedUser?.linkTitleFontSize || 14}
-                  cardHeight={fetchedUser?.linkCardHeight || 16}
-                  {...link}
-                  registerClicks={() => handleRegisterClick(id)}
-                />
-              ))}
-          </div>
+          {userLinks
+            ?.filter((link) => !link.isSocial)
+            .map(({ id, ...link }) => (
+              <LinkCard
+                buttonStyle={buttonStyle}
+                theme={theme}
+                id={id}
+                key={id}
+                fontSize={fetchedUser?.linkTitleFontSize || 14}
+                {...link}
+                registerClicks={() => handleRegisterClick(id)}
+              />
+            ))}
 
           {userLinks?.length === 0 && (
             <div className="flex justify-center">

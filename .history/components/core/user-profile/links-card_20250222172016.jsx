@@ -34,7 +34,7 @@ const LinkCard = (props) => {
   const hasPreview = iframelyData.embedHtml || (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
 
   return (
-    <div className="w-full transition-all duration-300">
+    <div className="w-full mb-4 transition-all duration-300">
       <div className="relative">
         <a
           href={props.url}

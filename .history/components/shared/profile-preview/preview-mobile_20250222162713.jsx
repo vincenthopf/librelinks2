@@ -55,13 +55,12 @@ const PreviewMobile = ({ close }) => {
     <>
       <section
         style={{ background: theme.primary }}
-        className="h-[100vh] w-[100vw] overflow-auto"
+        className="h-[100vh] w-[100vw] no-scrollbar overflow-auto"
       >
         <div 
           className="flex items-center w-full flex-col mx-auto max-w-3xl justify-center px-8"
           style={{ 
-            paddingTop: `${currentUser?.headToPicturePadding || 40}px`,
-            paddingBottom: `${currentUser?.headToPicturePadding || 40}px`
+            marginTop: `${currentUser?.headToPicturePadding || 40}px`
           }}
         >
           <Avatar.Root
@@ -79,7 +78,7 @@ const PreviewMobile = ({ close }) => {
               alt="avatar"
             />
             <Avatar.Fallback
-              className="leading-1 flex h-full w-full items-center justify-center bg-white text-[15px] font-medium"
+              className="leading-1 flex h-full w-full items-center justify-center bg-slate-900 text-xl text-white font-medium"
               delayMs={100}
             >
               @
@@ -91,7 +90,7 @@ const PreviewMobile = ({ close }) => {
               fontSize: `${currentUser?.profileNameFontSize || 16}px`,
               marginTop: `${currentUser?.pictureToNamePadding || 16}px`
             }}
-            className="font-bold text-white text-center mb-2"
+            className="font-bold text-white text-center mb-2 lg:mt-4"
           >
             {currentUser?.name}
           </p>

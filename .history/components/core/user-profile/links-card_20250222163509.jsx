@@ -34,14 +34,14 @@ const LinkCard = (props) => {
   const hasPreview = iframelyData.embedHtml || (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
 
   return (
-    <div className="w-full transition-all duration-300">
+    <div className="w-full mb-4 transition-all duration-300">
       <div className="relative">
         <a
           href={props.url}
           onClick={props.registerClicks}
           target="_blank"
           rel="noopener noreferrer"
-          className={`block w-full rounded-lg ${props.buttonStyle} transition-all duration-300`}
+          className={`block w-full rounded-lg p-4 ${props.buttonStyle} transition-all duration-300`}
           style={style}
         >
           <div className="flex items-center gap-3">

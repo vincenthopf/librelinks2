@@ -14,7 +14,6 @@ const PreviewMobile = ({ close }) => {
   const [, setIsDataLoaded] = useState(false);
 
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
-
   const { data: userLinks } = useLinks(currentUser?.id);
 
   const theme = useMemo(
@@ -91,7 +90,7 @@ const PreviewMobile = ({ close }) => {
               fontSize: `${currentUser?.profileNameFontSize || 16}px`,
               marginTop: `${currentUser?.pictureToNamePadding || 16}px`
             }}
-            className="font-bold text-white text-center mb-2"
+            className="font-bold text-white text-center mb-2 lg:mt-4"
           >
             {currentUser?.name}
           </p>
@@ -152,7 +151,7 @@ const PreviewMobile = ({ close }) => {
               <Link
                 className="font-semibold"
                 target="_blank"
-                href="https://twitter.com/NerdyProgramme2"
+                href="https://librelinks.vercel.app/"
               >
                 Librelinks
               </Link>

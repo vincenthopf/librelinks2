@@ -79,7 +79,7 @@ const PreviewMobile = ({ close }) => {
               alt="avatar"
             />
             <Avatar.Fallback
-              className="leading-1 flex h-full w-full items-center justify-center bg-white text-[15px] font-medium"
+              className="leading-1 flex h-full w-full items-center justify-center bg-slate-900 text-xl text-white font-medium"
               delayMs={100}
             >
               @
@@ -91,7 +91,7 @@ const PreviewMobile = ({ close }) => {
               fontSize: `${currentUser?.profileNameFontSize || 16}px`,
               marginTop: `${currentUser?.pictureToNamePadding || 16}px`
             }}
-            className="font-bold text-white text-center mb-2"
+            className="font-bold text-white text-center mb-2 lg:mt-4"
           >
             {currentUser?.name}
           </p>
