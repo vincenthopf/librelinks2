@@ -39,38 +39,25 @@ export const SocialCards = ({ url, title, color, registerClicks }) => {
         onClick={registerClicks}
         target="_blank"
         href={url}
-        className="hover:scale-125 transition-all rounded-full px-2"
-      >
-        <div style={{
+        style={{
           width: `${iconSize}px`,
           height: `${iconSize}px`,
-          display: '-webkit-flex',
-          display: 'flex',
-          WebkitAlignItems: 'center',
-          alignItems: 'center',
-          WebkitJustifyContent: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden'
-        }}>
-          <img
-            loading="lazy"
-            src={svgLoadError 
-              ? `${GOOGLE_FAVICON_URL}${getApexDomain(url)}`
-              : `https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`
-            }
-            onError={() => {
-              console.warn(`SVG icon failed to load for ${url}, falling back to favicon`);
-              setSvgLoadError(true);
-            }}
-            style={{
-              width: '100%',
-              height: '100%',
-              WebkitObjectFit: 'contain',
-              objectFit: 'contain'
-            }}
-            alt={title}
-          />
-        </div>
+        }}
+        className="hover:scale-125 transition-all rounded-full px-2"
+      >
+        <img
+          loading="lazy"
+          src={svgLoadError 
+            ? `${GOOGLE_FAVICON_URL}${getApexDomain(url)}`
+            : `https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`
+          }
+          onError={() => setSvgLoadError(true)}
+          style={{
+            width: `${iconSize}px`,
+            height: `${iconSize}px`,
+          }}
+          alt={title}
+        />
       </a>
     </>
   );

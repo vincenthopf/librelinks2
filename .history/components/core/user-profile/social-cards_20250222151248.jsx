@@ -1,14 +1,25 @@
 /* eslint-disable @next/next/no-img-element */
-import { useState } from 'react';
 import { getApexDomain, removeHashFromHexColor } from '@/utils/helpers';
-import { GOOGLE_FAVICON_URL } from '@/utils/constants';
 import useCurrentUser from '@/hooks/useCurrentUser';
+import { useState } from 'react';
+
+/**
+ * @typedef {Object} RetryState
+ * @property {number} svgAttempts - Number of SVG service retry attempts
+ * @property {number} googleAttempts - Number of Google Favicon retry attempts
+ * @property {number} currentSize - Current icon size being used
+ */
 
 export const SocialCards = ({ url, title, color, registerClicks }) => {
   const validColor = removeHashFromHexColor(color);
   const { data: currentUser } = useCurrentUser();
   const iconSize = currentUser?.socialIconSize || 30;
-  const [svgLoadError, setSvgLoadError] = useState(false);
+
+  const [retryState, setRetryState] = useState({
+    svgAttempts: 0,
+    googleAttempts: 0,
+    currentSize: iconSize
+  });
 
   // checking for website aliases: adding more soon
   const specialCases = {
@@ -39,38 +50,21 @@ export const SocialCards = ({ url, title, color, registerClicks }) => {
         onClick={registerClicks}
         target="_blank"
         href={url}
-        className="hover:scale-125 transition-all rounded-full px-2"
-      >
-        <div style={{
+        style={{
           width: `${iconSize}px`,
           height: `${iconSize}px`,
-          display: '-webkit-flex',
-          display: 'flex',
-          WebkitAlignItems: 'center',
-          alignItems: 'center',
-          WebkitJustifyContent: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden'
-        }}>
-          <img
-            loading="lazy"
-            src={svgLoadError 
-              ? `${GOOGLE_FAVICON_URL}${getApexDomain(url)}`
-              : `https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`
-            }
-            onError={() => {
-              console.warn(`SVG icon failed to load for ${url}, falling back to favicon`);
-              setSvgLoadError(true);
-            }}
-            style={{
-              width: '100%',
-              height: '100%',
-              WebkitObjectFit: 'contain',
-              objectFit: 'contain'
-            }}
-            alt={title}
-          />
-        </div>
+        }}
+        className="hover:scale-125 transition-all rounded-full px-2"
+      >
+        <img
+          loading="lazy"
+          src={`https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`}
+          style={{
+            width: `${iconSize}px`,
+            height: `${iconSize}px`,
+          }}
+          alt={title}
+        />
       </a>
     </>
   );
