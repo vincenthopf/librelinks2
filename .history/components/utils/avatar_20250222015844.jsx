@@ -6,18 +6,11 @@ export const UserAvatar = () => {
   const { data: currentUser } = useCurrentUser();
   const { data: fetchedUser } = useUser(currentUser?.handle);
 
-  const size = fetchedUser?.profileImageSize || 35;
-  const lgSize = Math.floor(size * 1.3); // 30% larger for desktop
-
   return (
     <>
       <Avatar.Root
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-        }}
-        className="inline-flex border-2 border-blue-300
-         items-center justify-center overflow-hidden rounded-full align-middle lg:w-[${lgSize}px] lg:h-[${lgSize}px]"
+        className="inline-flex h-[35px] w-[35px] border-2 border-blue-300
+				 items-center justify-center overflow-hidden rounded-full align-middle lg:w-[45px] lg:h-[45px]"
       >
         <Avatar.Image
           className="h-full w-full rounded-[inherit] object-cover"
@@ -40,17 +33,11 @@ export const UserAvatarSetting = () => {
   const { data: currentUser } = useCurrentUser();
   const { data: fetchedUser } = useUser(currentUser?.handle);
 
-  const size = fetchedUser?.profileImageSize || 100;
-
   return (
     <>
       <Avatar.Root
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-        }}
-        className="inline-flex border-2 border-blue-400
-         items-center justify-center overflow-hidden rounded-full align-middle"
+        className="inline-flex h-[100px] w-[100px] 
+				 items-center justify-center overflow-hidden rounded-full align-middle border-2 border-blue-400"
       >
         <Avatar.Image
           className="h-full w-full rounded-[inherit] object-cover"

@@ -1,11 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { getApexDomain, removeHashFromHexColor } from '@/utils/helpers';
-import useCurrentUser from '@/hooks/useCurrentUser';
-
 export const SocialCards = ({ url, title, color, registerClicks }) => {
   const validColor = removeHashFromHexColor(color);
-  const { data: currentUser } = useCurrentUser();
-  const iconSize = currentUser?.socialIconSize || 30;
 
   // checking for website aliases: adding more soon
   const specialCases = {
@@ -36,19 +32,12 @@ export const SocialCards = ({ url, title, color, registerClicks }) => {
         onClick={registerClicks}
         target="_blank"
         href={url}
-        style={{
-          width: `${iconSize}px`,
-          height: `${iconSize}px`,
-        }}
-        className="hover:scale-125 transition-all rounded-full px-2"
+        className="hover:scale-125 transition-all w-[30px] h-[30px]  md:h-[35px] md:w-[35px] rounded-full px-2 lg:w-[42px] lg:h-[42px]"
       >
         <img
           loading="lazy"
           src={`https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`}
-          style={{
-            width: `${iconSize}px`,
-            height: `${iconSize}px`,
-          }}
+          className="w-[42px] h-[42px]"
           alt={title}
         />
       </a>

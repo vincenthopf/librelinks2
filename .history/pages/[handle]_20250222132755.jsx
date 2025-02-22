@@ -120,12 +120,8 @@ const ProfilePage = () => {
             </div>
           )}
           <Avatar.Root
-            style={{
-              width: `${fetchedUser?.profileImageSize || 70}px`,
-              height: `${fetchedUser?.profileImageSize || 70}px`,
-            }}
-            className="inline-flex border-2 border-blue-300
-             items-center justify-center overflow-hidden rounded-full align-middle"
+            className="inline-flex h-[70px] w-[70px] border-2 border-blue-300
+						items-center justify-center overflow-hidden rounded-full align-middle lg:w-[96px] lg:h-[96px]"
           >
             <Avatar.Image
               className="h-full w-full rounded-[inherit] object-cover"
