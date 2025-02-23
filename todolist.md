@@ -989,3 +989,80 @@ All tasks have been completed successfully. The social icons now have a fallback
   - [ ] Update component documentation
   - [ ] Document API changes
   - [ ] Add usage examples
+
+# Cloudinary Image Upload Implementation Tasks
+
+## Setup & Configuration
+- [x] Install Required Packages
+  * ✓ Install next-cloudinary package
+  * ✓ Remove unnecessary cloudinary packages
+  * ✓ Update package.json
+  * ✓ Add types for next-cloudinary
+
+- [x] Update Environment Configuration
+  * ✓ Add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+  * ✓ Verify existing CLOUDINARY_API_KEY
+  * ✓ Verify existing CLOUDINARY_API_SECRET
+  * ✓ Add proper validation for env variables
+
+## Component Updates
+- [x] Create CldImage Components
+  * ✓ Create wrapper component for CldImage
+  * ✓ Add proper TypeScript types
+  * ✓ Add loading and error states
+  * ✓ Add responsive image handling
+  * ✓ Implement automatic optimization
+
+- [x] Update Avatar Component
+  * ✓ Replace img tag with CldImage
+  * ✓ Add auto-format and auto-quality
+  * ✓ Implement proper cropping
+  * ✓ Add loading placeholder
+  * ✓ Handle error states
+
+- [x] Update UploadModal Component
+  * ✓ Keep existing file validation
+  * ✓ Update preview to use CldImage
+  * ✓ Maintain progress tracking
+  * ✓ Keep retry mechanism
+  * ✓ Update error handling
+
+## Backend Implementation
+- [x] Simplify Upload API
+  * ✓ Remove transformation logic (handled by CldImage)
+  * ✓ Update upload parameters
+  * ✓ Simplify error handling
+  * ✓ Update response format
+  * ✓ Add proper logging
+
+## Image Transformation
+- [x] Implement Transformation Presets
+  * ✓ Create avatar preset (square crop)
+  * ✓ Add responsive sizing
+  * ✓ Configure auto-format
+  * ✓ Set quality parameters
+  * ✓ Add loading optimization
+
+## Testing & Validation
+- [ ] Test Image Components
+  * Test responsive behavior
+  * Verify auto-optimization
+  * Check loading states
+  * Test error handling
+  * Verify transformations
+
+## Documentation
+- [ ] Update Documentation
+  * Document CldImage usage
+  * Add transformation examples
+  * Document responsive images
+  * Add error handling guide
+  * Document best practices
+
+## Migration
+- [ ] Handle Existing Images
+  * Test existing image URLs
+  * Update image references
+  * Verify backwards compatibility
+  * Add migration guide
+  * Test migration process

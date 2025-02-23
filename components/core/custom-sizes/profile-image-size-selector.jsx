@@ -9,9 +9,11 @@ import { signalIframe } from '@/utils/helpers';
 const SIZE_PRESETS = [
   { label: 'Small', value: 50 },
   { label: 'Medium', value: 100 },
+  { label: 'M-Large', value: 150 },
   { label: 'Large', value: 200 },
-  { label: 'X-Large', value: 300 },
-  { label: 'XX-Large', value: 400 },
+  { label: 'X-Large', value: 250 },
+  { label: 'XX-Large', value: 300 },
+  { label: 'XXX-Large', value: 400 },
   { label: 'Maximum', value: 500 },
 ];
 
@@ -76,7 +78,7 @@ const ProfileImageSizeSelector = () => {
       console.error('Error in handleSizeChange:', error);
     }
   };
-
+  
   return (
     <select
       value={selectedSize}
