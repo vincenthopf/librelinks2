@@ -73,9 +73,9 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderConstraints> = {
       desktop: '10%'
     },
     aspectRatio: {
-      mobile: '1/2',
-      tablet: '1/2',
-      desktop: '1/2'
+      mobile: 'auto',
+      tablet: 'auto',
+      desktop: 'auto'
     },
     padding: {
       mobile: '0',
@@ -91,8 +91,8 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderConstraints> = {
     },
     aspectRatio: {
       mobile: 'auto',
-      tablet: '1.91/1',
-      desktop: '1.91/1'
+      tablet: 'auto',
+      desktop: 'auto'
     },
     minHeight: '250px',
     padding: {
@@ -104,13 +104,13 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderConstraints> = {
   TikTok: {
     maxWidth: {
       mobile: '100%',
-      tablet: '325px',
-      desktop: '325px'
+      tablet: 'auto',
+      desktop: 'auto'
     },
     aspectRatio: {
-      mobile: '9/16',
-      tablet: '9/16',
-      desktop: '9/16'
+      mobile: 'auto',
+      tablet: 'auto',
+      desktop: 'auto'
     },
     minHeight: '500px',
     padding: {
@@ -122,13 +122,13 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderConstraints> = {
   Generic: {
     maxWidth: {
       mobile: '50%',
-      tablet: '352px',
-      desktop: '352px'
+      tablet: 'auto',
+      desktop: 'auto'
     },
     aspectRatio: {
-      mobile: '4/4',
-      tablet: '9/9',
-      desktop: '9/9'
+      mobile: 'auto',
+      tablet: 'auto',
+      desktop: 'auto'
     },
     padding: {
       mobile: '1rem',

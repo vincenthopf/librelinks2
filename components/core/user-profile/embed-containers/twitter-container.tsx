@@ -21,8 +21,8 @@ const TwitterContainer: React.FC<TwitterContainerProps> = ({
     containerClass: `twitter-embed-container w-full max-w-[550px] mx-auto overflow-hidden rounded-lg ${config?.containerClass || ''}`,
     aspectRatio: {
       mobile: 'aspect-auto',
-      tablet: 'aspect-[1.91/1]',
-      desktop: 'aspect-[1.91/1]',
+      tablet: 'aspect-auto',
+      desktop: 'aspect-auto',
     },
   };
 

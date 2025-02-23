@@ -20,9 +20,9 @@ const GenericContainer: React.FC<GenericContainerProps> = ({
     ...config,
     containerClass: `generic-embed-container w-full overflow-hidden rounded-lg ${config?.containerClass || ''}`,
     aspectRatio: {
-      mobile: 'aspect-[4/3]',
-      tablet: 'aspect-[4/3]',
-      desktop: 'aspect-[16/9]',
+      mobile: 'aspect-auto',
+      tablet: 'aspect-auto',
+      desktop: 'aspect-auto',
     },
   };
 

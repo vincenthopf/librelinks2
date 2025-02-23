@@ -7,7 +7,7 @@ describe('ContainerFactory', () => {
     type: 'link',
     url: '',
     title: 'Test Link',
-    maxWidth: '500px',
+    maxWidth: 'auto',
     className: 'test-class'
   };
 

@@ -86,7 +86,7 @@ const LinkCard = (props) => {
         </a>
       </div>
       
-      <div className={`transition-all duration-300 ${showPreview ? 'max-h-[600px] opacity-100 mt-2' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+      <div className={`transition-all duration-300 ${showPreview ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0 '}`}>
         <RichMediaPreview link={iframelyData} />
       </div>
     </div>

@@ -3,9 +3,9 @@ import { EmbedProviderConfig } from '@/types/embed';
 export const EMBED_CONFIGS: EmbedProviderConfig = {
   Instagram: {
     aspectRatio: {
-      mobile: 'aspect-[4/5]',
-      tablet: 'aspect-square',
-      desktop: 'aspect-square'
+      mobile: 'aspect-auto',
+      tablet: 'aspect-auto',
+      desktop: 'aspect-auto'
     },
     containerClass: 'instagram-embed-container w-full max-w-[540px] mx-auto overflow-hidden rounded-lg',
     script: {
@@ -35,8 +35,8 @@ export const EMBED_CONFIGS: EmbedProviderConfig = {
   Twitter: {
     aspectRatio: {
       mobile: 'aspect-auto',
-      tablet: 'aspect-[1.91/1]',
-      desktop: 'aspect-[1.91/1]'
+      tablet: 'aspect-auto',
+      desktop: 'aspect-auto'
     },
     containerClass: 'twitter-embed-container w-full max-w-[550px] mx-auto overflow-hidden rounded-lg',
     script: {
@@ -46,11 +46,11 @@ export const EMBED_CONFIGS: EmbedProviderConfig = {
   },
   TikTok: {
     aspectRatio: {
-      mobile: 'aspect-[9/16]',
-      tablet: 'aspect-[9/16]',
-      desktop: 'aspect-[9/16]'
+      mobile: 'aspect-auto',
+      tablet: 'aspect-auto',
+      desktop: 'aspect-auto'
     },
-    containerClass: 'tiktok-embed-container w-full max-w-[325px] mx-auto overflow-hidden rounded-lg',
+    
     script: {
       main: 'https://www.tiktok.com/embed.js'
     }
@@ -76,9 +76,9 @@ export const EMBED_CONFIGS: EmbedProviderConfig = {
   },
   Generic: {
     aspectRatio: {
-      mobile: 'aspect-[4/4]',
-      tablet: 'aspect-[4/4]',
-      desktop: 'aspect-[4/4]'
+      mobile: 'aspect-auto',
+      tablet: 'aspect-auto',
+      desktop: 'aspect-auto'
     },
     containerClass: 'generic-embed-container w-full overflow-hidden rounded-lg',
     processHtml: (html: string) => {

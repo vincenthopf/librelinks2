@@ -27,7 +27,7 @@ const TikTokContainer: React.FC<TikTokContainerProps> = ({
   embedHtml,
   url,
   title,
-  maxWidth = '325px',
+  maxWidth = 'auto',
   config,
   className = ''
 }) => {
