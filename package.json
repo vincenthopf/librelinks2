@@ -61,12 +61,16 @@
     "zustand": "^4.3.9"
   },
   "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "eslint": "^8.48.0",
     "eslint-config-prettier": "^9.0.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.4.3",
     "prettier": "^3.0.3",
-    "prisma": "^5.2.0"
+    "prisma": "^5.2.0",
+    "typescript": "^5.7.3"
   },
   "lint-staged": {
     "*.js": "eslint --cache --fix",
