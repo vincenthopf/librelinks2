@@ -138,3 +138,109 @@ Both components implement comprehensive error handling:
    - Maintain aspect ratios
    - Scale content appropriately
    - Handle different screen sizes
+
+## Link Management Components
+
+### EditLinkModal
+
+A modal component for editing existing links. Handles URL validation, automatic HTTPS prefixing, and rich media data updates through Iframely.
+
+#### Props
+
+```typescript
+{
+  id: string;       // Link ID
+  title: string;    // Current link title
+  url: string;      // Current link URL
+  close: () => void; // Function to close the modal
+}
+```
+
+#### Features
+
+- Validates URLs and automatically adds https:// if missing
+- Shows loading state during updates
+- Displays error messages for invalid URLs
+- Preserves existing URL protocols
+- Fetches and updates rich media data when URL changes
+- Maintains consistent UX with AddLinkModal
+
+#### Example Usage
+
+```jsx
+<EditLinkModal
+  id="123"
+  title="My Link"
+  url="https://example.com"
+  close={() => setIsOpen(false)}
+/>
+```
+
+### AddLinkModal
+
+A modal component for adding new links. Shares common functionality with EditLinkModal.
+
+#### Props
+
+None - Uses internal state management
+
+#### Features
+
+- Validates URLs and automatically adds https:// if missing
+- Shows loading state during creation
+- Displays error messages for invalid URLs
+- Supports social media icon toggle
+- Fetches rich media data for preview
+- Maintains consistent UX with EditLinkModal
+
+#### Example Usage
+
+```jsx
+<AddLinkModal />
+```
+
+## URL Processing Utilities
+
+### ensureHttps
+
+A utility function that ensures URLs have the HTTPS protocol.
+
+```typescript
+function ensureHttps(url: string): string;
+```
+
+#### Features
+
+- Adds https:// prefix if no protocol is present
+- Preserves existing protocols (http://, ftp://, etc.)
+- Handles null/undefined inputs safely
+
+#### Example Usage
+
+```javascript
+ensureHttps('example.com'); // returns 'https://example.com'
+ensureHttps('http://example.com'); // returns 'http://example.com'
+ensureHttps('https://example.com'); // returns 'https://example.com'
+```
+
+### isValidUrl
+
+A utility function that validates URLs, working in conjunction with ensureHttps.
+
+```typescript
+function isValidUrl(url: string): boolean;
+```
+
+#### Features
+
+- Validates URLs with or without protocols
+- Automatically adds https:// during validation
+- Supports URLs with paths, query parameters, and fragments
+
+#### Example Usage
+
+```javascript
+isValidUrl('example.com'); // returns true
+isValidUrl('not a url'); // returns false
+isValidUrl('http://example.com'); // returns true
+```

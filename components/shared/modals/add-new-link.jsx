@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useState } from 'react';
 import Image from 'next/image';
 import closeSVG from '@/public/close_button.svg';
-import { isValidUrl, signalIframe } from '@/utils/helpers';
+import { isValidUrl, ensureHttps, signalIframe } from '@/utils/helpers';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ const AddLinkModal = () => {
   const [url, setUrl] = useState('');
   const [isSocial, setIsSocial] = useState(false);
   const [urlError, setUrlError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { data: currentUser } = useCurrentUser();
   const userId = currentUser?.id ?? null;
@@ -27,12 +28,19 @@ const AddLinkModal = () => {
 
   const addLinkMutation = useMutation(
     async ({ title, url, order }) => {
-      await axios.post('/api/links', {
-        title,
-        url,
-        order,
-        isSocial,
-      });
+      setIsLoading(true);
+      try {
+        const processedUrl = ensureHttps(url);
+        const response = await axios.post('/api/links', {
+          title,
+          url: processedUrl,
+          order,
+          isSocial,
+        });
+        return response.data;
+      } finally {
+        setIsLoading(false);
+      }
     },
     {
       onSuccess: () => {
@@ -51,18 +59,19 @@ const AddLinkModal = () => {
       return;
     }
     await toast.promise(addLinkMutation.mutateAsync({ title, url, order }), {
-      loading: 'Adding link',
+      loading: 'Adding link and fetching preview data...',
       success: 'Link added successfully',
-      error: 'An error occured',
+      error: 'An error occurred while adding the link',
     });
   };
 
   const handleUrlChange = (event) => {
     const urlValue = event.target.value;
-    const URL = isValidUrl(urlValue);
+    const processedUrl = ensureHttps(urlValue);
+    const isValid = isValidUrl(urlValue);
 
-    setUrl(urlValue);
-    setUrlError(!URL);
+    setUrl(processedUrl);
+    setUrlError(!isValid);
   };
 
   return (
@@ -89,6 +98,7 @@ const AddLinkModal = () => {
                 id="name"
                 type="text"
                 placeholder="Title"
+                disabled={isLoading}
               />
             </div>
             <div className="relative">
@@ -101,10 +111,11 @@ const AddLinkModal = () => {
                 id="url"
                 type="url"
                 placeholder="URL"
+                disabled={isLoading}
               />
               {urlError && (
                 <small className="text-red-500 text-sm">
-                  Enter a valid URL (ex: https://hello.com)
+                  Enter a valid URL (ex: hello.com)
                 </small>
               )}
             </div>
@@ -122,6 +133,7 @@ const AddLinkModal = () => {
                 checked={isSocial}
                 onCheckedChange={() => setIsSocial(!isSocial)}
                 className="w-[39px] h-[21px] bg-[#E4E4E7] rounded-full relative focus:shadow-black border border-slate-200 data-[state=checked]:bg-slate-900 outline-none cursor-default lg:w-[42px] lg:h-[25px]"
+                disabled={isLoading}
               >
                 <Switch.Thumb className="block w-[17px] h-[17px] bg-white rounded-full shadow-[0_2px_2px] transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[19px] lg:w-[21px] lg:h-[21px]" />
               </Switch.Root>
@@ -130,16 +142,16 @@ const AddLinkModal = () => {
             <Dialog.Close asChild>
               <button
                 onClick={submitLink}
-                disabled={urlError}
+                disabled={urlError || isLoading}
                 className={`inline-block w-full px-4 py-4 leading-none 
                      			 text-lg mt-2 text-white rounded-3xl 
                       			${
-                              !urlError
+                              !urlError && !isLoading
                                 ? 'bg-slate-800 hover:bg-slate-900'
                                 : 'bg-slate-500'
                             }`}
               >
-                Create Link{' '}
+                {isLoading ? 'Creating...' : 'Create Link'}{' '}
                 <span role="img" aria-label="sparkling star">
                   ✨
                 </span>

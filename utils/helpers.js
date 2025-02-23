@@ -54,9 +54,31 @@ export const timeAgo = (timestamp) => {
   return ms(diff);
 };
 
+/**
+ * Ensures a URL has https:// prefix if no protocol is specified
+ * @param {string} url - The URL to process
+ * @returns {string} The processed URL with https:// if needed
+ */
+export const ensureHttps = (url) => {
+  if (!url) return url;
+
+  // If URL already has a protocol, return as is
+  if (url.match(/^[a-zA-Z]+:\/\//)) {
+    return url;
+  }
+
+  // Add https:// prefix
+  return `https://${url}`;
+};
+
+/**
+ * Verify if the URL is valid, adding https:// if needed
+ * @param {string} url - The URL to validate
+ * @returns {boolean} Whether the URL is valid
+ */
 export const isValidUrl = (url) => {
   try {
-    new URL(url);
+    new URL(ensureHttps(url));
     return true;
   } catch (e) {
     return false;

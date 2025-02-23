@@ -1,9 +1,10 @@
 import { db } from '@/lib/db';
+import { fetchIframelyData, processIframelyResponse } from '@/utils/iframely';
 
 export default async function handler(req, res) {
-  // if (req.method !== "PATCH" && req.method !== "DELETE") {
-  //   return res.status(405).end();
-  // }
+  if (req.method !== 'PATCH' && req.method !== 'DELETE') {
+    return res.status(405).end();
+  }
 
   try {
     const { linkId } = req.query;
@@ -15,6 +16,26 @@ export default async function handler(req, res) {
     if (req.method === 'PATCH') {
       const { newTitle, newUrl, archived } = req.body;
 
+      // Get current link data to check if URL changed
+      const currentLink = await db.link.findUnique({
+        where: { id: linkId },
+      });
+
+      if (!currentLink) {
+        return res.status(404).json({ error: 'Link not found' });
+      }
+
+      // Only fetch new Iframely data if URL changed
+      let iframelyData = null;
+      if (newUrl && newUrl !== currentLink.url) {
+        console.log('URL changed, fetching new Iframely data for:', newUrl);
+        iframelyData = await fetchIframelyData(newUrl);
+      }
+
+      const processedData = iframelyData
+        ? processIframelyResponse(iframelyData)
+        : null;
+
       const updatedLink = await db.link.update({
         where: {
           id: linkId,
@@ -23,6 +44,16 @@ export default async function handler(req, res) {
           title: newTitle,
           url: newUrl,
           archived: archived,
+          // Only update Iframely data if we have new data
+          ...(processedData && {
+            type: processedData.type,
+            providerName: processedData.providerName,
+            embedHtml: processedData.embedHtml,
+            thumbnails: processedData.thumbnails,
+            authorName: processedData.authorName,
+            authorUrl: processedData.authorUrl,
+            iframelyMeta: processedData.iframelyMeta,
+          }),
         },
       });
 
@@ -37,7 +68,7 @@ export default async function handler(req, res) {
       return res.status(204).end();
     }
   } catch (error) {
-    console.log(error);
-    return res.status(400).end();
+    console.error('API Error:', error);
+    return res.status(400).json({ error: error.message || 'Bad Request' });
   }
 }

@@ -993,76 +993,160 @@ All tasks have been completed successfully. The social icons now have a fallback
 # Cloudinary Image Upload Implementation Tasks
 
 ## Setup & Configuration
+
 - [x] Install Required Packages
-  * ✓ Install next-cloudinary package
-  * ✓ Remove unnecessary cloudinary packages
-  * ✓ Update package.json
-  * ✓ Add types for next-cloudinary
+
+  - ✓ Install next-cloudinary package
+  - ✓ Remove unnecessary cloudinary packages
+  - ✓ Update package.json
+  - ✓ Add types for next-cloudinary
 
 - [x] Update Environment Configuration
-  * ✓ Add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-  * ✓ Verify existing CLOUDINARY_API_KEY
-  * ✓ Verify existing CLOUDINARY_API_SECRET
-  * ✓ Add proper validation for env variables
+  - ✓ Add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+  - ✓ Verify existing CLOUDINARY_API_KEY
+  - ✓ Verify existing CLOUDINARY_API_SECRET
+  - ✓ Add proper validation for env variables
 
 ## Component Updates
+
 - [x] Create CldImage Components
-  * ✓ Create wrapper component for CldImage
-  * ✓ Add proper TypeScript types
-  * ✓ Add loading and error states
-  * ✓ Add responsive image handling
-  * ✓ Implement automatic optimization
+
+  - ✓ Create wrapper component for CldImage
+  - ✓ Add proper TypeScript types
+  - ✓ Add loading and error states
+  - ✓ Add responsive image handling
+  - ✓ Implement automatic optimization
 
 - [x] Update Avatar Component
-  * ✓ Replace img tag with CldImage
-  * ✓ Add auto-format and auto-quality
-  * ✓ Implement proper cropping
-  * ✓ Add loading placeholder
-  * ✓ Handle error states
+
+  - ✓ Replace img tag with CldImage
+  - ✓ Add auto-format and auto-quality
+  - ✓ Implement proper cropping
+  - ✓ Add loading placeholder
+  - ✓ Handle error states
 
 - [x] Update UploadModal Component
-  * ✓ Keep existing file validation
-  * ✓ Update preview to use CldImage
-  * ✓ Maintain progress tracking
-  * ✓ Keep retry mechanism
-  * ✓ Update error handling
+  - ✓ Keep existing file validation
+  - ✓ Update preview to use CldImage
+  - ✓ Maintain progress tracking
+  - ✓ Keep retry mechanism
+  - ✓ Update error handling
 
 ## Backend Implementation
+
 - [x] Simplify Upload API
-  * ✓ Remove transformation logic (handled by CldImage)
-  * ✓ Update upload parameters
-  * ✓ Simplify error handling
-  * ✓ Update response format
-  * ✓ Add proper logging
+  - ✓ Remove transformation logic (handled by CldImage)
+  - ✓ Update upload parameters
+  - ✓ Simplify error handling
+  - ✓ Update response format
+  - ✓ Add proper logging
 
 ## Image Transformation
+
 - [x] Implement Transformation Presets
-  * ✓ Create avatar preset (square crop)
-  * ✓ Add responsive sizing
-  * ✓ Configure auto-format
-  * ✓ Set quality parameters
-  * ✓ Add loading optimization
+  - ✓ Create avatar preset (square crop)
+  - ✓ Add responsive sizing
+  - ✓ Configure auto-format
+  - ✓ Set quality parameters
+  - ✓ Add loading optimization
 
 ## Testing & Validation
+
 - [ ] Test Image Components
-  * Test responsive behavior
-  * Verify auto-optimization
-  * Check loading states
-  * Test error handling
-  * Verify transformations
+  - Test responsive behavior
+  - Verify auto-optimization
+  - Check loading states
+  - Test error handling
+  - Verify transformations
 
 ## Documentation
+
 - [ ] Update Documentation
-  * Document CldImage usage
-  * Add transformation examples
-  * Document responsive images
-  * Add error handling guide
-  * Document best practices
+  - Document CldImage usage
+  - Add transformation examples
+  - Document responsive images
+  - Add error handling guide
+  - Document best practices
 
 ## Migration
+
 - [ ] Handle Existing Images
-  * Test existing image URLs
-  * Update image references
-  * Verify backwards compatibility
-  * Add migration guide
-  * Test migration process
+  - Test existing image URLs
+  - Update image references
+  - Verify backwards compatibility
+  - Add migration guide
+  - Test migration process
+
+# Link URL Update with Iframely Integration Implementation
+
+## URL Processing
+
+- [x] Add `ensureHttps` function to helpers.js
+
+  - Auto-add https:// prefix if missing
+  - Preserve existing protocols
+  - Add tests for the function
+
+- [x] Update `isValidUrl` function
+  - Integrate with ensureHttps
+  - Maintain backward compatibility
+  - Add tests for updated function
+
+## API Endpoint Updates
+
+- [x] Update PATCH handler in [linkId].js
+  - Add Iframely data fetching for URL changes
+  - Preserve old Iframely data if fetch fails
+  - Add proper error handling
+  - Add logging for debugging
+
+## Frontend Components
+
+- [x] Update EditLinkModal
+
+  - Integrate ensureHttps in URL handling
+  - Update URL validation
+  - Add loading state during Iframely fetch
+  - Update error messaging
+
+- [x] Update AddLinkModal
+  - Integrate ensureHttps in URL handling
+  - Update URL validation
+  - Maintain consistent UX with EditLinkModal
+
+## Testing
+
+- [x] Test URL Processing
+
+  - Test ensureHttps with various inputs
+  - Test isValidUrl with new implementation
+  - Test edge cases and error conditions
+
+- [x] Test API Endpoint
+
+  - Test successful URL updates
+  - Test Iframely integration
+  - Test error handling
+  - Test data preservation
+
+- [x] Test Frontend Components
+  - Test URL validation in forms
+  - Test loading states
+  - Test error handling
+  - Test user feedback (toasts)
+
+## Documentation
+
+- [x] Update code documentation
+  - Document new functions
+  - Document API changes
+  - Document component changes
+  - Add usage examples
+
+## Final Verification
+
+- [ ] Verify end-to-end flow
+  - Test complete edit flow
+  - Verify Iframely data
+  - Check error handling
+  - Validate UX consistency
