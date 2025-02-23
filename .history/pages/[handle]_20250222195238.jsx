@@ -3,7 +3,7 @@ import LinkCard from '@/components/core/user-profile/links-card';
 import * as Avatar from '@radix-ui/react-avatar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -138,17 +138,15 @@ const ProfilePage = () => {
             {fetchedUser?.name}
           </p>
           {fetchedUser?.bio && (
-            <div className="w-full">
-              <p
-                style={{ 
-                  color: theme.accent,
-                  fontSize: `${fetchedUser?.bioFontSize || 14}px`
-                }}
-                className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
-              >
-                {fetchedUser?.bio}
-              </p>
-            </div>
+            <p
+              style={{ 
+                color: theme.accent,
+                fontSize: `${fetchedUser?.bioFontSize || 14}px`
+              }}
+              className="w-[150px] truncate text-center mt-1 mb-4 lg:mb-4 lg:w-[600px]"
+            >
+              {fetchedUser?.bio}
+            </p>
           )}
           <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">
             {userLinks

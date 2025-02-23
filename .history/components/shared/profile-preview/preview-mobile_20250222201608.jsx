@@ -13,6 +13,9 @@ import { UserAvatarSetting } from '@/components/utils/avatar';
 
 const PreviewMobile = ({ close }) => {
   const [, setIsDataLoaded] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [shouldShowMore, setShouldShowMore] = useState(false);
+  const bioRef = useRef(null);
 
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
@@ -43,6 +46,15 @@ const PreviewMobile = ({ close }) => {
       setIsDataLoaded(true);
     }
   }, [currentUser, userLinks]);
+
+  // Add effect to check bio height
+  useEffect(() => {
+    if (bioRef.current) {
+      const lineHeight = parseInt(window.getComputedStyle(bioRef.current).lineHeight);
+      const height = bioRef.current.scrollHeight;
+      setShouldShowMore(height > lineHeight * 3);
+    }
+  }, [currentUser?.bio]);
 
   if (isUserLoading) {
     return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
@@ -79,14 +91,24 @@ const PreviewMobile = ({ close }) => {
           {currentUser?.bio && (
             <div className="w-full">
               <p
+                ref={bioRef}
                 style={{ 
                   color: theme.accent,
                   fontSize: `${currentUser?.bioFontSize || 14}px`
                 }}
-                className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
+                className={`text-center mt-1 mb-4 break-words whitespace-pre-wrap ${!isBioExpanded ? 'line-clamp-3' : ''}`}
               >
                 {currentUser?.bio}
               </p>
+              {shouldShowMore && (
+                <button
+                  onClick={() => setIsBioExpanded(!isBioExpanded)}
+                  className="text-center w-full mt-2 mb-4 transition-all duration-300 hover:opacity-80"
+                  style={{ color: theme.accent }}
+                >
+                  {isBioExpanded ? 'Show less' : 'Show more'}
+                </button>
+              )}
             </div>
           )}
           <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">

@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
-import { db } from '@/lib/db';
+import prisma from '@/libs/prismadb';
 
 export default async function handler(req, res) {
   if (req.method !== 'PATCH') {
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
         .json({ message: 'Favicon size must be between 16px and 64px' });
     }
 
-    const user = await db.user.update({
+    const user = await prisma.user.update({
       where: {
         email: session.user.email,
       },

@@ -52,7 +52,7 @@ const ImageSizeSelector = () => {
   const imageSizeOptions = [16, 20, 24, 28, 32, 40, 48, 56, 64];
 
   return (
-    <div className="max-w-[640px] mx-auto my-4">
+    
       <h3 className="text-xl font-semibold">Image Sizes</h3>
       <div className="mt-4 rounded-2xl border bg-white p-4 w-full h-auto">
         <div className="space-y-6">
@@ -105,7 +105,7 @@ const ImageSizeSelector = () => {
           </div>
         </div>
       </div>
-    </div>
+   
   );
 };
 

@@ -3,7 +3,7 @@ import LinkCard from '@/components/core/user-profile/links-card';
 import * as Avatar from '@radix-ui/react-avatar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -32,6 +32,7 @@ const ProfilePage = () => {
 
   const queryClient = useQueryClient();
   const [, setIsDataLoaded] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   const mutation = useMutation(
     async (id) => {
@@ -138,16 +139,25 @@ const ProfilePage = () => {
             {fetchedUser?.name}
           </p>
           {fetchedUser?.bio && (
-            <div className="w-full">
+            <div className="w-full max-w-3xl px-8">
               <p
                 style={{ 
                   color: theme.accent,
                   fontSize: `${fetchedUser?.bioFontSize || 14}px`
                 }}
-                className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
+                className={`text-center mt-1 mb-4 break-words whitespace-normal ${!isBioExpanded ? 'line-clamp-3' : ''}`}
               >
                 {fetchedUser?.bio}
               </p>
+              {fetchedUser?.bio.split('\n').length > 3 && (
+                <button
+                  onClick={() => setIsBioExpanded(!isBioExpanded)}
+                  className="text-center w-full mt-2 mb-4 transition-all duration-300"
+                  style={{ color: theme.accent }}
+                >
+                  {isBioExpanded ? 'Show less' : 'Show more'}
+                </button>
+              )}
             </div>
           )}
           <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">

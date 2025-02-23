@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import * as Avatar from '@radix-ui/react-avatar';
 import LinkCard from '@/components/core/user-profile/links-card';
 import Link from 'next/link';
@@ -77,17 +77,15 @@ const PreviewMobile = ({ close }) => {
             {currentUser?.name}
           </p>
           {currentUser?.bio && (
-            <div className="w-full">
-              <p
-                style={{ 
-                  color: theme.accent,
-                  fontSize: `${currentUser?.bioFontSize || 14}px`
-                }}
-                className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
-              >
-                {currentUser?.bio}
-              </p>
-            </div>
+            <p
+              style={{ 
+                color: theme.accent,
+                fontSize: `${currentUser?.bioFontSize || 14}px`
+              }}
+              className="w-[150px] text-center mt-1 mb-4 break-words whitespace-normal lg:mb-4 lg:w-[500px] px-2"
+            >
+              {currentUser?.bio}
+            </p>
           )}
           <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">
             {socialLinks?.map(({ title, url }) => (

@@ -9,6 +9,7 @@ import { signalIframe } from '@/utils/helpers';
 const ImageSizeSelector = () => {
   const { data: currentUser } = useCurrentUser();
   const [imageSizes, setImageSizes] = useState({
+    profileImage: 70,
     socialIcon: 30,
     favicon: 32
   });
@@ -18,6 +19,7 @@ const ImageSizeSelector = () => {
   useEffect(() => {
     if (currentUser) {
       setImageSizes({
+        profileImage: currentUser.profileImageSize || 70,
         socialIcon: currentUser.socialIconSize || 30,
         favicon: currentUser.faviconSize || 32
       });
@@ -27,6 +29,7 @@ const ImageSizeSelector = () => {
   const mutateImageSizes = useMutation(
     async (newImageSizes) => {
       await axios.patch('/api/customize', {
+        profileImageSize: newImageSizes.profileImage,
         socialIconSize: newImageSizes.socialIcon,
         faviconSize: newImageSizes.favicon
       });
@@ -49,13 +52,11 @@ const ImageSizeSelector = () => {
     setImageSizes(newImageSizes);
   };
 
-  const imageSizeOptions = [16, 20, 24, 28, 32, 40, 48, 56, 64];
+  const imageSizeOptions = [16, 20, 24, 28, 32, 40, 48, 56, 64, 70, 80, 96, 128];
 
   return (
     <div className="max-w-[640px] mx-auto my-4">
-      <h3 className="text-xl font-semibold">Image Sizes</h3>
-      <div className="mt-4 rounded-2xl border bg-white p-4 w-full h-auto">
-        <div className="space-y-6">
+
           {/* Social Icon Size */}
           <div>
             <p className="text-inherit pb-2">Social Icon Size</p>
@@ -64,7 +65,7 @@ const ImageSizeSelector = () => {
               onChange={(e) => handleImageSizeChange('socialIcon', parseInt(e.target.value))}
               className="w-full p-2 border rounded-md"
             >
-              {imageSizeOptions.map(size => (
+              {imageSizeOptions.filter(size => size <= 64).map(size => (
                 <option key={size} value={size}>{size}px</option>
               ))}
             </select>
@@ -88,7 +89,7 @@ const ImageSizeSelector = () => {
               onChange={(e) => handleImageSizeChange('favicon', parseInt(e.target.value))}
               className="w-full p-2 border rounded-md"
             >
-              {imageSizeOptions.map(size => (
+              {imageSizeOptions.filter(size => size <= 64).map(size => (
                 <option key={size} value={size}>{size}px</option>
               ))}
             </select>
@@ -104,8 +105,7 @@ const ImageSizeSelector = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+
   );
 };
 
