@@ -46,11 +46,12 @@ export const UserAvatar = () => {
  * UserAvatarSetting component for the settings page and preview panels
  * @param {Object} props - Component props
  * @param {boolean} [props.isPreview=false] - Whether the avatar is being shown in a preview panel
+ * @param {string} [props.handle] - Optional handle for public view
  * Uses fixed 100px size in settings view and dynamic sizing in preview mode
  */
-export const UserAvatarSetting = ({ isPreview = false }) => {
+export const UserAvatarSetting = ({ isPreview = false, handle }) => {
   const { data: currentUser } = useCurrentUser();
-  const { data: fetchedUser } = useUser(currentUser?.handle);
+  const { data: fetchedUser } = useUser(handle || currentUser?.handle);
 
   // Use fixed 100px size for settings view, dynamic size for preview
   const size = isPreview ? (fetchedUser?.profileImageSize || 100) : 100;
@@ -71,7 +72,7 @@ export const UserAvatarSetting = ({ isPreview = false }) => {
           width={size}
           height={size}
           className="h-full w-full rounded-[inherit] object-cover"
-          priority={!isPreview} // Priority load for settings view
+          priority={!isPreview}
         />
       ) : (
         <Avatar.Fallback

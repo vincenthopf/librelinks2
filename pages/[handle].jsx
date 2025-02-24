@@ -126,7 +126,7 @@ const ProfilePage = () => {
               />
             </div>
           )}
-          <UserAvatarSetting isPreview={true} />
+          <UserAvatarSetting isPreview={true} handle={handle} />
           <p
             style={{ 
               color: theme.accent,
