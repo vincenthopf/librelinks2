@@ -33,6 +33,14 @@ model User {
   pictureToNamePadding Int @default(16)
   betweenCardsPadding Int @default(16)
   linkCardHeight Int @default(16)
+  // Frame customization fields
+  frameTemplate String    @default("none")
+  frameColor    String    @default("#000000")
+  frameThickness Int      @default(0)
+  frameRotation Int      @default(0)
+  pictureRotation Int    @default(0)
+  syncRotation  Boolean   @default(true)
+  frameAnimation Json?    @default("{\"type\": null, \"enabled\": false, \"config\": {}}")
   accounts       Account[]
   images         UserImage[]
 

@@ -157,3 +157,154 @@ The `/api/customize` endpoint handles padding updates through a PATCH request:
 2. Use theme colors for interactive elements
 3. Ensure mobile-first responsive design
 4. Keep preview and main profile synchronized
+
+# Profile Frame Optimizations
+
+## Overview
+
+The profile frame system has been optimized for performance while maintaining visual quality and animation capabilities. Key optimizations include frame caching, style optimization, and efficient SVG rendering.
+
+### Implementation Details
+
+1. Frame Caching System
+
+   - Uses `getFrameCacheKey` to generate unique cache keys based on frame properties
+   - Cache key includes frame type, size, color, rotation, name, and animation settings
+   - Prevents unnecessary re-renders of identical frames
+
+2. Style Optimization
+
+   - `getOptimizedStyles` function provides performance-optimized styles
+   - Conditional application of hardware acceleration
+   - Efficient handling of transform properties
+
+3. SVG Rendering
+   - Encapsulated rendering logic in `renderFrame` functions
+   - Optimized SVG paths and patterns
+   - Efficient use of SVG masks and clips
+   - Pattern-based text rendering for decorative elements
+
+### Frame Templates
+
+All frame templates follow a consistent optimization pattern:
+
+```tsx
+const FrameComponent = (props) => {
+  const cacheKey = getFrameCacheKey(/* frame properties */);
+  const isAnimated = animation?.enabled && animation.type !== null;
+  const optimizedStyles = getOptimizedStyles(isAnimated);
+  const renderFrame = () => (/* SVG rendering logic */);
+  return useOptimizedFrame(renderFrame, cacheKey);
+};
+```
+
+### Best Practices
+
+1. Always generate unique cache keys for different frame configurations
+2. Use hardware acceleration only when necessary (animations)
+3. Encapsulate SVG rendering logic for better maintainability
+4. Implement consistent optimization patterns across all frame templates
+5. Consider performance impact when adding new frame features
+
+### Future Considerations
+
+1. Monitor frame rendering performance with multiple instances
+2. Consider implementing frame preloading for common configurations
+3. Add performance metrics tracking
+4. Optimize animation transitions further if needed
+5. Consider implementing frame template lazy loading
+
+# Profile Picture Frame Improvements
+
+## Implementation Decisions
+
+### Container Structure
+
+- Implemented a two-layer approach with proper z-indexing:
+  - Frame layer (z-10): Contains the SVG frame
+  - Image layer (z-0): Contains the image with proper scaling
+- Used absolute positioning for both layers to ensure perfect alignment
+- Added overflow handling to prevent image spillover
+- Maintained consistent structure across all avatar components
+
+### Image Sizing
+
+- Implemented dynamic image scaling based on frame type and thickness
+- Used 90% of frame inner space for image (imageScale = 0.9)
+- Added conditional border radius for circle frames
+- Ensured proper centering with flex layout
+- Used object-fit: cover for consistent image display
+
+### Frame Templates
+
+- Standardized viewBox calculations across all frame types
+- Added proper thickness handling for stroke width
+- Implemented dynamic frame size calculations
+- Maintained aspect ratio consistency
+- Added proper caching based on all relevant properties
+
+## Lessons Learned
+
+1. SVG Optimization
+
+   - Using viewBox for consistent scaling
+   - Proper stroke positioning for clean edges
+   - Importance of caching for performance
+
+2. Image Handling
+
+   - Need for overflow control
+   - Importance of proper aspect ratio maintenance
+   - Benefits of object-fit for consistent display
+
+3. Component Structure
+   - Value of consistent patterns across components
+   - Importance of proper z-index management
+   - Benefits of clear layer separation
+
+## Browser-Specific Considerations
+
+1. Safari
+
+   - Needs vendor prefixes for object-fit
+   - May require additional overflow handling
+
+2. Mobile Browsers
+   - Touch events need larger hit areas
+   - Different pixel density considerations
+
+## Future Improvements
+
+1. Performance
+
+   - Consider implementing lazy loading for frames
+   - Add more aggressive caching strategies
+
+2. Accessibility
+
+   - Add proper ARIA labels for frames
+   - Improve keyboard navigation support
+
+3. Features
+   - Consider adding more frame types
+   - Add support for custom frame patterns
+   - Consider adding frame shadow options
+
+## Best Practices
+
+1. Frame Implementation
+
+   - Always validate thickness before rendering
+   - Use proper caching mechanisms
+   - Maintain consistent viewBox calculations
+
+2. Image Handling
+
+   - Always handle missing images gracefully
+   - Maintain proper aspect ratios
+   - Use proper scaling calculations
+
+3. Component Structure
+   - Keep consistent patterns across components
+   - Use proper z-index management
+   - Maintain clear separation of concerns

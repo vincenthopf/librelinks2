@@ -52,6 +52,7 @@
         "prop-types": "^15.8.1",
         "qrcode.react": "^3.1.0",
         "react": "18.2.0",
+        "react-colorful": "^5.6.1",
         "react-dom": "18.2.0",
         "react-dom-confetti": "^0.2.0",
         "react-dropzone": "^14.2.3",
@@ -68,20 +69,23 @@
         "zustand": "^4.3.9"
     },
     "devDependencies": {
+        "@types/lodash": "^4.17.15",
         "@types/node": "^22.13.5",
         "@types/react": "^19.0.10",
         "@types/react-dom": "^19.0.4",
         "eslint": "^8.48.0",
-        "eslint-config-prettier": "^9.0.0",
+        "eslint-config-prettier": "^9.1.0",
         "husky": "^8.0.3",
         "lint-staged": "^15.4.3",
-        "prettier": "^3.0.3",
+        "prettier": "^3.5.2",
         "prisma": "^5.2.0",
         "typescript": "^5.7.3"
     },
     "lint-staged": {
-        "*.js": "eslint --cache --fix",
-        "*.{js,css,md}": "prettier --write",
-        "*.{js,jsx,ts,tsx}": "eslint --fix"
+        "*.{js,jsx,ts,tsx}": [
+            "prettier --write",
+            "eslint --fix"
+        ],
+        "*.{css,md}": "prettier --write"
     }
 }

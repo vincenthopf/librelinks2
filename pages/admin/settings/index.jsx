@@ -20,6 +20,7 @@ import { signOut } from 'next-auth/react';
 import Head from 'next/head';
 import PaddingSelector from '@/components/core/custom-padding/padding-selector';
 import ProfileImageSizeSelector from '@/components/core/custom-sizes/profile-image-size-selector';
+import { FrameCustomizer } from '@/components/core/profile-frames/frame-customizer';
 
 const Settings = () => {
   const { data: currentUser } = useCurrentUser();
@@ -175,6 +176,114 @@ const Settings = () => {
                   placeholder="@Bio"
                   className="outline-none w-full p-4 h-[120px] rounded-lg border-2
                 bg-gray-100 text-black focus:border-slate-900"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-[690px] mx-auto my-10">
+            <h3 className="text-xl font-semibold">Frame Template</h3>
+            <div className="mt-4 rounded-2xl border bg-white p-lg w-full h-auto">
+              <div className="p-6">
+                <FrameCustomizer
+                  template={fetchedUser?.frameTemplate || 'none'}
+                  color={fetchedUser?.frameColor || '#000000'}
+                  thickness={fetchedUser?.frameThickness ?? 0}
+                  rotation={fetchedUser?.frameRotation || 0}
+                  pictureRotation={fetchedUser?.pictureRotation || 0}
+                  syncRotation={fetchedUser?.syncRotation ?? true}
+                  animation={
+                    fetchedUser?.frameAnimation || {
+                      type: null,
+                      enabled: false,
+                      config: {},
+                    }
+                  }
+                  name={fetchedUser?.name || ''}
+                  onTemplateChange={async (template) => {
+                    try {
+                      await axios.patch('/api/frame', {
+                        frameTemplate: template,
+                      });
+                      queryClient.invalidateQueries('users');
+                      signalIframe();
+                      toast.success('Frame template updated');
+                    } catch (error) {
+                      toast.error('Failed to update frame template');
+                    }
+                  }}
+                  onColorChange={async (color) => {
+                    try {
+                      await axios.patch('/api/frame', { frameColor: color });
+                      queryClient.invalidateQueries('users');
+                      signalIframe();
+                      toast.success('Frame color updated');
+                    } catch (error) {
+                      toast.error('Failed to update frame color');
+                    }
+                  }}
+                  onThicknessChange={async (thickness) => {
+                    try {
+                      await axios.patch('/api/frame', {
+                        frameThickness: thickness,
+                      });
+                      queryClient.invalidateQueries('users');
+                      signalIframe();
+                      toast.success('Frame thickness updated');
+                    } catch (error) {
+                      console.error('Frame thickness update error:', error);
+                      toast.error('Failed to update frame thickness');
+                    }
+                  }}
+                  onRotationChange={async (rotation) => {
+                    try {
+                      await axios.patch('/api/frame', {
+                        frameRotation: rotation,
+                      });
+                      queryClient.invalidateQueries('users');
+                      signalIframe();
+                      toast.success('Frame rotation updated');
+                    } catch (error) {
+                      toast.error('Failed to update frame rotation');
+                    }
+                  }}
+                  onPictureRotationChange={async (rotation) => {
+                    try {
+                      await axios.patch('/api/frame', {
+                        pictureRotation: rotation,
+                      });
+                      queryClient.invalidateQueries('users');
+                      signalIframe();
+                      toast.success('Picture rotation updated');
+                    } catch (error) {
+                      toast.error('Failed to update picture rotation');
+                    }
+                  }}
+                  onSyncRotationChange={async (sync) => {
+                    try {
+                      await axios.patch('/api/frame', { syncRotation: sync });
+                      queryClient.invalidateQueries('users');
+                      signalIframe();
+                      toast.success('Rotation sync updated');
+                      return true;
+                    } catch (error) {
+                      console.error('Sync rotation update error:', error);
+                      toast.error('Failed to update rotation sync');
+                      throw error;
+                    }
+                  }}
+                  onAnimationChange={async (animation) => {
+                    try {
+                      await axios.patch('/api/frame', {
+                        frameAnimation: animation,
+                      });
+                      queryClient.invalidateQueries('users');
+                      signalIframe();
+                      toast.success('Frame animation updated');
+                    } catch (error) {
+                      toast.error('Failed to update frame animation');
+                    }
+                  }}
                 />
               </div>
             </div>
