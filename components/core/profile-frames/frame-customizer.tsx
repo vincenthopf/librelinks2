@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { TransformControls } from './frame-transformations';
 import { FrameTemplate, FrameSelector } from './frame-selector';
@@ -60,37 +60,32 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
     setLocalPictureRotation(pictureRotation);
   }, [rotation, pictureRotation]);
 
-  // Create debounced functions
-  const debouncedColorChangeFunc = useMemo(
-    () => debounce((color: string) => onColorChange(color), 300),
+  // Create memoized debounced functions
+  const debouncedColorChange = useCallback(
+    (newColor: string) => {
+      debounce((value: string) => {
+        onColorChange(value);
+      }, 300)(newColor);
+    },
     [onColorChange]
   );
 
-  const debouncedFrameRotationFunc = useMemo(
-    () => debounce((rotation: number) => onRotationChange(rotation), 300),
+  const debouncedFrameRotationChange = useCallback(
+    (newRotation: number) => {
+      debounce((value: number) => {
+        onRotationChange(value);
+      }, 300)(newRotation);
+    },
     [onRotationChange]
   );
 
-  const debouncedPictureRotationFunc = useMemo(
-    () =>
-      debounce((rotation: number) => onPictureRotationChange(rotation), 300),
-    [onPictureRotationChange]
-  );
-
-  // Debounced handlers
-  const debouncedColorChange = useCallback(
-    (newColor: string) => debouncedColorChangeFunc(newColor),
-    [debouncedColorChangeFunc]
-  );
-
-  const debouncedFrameRotationChange = useCallback(
-    (newRotation: number) => debouncedFrameRotationFunc(newRotation),
-    [debouncedFrameRotationFunc]
-  );
-
   const debouncedPictureRotationChange = useCallback(
-    (newRotation: number) => debouncedPictureRotationFunc(newRotation),
-    [debouncedPictureRotationFunc]
+    (newRotation: number) => {
+      debounce((value: number) => {
+        onPictureRotationChange(value);
+      }, 300)(newRotation);
+    },
+    [onPictureRotationChange]
   );
 
   // Local update handlers

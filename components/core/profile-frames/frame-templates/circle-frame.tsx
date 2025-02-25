@@ -27,27 +27,48 @@ export const CircleFrame: React.FC<CircleFrameProps> = ({
   animation,
   className,
 }) => {
+  const cacheKey = getFrameCacheKey(
+    'circle',
+    size,
+    color,
+    rotation,
+    thickness,
+    '',
+    animation
+  );
+  const isAnimated = animation?.enabled && animation.type !== null;
+  const optimizedStyles = getOptimizedStyles(isAnimated);
+  const animationProps = getAnimationProps(animation);
+
+  // Calculate the radius based on thickness to ensure proper scaling
+  const radius = 50 - thickness / 2;
+  const viewBoxSize = 100;
+
   const renderFrame = () => (
     <motion.svg
       width={size}
       height={size}
-      viewBox="0 0 100 100"
-      style={{ transform: `rotate(${rotation}deg)` }}
+      viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{
+        rotate: `${rotation}deg`,
+        ...optimizedStyles,
+      }}
       className={className}
-      {...getAnimationProps(animation)}
+      {...animationProps}
     >
       <circle
-        cx="50"
-        cy="50"
-        r={50 - thickness / 2}
-        fill="none"
+        cx={viewBoxSize / 2}
+        cy={viewBoxSize / 2}
+        r={radius}
         stroke={color}
         strokeWidth={thickness}
+        fill="transparent"
       />
     </motion.svg>
   );
 
-  const cacheKey = `${size}-${color}-${thickness}-${rotation}-${JSON.stringify(animation)}`;
   const optimizedFrame = useOptimizedFrame(renderFrame, cacheKey);
 
   if (thickness === undefined) {

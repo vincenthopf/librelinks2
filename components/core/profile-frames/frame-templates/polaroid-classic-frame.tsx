@@ -27,30 +27,54 @@ export const PolaroidClassicFrame: React.FC<PolaroidClassicFrameProps> = ({
   animation,
   className,
 }) => {
+  const cacheKey = getFrameCacheKey(
+    'polaroid-classic',
+    size,
+    color,
+    rotation,
+    thickness,
+    '',
+    animation
+  );
+  const isAnimated = animation?.enabled && animation.type !== null;
+  const optimizedStyles = getOptimizedStyles(isAnimated);
+  const animationProps = getAnimationProps(animation);
+
+  // Calculate dimensions based on thickness
+  const viewBoxSize = 100;
+  const borderRadius = 8;
+  const frameSize = viewBoxSize - thickness;
+
   const renderFrame = () => (
     <motion.svg
       width={size}
       height={size}
-      viewBox="0 0 100 100"
-      style={{ transform: `rotate(${rotation}deg)` }}
+      viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{
+        rotate: `${rotation}deg`,
+        ...optimizedStyles,
+      }}
       className={className}
-      {...getAnimationProps(animation)}
+      {...animationProps}
     >
       <rect
         x={thickness / 2}
         y={thickness / 2}
-        width={100 - thickness}
-        height={100 - thickness}
-        fill="none"
+        width={frameSize}
+        height={frameSize}
+        rx={borderRadius}
         stroke={color}
         strokeWidth={thickness}
+        fill="transparent"
       />
     </motion.svg>
   );
 
-  const cacheKey = `${size}-${color}-${thickness}-${rotation}-${JSON.stringify(animation)}`;
   const optimizedFrame = useOptimizedFrame(renderFrame, cacheKey);
 
+  // Return null if thickness is undefined
   if (thickness === undefined) {
     return null;
   }

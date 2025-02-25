@@ -1253,3 +1253,52 @@ All tasks have been completed successfully. The social icons now have a fallback
   - Note any browser-specific issues
   - Add future considerations
   - Document best practices
+
+## ESLint Fixes Task List
+
+### React Hooks Conditional Calls Fixes
+
+- [x] Fix circle-frame.tsx conditional hook call
+
+  - Move useOptimizedFrame before conditional
+  - Maintain null check for thickness
+  - Keep all existing functionality
+
+- [x] Fix polaroid-classic-frame.tsx conditional hook call
+
+  - Move useOptimizedFrame before conditional
+  - Maintain null check for thickness
+  - Keep all existing functionality
+
+- [x] Fix polaroid-pattern-frame.tsx conditional hook call
+  - Move useOptimizedFrame before conditional
+  - Maintain null check for thickness
+  - Keep all existing functionality
+
+### useCallback Dependencies Fixes in frame-customizer.tsx
+
+- [x] Fix debouncedColorChange useCallback
+
+  - Add proper dependency array
+  - Memoize debounced function
+  - Maintain existing debounce timing
+
+- [x] Fix debouncedFrameRotationChange useCallback
+
+  - Add proper dependency array
+  - Memoize debounced function
+  - Maintain existing debounce timing
+
+- [x] Fix debouncedPictureRotationChange useCallback
+  - Add proper dependency array
+  - Memoize debounced function
+  - Maintain existing debounce timing
+
+### Verification Steps
+
+- [x] Verify all ESLint errors are resolved
+- [x] Confirm no new ESLint warnings introduced
+- [ ] Test all frame components still work as expected
+- [ ] Verify frame customizer functionality remains unchanged
+
+Note: TypeScript configuration warnings exist but are separate from the ESLint fixes we implemented. These are related to TypeScript version compatibility and would need to be addressed separately if desired.
