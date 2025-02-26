@@ -1598,52 +1598,61 @@ Note: TypeScript configuration warnings exist but are separate from the ESLint f
   - Test permission failures
   - Test transaction failures
 
-# Template Operations Refresh Implementation
+# Template Admin Changes Implementation
 
-## Template Save Refresh
+## Frontend Changes
 
-- [ ] Update save-as-template-modal.jsx
+- [x] Update TemplateList component
 
-  - Add signalIframe() call after successful save
-  - Implement optimistic updates using React Query
-  - Ensure modal closes after successful save and refresh
-  - Add debug console logs for timing verification
+  - Remove Edit button
+  - Remove Preview button
+  - Remove Duplicate button
+  - Add Upload button
+  - Keep Delete button with window.confirm()
+  - Update UI layout for new button arrangement
 
-- [ ] Update template-utils.js
-  - Add helper function for optimistic updates
-  - Ensure proper data structure for template updates
+- [x] Create UploadThumbnailDialog component
+  - Reuse existing Cloudinary upload modal structure
+  - Add template-specific upload configuration
+  - Implement 4MB size limit validation
+  - Add progress indicator
+  - Add success/error states
+  - Add preview of uploaded thumbnail
 
-## Template Apply Refresh
+## Backend Changes
 
-- [ ] Update template apply functionality
-  - Add signalIframe() call after successful apply
-  - Implement optimistic updates for applied template
-  - Add proper sequencing of operations
+- [x] Update Template Model
 
-## Code Cleanup & Testing
+  - Add thumbnailUrl field to template schema
+  - Add migration for new field
 
-- [ ] Clean up console logs
+- [x] Create Template Thumbnail API Endpoint
+  - Create /api/templates/[id]/thumbnail endpoint
+  - Implement Cloudinary upload with template-specific settings
+  - Add proper error handling
+  - Add validation for file size and types
 
-  - Remove unnecessary debug logs
-  - Keep only essential timing logs
+## Integration
 
-- [ ] Test refresh functionality
-  - Test template save refresh
-  - Test template apply refresh
-  - Verify iframe updates correctly
-  - Check browser compatibility (Chrome, Firefox, Safari)
+- [x] Connect Frontend to Backend
+  - Integrate upload dialog with new API endpoint
+  - Update template list to show thumbnails
+  - Add loading states during upload
+  - Add error handling and user feedback
+  - Test upload functionality end-to-end
 
-## Documentation
+## Testing & Cleanup
 
-- [ ] Update code comments
-  - Document refresh implementation
-  - Add timing considerations
-  - Note browser compatibility details
+- [ ] Manual Testing
 
-## Final Verification
+  - Test upload functionality with valid files
+  - Test upload functionality with invalid files
+  - Test delete functionality
+  - Test UI responsiveness
+  - Test error states and messages
 
-- [ ] Verify all functionality
-  - Test save template with refresh
-  - Test apply template with refresh
-  - Verify no full page refreshes occur
-  - Check performance impact
+- [ ] Code Cleanup
+  - Remove unused imports
+  - Clean up console logs
+  - Add comments where needed
+  - Format code

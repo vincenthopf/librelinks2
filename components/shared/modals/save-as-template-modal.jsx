@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-hot-toast';
-import { signalIframe } from '@/utils/helpers';
 
 const SaveAsTemplateModal = ({ onClose = () => {} }) => {
   const [formData, setFormData] = useState({
@@ -65,7 +64,6 @@ const SaveAsTemplateModal = ({ onClose = () => {} }) => {
       }
 
       toast.success('Template saved successfully');
-      signalIframe();
       onClose();
     } catch (error) {
       console.error('Error saving template:', error);

@@ -1,20 +1,10 @@
 import React from 'react';
-import { useRouter } from 'next/router';
-import { Edit2, Trash2, Copy, Eye } from 'lucide-react';
+import { Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
+import CloudinaryImage from '@/components/shared/cloudinary-image';
 
-const TemplateList = ({ templates, onDelete, onDuplicate }) => {
-  const router = useRouter();
-
-  const handleEdit = (templateId) => {
-    router.push(`/admin/templates-admin/${templateId}`);
-  };
-
-  const handlePreview = (templateId) => {
-    router.push(`/admin/templates-admin/${templateId}/preview`);
-  };
-
+const TemplateList = ({ templates, onDelete, onUpload }) => {
   const handleDelete = async (templateId) => {
     if (window.confirm('Are you sure you want to delete this template?')) {
       try {
@@ -27,13 +17,12 @@ const TemplateList = ({ templates, onDelete, onDuplicate }) => {
     }
   };
 
-  const handleDuplicate = async (templateId) => {
+  const handleUpload = async (templateId) => {
     try {
-      await onDuplicate(templateId);
-      toast.success('Template duplicated successfully');
+      await onUpload(templateId);
     } catch (error) {
-      console.error('Error duplicating template:', error);
-      toast.error('Failed to duplicate template');
+      console.error('Error uploading thumbnail:', error);
+      toast.error('Failed to upload thumbnail');
     }
   };
 
@@ -54,6 +43,22 @@ const TemplateList = ({ templates, onDelete, onDuplicate }) => {
           key={template.id}
           className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
         >
+          <div className="aspect-[9/19] relative">
+            {template.thumbnailUrl ? (
+              <CloudinaryImage
+                src={template.thumbnailUrl}
+                alt={template.name}
+                width={360}
+                height={760}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <p className="text-gray-400">No thumbnail</p>
+              </div>
+            )}
+          </div>
+
           <div className="p-4">
             <h3 className="font-medium text-lg mb-1">{template.name}</h3>
             <p className="text-gray-600 text-sm mb-4 line-clamp-2">
@@ -67,46 +72,24 @@ const TemplateList = ({ templates, onDelete, onDuplicate }) => {
 
             <div className="flex items-center justify-between gap-2">
               <Button
-                onClick={() => handlePreview(template.id)}
-                className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
+                onClick={() => handleUpload(template.id)}
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
                 variant="ghost"
                 size="sm"
               >
-                <Eye size={16} />
-                Preview
+                <Upload size={16} />
+                {template.thumbnailUrl ? 'Change' : 'Upload'}
               </Button>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => handleEdit(template.id)}
-                  className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
-                  variant="ghost"
-                  size="sm"
-                >
-                  <Edit2 size={16} />
-                  Edit
-                </Button>
-
-                <Button
-                  onClick={() => handleDuplicate(template.id)}
-                  className="flex items-center gap-1 text-green-600 hover:text-green-700"
-                  variant="ghost"
-                  size="sm"
-                >
-                  <Copy size={16} />
-                  Duplicate
-                </Button>
-
-                <Button
-                  onClick={() => handleDelete(template.id)}
-                  className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                  variant="ghost"
-                  size="sm"
-                >
-                  <Trash2 size={16} />
-                  Delete
-                </Button>
-              </div>
+              <Button
+                onClick={() => handleDelete(template.id)}
+                className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                variant="ghost"
+                size="sm"
+              >
+                <Trash2 size={16} />
+                Delete
+              </Button>
             </div>
           </div>
         </div>

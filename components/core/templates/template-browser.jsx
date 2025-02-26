@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import TemplatePreview from './template-preview';
+import CloudinaryImage from '@/components/shared/cloudinary-image';
 import { signalIframe } from '@/utils/helpers';
 
 const TemplateBrowser = ({ templates, onApplyTemplate }) => {
@@ -19,9 +20,9 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
   const handleApplyTemplate = async () => {
     try {
       await onApplyTemplate(selectedTemplate.id);
-      signalIframe();
       setShowConfirmDialog(false);
       setSelectedTemplate(null);
+      signalIframe(); // Refresh the iframe after applying template
     } catch (error) {
       console.error('Error applying template:', error);
     }
@@ -49,27 +50,28 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
             key={template.id}
             className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
           >
+            <div className="aspect-[9/19] relative">
+              {template.thumbnailUrl ? (
+                <CloudinaryImage
+                  src={template.thumbnailUrl}
+                  alt={template.name}
+                  width={360}
+                  height={760}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <p className="text-gray-400">No thumbnail</p>
+                </div>
+              )}
+            </div>
+
             <div className="p-4">
-              <h3 className="font-medium text-lg mb-1">{template.name}</h3>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                {template.description || 'No description provided'}
-              </p>
+              <h3 className="font-medium text-lg mb-4 text-center">
+                {template.name}
+              </h3>
 
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <span>Used {template.usageCount} times</span>
-                <span>Rating: {template.rating.toFixed(1)}/5</span>
-              </div>
-
-              <div className="flex items-center justify-between gap-2">
-                <Button
-                  onClick={() => setSelectedTemplate(template)}
-                  className="flex items-center gap-1"
-                  variant="outline"
-                  size="sm"
-                >
-                  Preview
-                </Button>
-
+              <div className="flex items-center justify-center">
                 <Button
                   onClick={() => {
                     setSelectedTemplate(template);
@@ -94,6 +96,17 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
               <h2 className="text-xl font-medium">{selectedTemplate.name}</h2>
               <p className="text-gray-600">{selectedTemplate.description}</p>
             </div>
+            {selectedTemplate.thumbnailUrl && (
+              <div className="p-4 border-b">
+                <CloudinaryImage
+                  src={selectedTemplate.thumbnailUrl}
+                  alt={selectedTemplate.name}
+                  width={360}
+                  height={760}
+                  className="w-full h-auto mx-auto"
+                />
+              </div>
+            )}
             <div className="p-4">
               <TemplatePreview template={selectedTemplate} />
             </div>
@@ -115,26 +128,23 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
         </div>
       )}
 
-      {showConfirmDialog && (
+      {showConfirmDialog && selectedTemplate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h2 className="text-xl font-medium mb-4">Apply Template</h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to apply this template? Your current links
-              will be preserved, but all styling settings will be replaced.
+              Are you sure you want to apply this template? This will update
+              your page appearance and layout.
             </p>
             <div className="flex justify-end gap-2">
               <Button
-                onClick={() => {
-                  setShowConfirmDialog(false);
-                  setSelectedTemplate(null);
-                }}
+                onClick={() => setShowConfirmDialog(false)}
                 variant="outline"
               >
                 Cancel
               </Button>
               <Button onClick={handleApplyTemplate} variant="default">
-                Apply Template
+                Apply
               </Button>
             </div>
           </div>

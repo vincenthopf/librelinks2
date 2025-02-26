@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import Head from 'next/head';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,9 +6,12 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import TemplateList from '@/components/core/templates/template-list';
 import TemplateLoading from '@/components/core/templates/template-loading';
+import UploadThumbnailDialog from '@/components/core/templates/upload-thumbnail-dialog';
 
 const TemplatesAdmin = () => {
   const queryClient = useQueryClient();
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
   // Fetch templates
   const { data: templates, isLoading } = useQuery({
@@ -26,28 +29,23 @@ const TemplatesAdmin = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['templates']);
+      toast.success('Template deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete template');
     },
   });
 
-  // Duplicate template mutation
-  const duplicateMutation = useMutation({
-    mutationFn: async (templateId) => {
-      const template = templates.find((t) => t.id === templateId);
-      if (!template) throw new Error('Template not found');
+  const handleUpload = (templateId) => {
+    setSelectedTemplateId(templateId);
+    setUploadDialogOpen(true);
+  };
 
-      const { data } = await axios.post('/api/templates', {
-        ...template,
-        name: `${template.name} (Copy)`,
-        id: undefined,
-        createdAt: undefined,
-        updatedAt: undefined,
-      });
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['templates']);
-    },
-  });
+  const handleUploadComplete = () => {
+    queryClient.invalidateQueries(['templates']);
+    setUploadDialogOpen(false);
+    setSelectedTemplateId(null);
+  };
 
   return (
     <>
@@ -66,11 +64,19 @@ const TemplatesAdmin = () => {
             {isLoading ? (
               <TemplateLoading />
             ) : (
-              <TemplateList
-                templates={templates}
-                onDelete={(id) => deleteMutation.mutateAsync(id)}
-                onDuplicate={(id) => duplicateMutation.mutateAsync(id)}
-              />
+              <>
+                <TemplateList
+                  templates={templates}
+                  onDelete={(id) => deleteMutation.mutateAsync(id)}
+                  onUpload={handleUpload}
+                />
+                <UploadThumbnailDialog
+                  templateId={selectedTemplateId}
+                  open={uploadDialogOpen}
+                  onOpenChange={setUploadDialogOpen}
+                  onUploadComplete={handleUploadComplete}
+                />
+              </>
             )}
           </div>
         </div>
