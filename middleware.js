@@ -14,6 +14,9 @@ export default async function middleware(req) {
     '/onboarding',
   ];
 
+  // Admin-only paths
+  const adminOnlyPaths = ['/admin/templates-admin'];
+
   // If it's the root path, just render it
   if (path === '/') {
     return NextResponse.next();
@@ -24,10 +27,20 @@ export default async function middleware(req) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
+  // Check for protected paths
   if (!session && protectedPaths.includes(path)) {
     return NextResponse.redirect(new URL('/login', req.url));
-  } else if (session && (path === '/login' || path === '/register')) {
+  }
+
+  // Check for admin-only paths
+  if (session && adminOnlyPaths.includes(path) && !session.isAdmin) {
     return NextResponse.redirect(new URL('/admin', req.url));
   }
+
+  // Redirect logged in users trying to access login/register
+  if (session && (path === '/login' || path === '/register')) {
+    return NextResponse.redirect(new URL('/admin', req.url));
+  }
+
   return NextResponse.next();
 }

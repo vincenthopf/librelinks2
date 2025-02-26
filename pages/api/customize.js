@@ -30,11 +30,9 @@ export default async function handler(req, res) {
       profileNameFontSize &&
       (profileNameFontSize < 12 || profileNameFontSize > 32)
     ) {
-      return res
-        .status(400)
-        .json({
-          message: 'Profile name font size must be between 12px and 32px',
-        });
+      return res.status(400).json({
+        message: 'Profile name font size must be between 12px and 32px',
+      });
     }
     if (bioFontSize && (bioFontSize < 12 || bioFontSize > 32)) {
       return res
@@ -45,11 +43,9 @@ export default async function handler(req, res) {
       linkTitleFontSize &&
       (linkTitleFontSize < 12 || linkTitleFontSize > 32)
     ) {
-      return res
-        .status(400)
-        .json({
-          message: 'Link title font size must be between 12px and 32px',
-        });
+      return res.status(400).json({
+        message: 'Link title font size must be between 12px and 32px',
+      });
     }
 
     // Validate image sizes

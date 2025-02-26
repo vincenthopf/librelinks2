@@ -36,6 +36,9 @@ export const authOptions = {
         session.user.name = token.name;
         session.user.email = token.email;
         session.user.handle = token.handle;
+        session.user.isAdmin = token.isAdmin;
+        session.user.buttonStyle = token.buttonStyle;
+        session.user.themePalette = token.themePalette;
       }
       return session;
     },
@@ -48,7 +51,16 @@ export const authOptions = {
       });
 
       if (!dbUser) {
-        token.id = user.id;
+        if (user) {
+          // Set isAdmin for new users
+          const isAdmin = user.email === 'dominic@workcentivo.com';
+          await db.user.update({
+            where: { id: user.id },
+            data: { isAdmin },
+          });
+          token.id = user.id;
+          token.isAdmin = isAdmin;
+        }
         return token;
       }
 
@@ -63,11 +75,21 @@ export const authOptions = {
         });
       }
 
+      // Update isAdmin status if email changes to/from admin email
+      const isAdmin = dbUser.email === 'dominic@workcentivo.com';
+      if (dbUser.isAdmin !== isAdmin) {
+        await db.user.update({
+          where: { id: dbUser.id },
+          data: { isAdmin },
+        });
+      }
+
       return {
         id: dbUser.id,
         name: dbUser.name,
         email: dbUser.email,
         handle: dbUser.handle,
+        isAdmin: isAdmin,
         buttonStyle: dbUser.buttonStyle,
         themePalette: dbUser.themePalette,
       };

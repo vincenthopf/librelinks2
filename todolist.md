@@ -1302,3 +1302,298 @@ All tasks have been completed successfully. The social icons now have a fallback
 - [ ] Verify frame customizer functionality remains unchanged
 
 Note: TypeScript configuration warnings exist but are separate from the ESLint fixes we implemented. These are related to TypeScript version compatibility and would need to be addressed separately if desired.
+
+# Templates Feature Implementation Todolist
+
+## Database & Authentication
+
+- [x] Update Prisma schema with Template model
+
+  - Add Template model with all necessary fields
+  - Add isAdmin field to User model
+  - Add templates relation to User model
+  - Run prisma generate and migrate
+
+- [x] Update Authentication
+  - Modify NextAuth callbacks for admin role
+  - Update middleware for admin route protection
+  - Add admin role check utilities
+
+## Navigation & Routing
+
+- [x] Add new navigation items
+
+  - Add Templates and Templates Admin to navbar
+  - Update navigation filtering based on user role
+  - Add new route protection
+
+- [x] Create new pages
+  - Create /admin/templates-admin page
+  - Create /admin/templates-user page
+  - Set up basic layouts for both pages
+
+## Template Management - Admin
+
+- [x] Create Template Editor Component
+
+  - Create form for template details
+  - Add link management interface
+  - Add styling/theme configuration
+  - Implement save/update functionality
+
+- [x] Create Template List Component
+
+  - Display all templates in grid/list view
+  - Add template actions (edit, delete, duplicate)
+  - Add template preview thumbnails
+  - Implement template search/filter
+
+- [x] Create Template Preview Component
+  - Show live preview of template
+  - Allow testing of interactive elements
+  - Display mobile/desktop views
+
+## Template Management - User
+
+- [x] Create Template Browser Component
+
+  - Display available templates grid
+  - Add search and filter functionality
+  - Show template details and preview
+
+- [x] Create Template Application Flow
+  - Create confirmation dialog
+  - Add merge strategy for existing links
+  - Implement undo/revert functionality
+  - Add success/error notifications
+
+## API Routes
+
+- [x] Create Template APIs
+  - POST /api/templates - Create template
+  - GET /api/templates - List templates
+  - GET /api/templates/[id] - Get template
+  - PUT /api/templates/[id] - Update template
+  - DELETE /api/templates/[id] - Delete template
+  - POST /api/templates/apply - Apply template
+
+## Testing & Polish
+
+- [x] Add Error Handling
+
+  - Add input validation
+  - Add error boundaries
+  - Implement loading states
+  - Add error notifications
+
+- [x] Add Template Analytics
+
+  - Track template usage
+  - Add template ratings/reviews
+  - Show popularity metrics
+
+- [x] Final Testing & Documentation
+  - Test all flows
+  - Add documentation
+  - Fix any remaining bugs
+  - Add loading states and optimizations
+
+# Save as Template Feature Implementation
+
+## UI Components
+
+- [x] Create UI Component Library
+
+  - Create Button component
+  - Create Input component
+  - Create Textarea component
+  - Add utility functions
+
+- [x] Create SaveTemplateButton component
+
+  - Import necessary icons and components
+  - Add button with icon
+  - Add modal trigger
+  - Style to match existing buttons
+  - Add proper TypeScript forwardRef
+
+- [x] Create SaveAsTemplateModal component
+
+  - Create form with name and description fields
+  - Add validation for required name field
+  - Add loading state
+  - Add error handling
+  - Style to match existing modals
+  - Add proper accessibility attributes
+  - Add form state management
+  - Add error message display
+
+- [x] Update Navbar component
+  - Add SaveTemplateButton for admin users
+  - Position next to Share button
+  - Handle visibility based on admin status
+
+## API Implementation
+
+- [x] Create save-current API endpoint
+  - Create new file at pages/api/templates/save-current.js
+  - Add authentication and admin checks
+  - Implement logic to fetch all current user settings
+  - Add error handling
+  - Add success response
+
+## Testing & Validation
+
+- [ ] Test UI Components
+
+  - Verify button appears only for admins
+  - Test modal opens and closes
+  - Test form validation
+  - Test loading states
+  - Test error states
+
+- [ ] Test API Endpoint
+  - Test authentication
+  - Test admin authorization
+  - Test data collection
+  - Test template creation
+  - Test error scenarios
+
+## Final Integration
+
+- [x] Connect UI to API
+
+  - Wire up form submission
+  - Add success notifications
+  - Add error notifications
+  - Test end-to-end flow
+
+- [x] Documentation
+  - Update templates.md with new feature
+  - Add any necessary comments
+  - Document API endpoint
+
+# Template Creation Fix Tasks
+
+## Code Changes
+
+- [x] 1. Update Template Creation in save-current.js
+  - Revert to using createdBy relation with connect pattern
+  - Maintain all existing template fields
+  - Ensure links creation structure remains intact
+  - Add proper error logging
+  - Add input validation logging
+
+## Testing & Validation
+
+- [x] 2. Add Debug Logging
+
+  - Add detailed console logging before template creation
+  - Log the full template data structure
+  - Log currentUser object structure
+  - Add try-catch with detailed error logging
+
+- [x] 3. Verify Schema Synchronization
+  - Confirm ensureSchemaSync is working correctly
+  - Log schema sync status
+  - Add error handling for schema sync failures
+
+## Error Handling
+
+- [x] 4. Enhance Error Handling
+  - Add specific error types for different failure scenarios
+  - Improve error messages for client debugging
+  - Add validation checks for required fields
+  - Log full error stack traces in development
+
+## Testing Steps
+
+- [ ] 5. Test Template Creation
+  - Test with minimal template data
+  - Test with full template data
+  - Test with various link configurations
+  - Verify user relations are correctly established
+
+## Documentation
+
+- [ ] 6. Update Code Documentation
+  - Document the correct way to create templates
+  - Add inline comments explaining the relation pattern
+  - Document error handling approach
+  - Add examples of correct data structures
+
+# Template Saving Functionality Fix
+
+## Code Structure Cleanup
+
+- [x] Create utility functions for template data preparation
+
+  - Extract template data preparation logic
+  - Add validation for required fields
+  - Add proper default values
+  - Add type checking for JSON fields
+
+- [x] Create utility functions for link data preparation
+
+  - Extract link data preparation logic
+  - Add validation for required fields
+  - Add proper default values
+  - Handle null/undefined cases
+
+- [x] Flatten error handling structure
+  - Remove nested try-catch blocks
+  - Implement single transaction wrapper
+  - Create unified error handler
+  - Add clear error messages
+
+## Data Validation Layer
+
+- [x] Create template data validator
+
+  - Validate all required fields
+  - Check data types
+  - Validate JSON structures
+  - Add default values where needed
+
+- [x] Create link data validator
+
+  - Validate required link fields
+  - Check link data types
+  - Handle optional link metadata
+  - Validate link order values
+
+- [x] Add logging improvements
+  - Add single logging point for template data
+  - Add structured error logging
+  - Remove duplicate logs
+  - Add validation error logging
+
+## Database Operations
+
+- [x] Implement single transaction wrapper
+
+  - Create transaction utility
+  - Handle rollback on failure
+  - Add proper error propagation
+  - Include all operations in transaction
+
+- [x] Update schema sync handling
+  - Review schema sync necessity
+  - Move to pre-operation check
+  - Add proper error handling
+  - Remove redundant sync calls
+
+## Testing & Verification
+
+- [ ] Add test cases
+
+  - Test template creation with no links
+  - Test template creation with links
+  - Test validation failures
+  - Test transaction rollback
+
+- [ ] Add error scenario testing
+  - Test invalid template data
+  - Test invalid link data
+  - Test permission failures
+  - Test transaction failures
