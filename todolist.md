@@ -1597,3 +1597,53 @@ Note: TypeScript configuration warnings exist but are separate from the ESLint f
   - Test invalid link data
   - Test permission failures
   - Test transaction failures
+
+# Template Operations Refresh Implementation
+
+## Template Save Refresh
+
+- [ ] Update save-as-template-modal.jsx
+
+  - Add signalIframe() call after successful save
+  - Implement optimistic updates using React Query
+  - Ensure modal closes after successful save and refresh
+  - Add debug console logs for timing verification
+
+- [ ] Update template-utils.js
+  - Add helper function for optimistic updates
+  - Ensure proper data structure for template updates
+
+## Template Apply Refresh
+
+- [ ] Update template apply functionality
+  - Add signalIframe() call after successful apply
+  - Implement optimistic updates for applied template
+  - Add proper sequencing of operations
+
+## Code Cleanup & Testing
+
+- [ ] Clean up console logs
+
+  - Remove unnecessary debug logs
+  - Keep only essential timing logs
+
+- [ ] Test refresh functionality
+  - Test template save refresh
+  - Test template apply refresh
+  - Verify iframe updates correctly
+  - Check browser compatibility (Chrome, Firefox, Safari)
+
+## Documentation
+
+- [ ] Update code comments
+  - Document refresh implementation
+  - Add timing considerations
+  - Note browser compatibility details
+
+## Final Verification
+
+- [ ] Verify all functionality
+  - Test save template with refresh
+  - Test apply template with refresh
+  - Verify no full page refreshes occur
+  - Check performance impact

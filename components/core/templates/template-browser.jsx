@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import TemplatePreview from './template-preview';
+import { signalIframe } from '@/utils/helpers';
 
 const TemplateBrowser = ({ templates, onApplyTemplate }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,6 +19,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
   const handleApplyTemplate = async () => {
     try {
       await onApplyTemplate(selectedTemplate.id);
+      signalIframe();
       setShowConfirmDialog(false);
       setSelectedTemplate(null);
     } catch (error) {
