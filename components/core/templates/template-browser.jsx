@@ -10,6 +10,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   const filteredTemplates = templates?.filter(
     (template) =>
@@ -22,10 +23,14 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
       await onApplyTemplate(selectedTemplate.id);
       setShowConfirmDialog(false);
       setSelectedTemplate(null);
-      signalIframe(); // Refresh the iframe after applying template
+      signalIframe();
     } catch (error) {
       console.error('Error applying template:', error);
     }
+  };
+
+  const handleImageError = (templateId) => {
+    setFailedImages((prev) => new Set([...prev, templateId]));
   };
 
   return (
@@ -44,21 +49,33 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filteredTemplates?.map((template) => (
           <div
             key={template.id}
             className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="aspect-[9/19] relative">
-              {template.thumbnailUrl ? (
-                <CloudinaryImage
-                  src={template.thumbnailUrl}
-                  alt={template.name}
-                  width={360}
-                  height={760}
-                  className="w-full h-full object-cover"
-                />
+              {template.thumbnailUrl && !failedImages.has(template.id) ? (
+                <div className="w-full h-full relative">
+                  <CloudinaryImage
+                    src={template.thumbnailUrl}
+                    alt={template.name}
+                    width={360}
+                    height={760}
+                    className="w-full h-full object-cover"
+                    onError={() => handleImageError(template.id)}
+                    loading="eager"
+                    quality={100}
+                  />
+                  <div
+                    className="absolute inset-0 bg-gray-100 animate-pulse"
+                    style={{
+                      opacity: 0,
+                      animation: 'fadeOut 0.3s ease-in-out',
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                   <p className="text-gray-400">No thumbnail</p>
@@ -70,7 +87,6 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
               <h3 className="font-medium text-lg mb-4 text-center">
                 {template.name}
               </h3>
-
               <div className="flex items-center justify-center">
                 <Button
                   onClick={() => {

@@ -10,7 +10,7 @@ const Preview = () => {
 
   useEffect(() => {
     if (!iframeRef.current) return;
-    
+
     const observer = new ResizeObserver(() => {
       if (iframeRef.current) {
         const container = iframeRef.current.parentElement;
@@ -22,6 +22,17 @@ const Preview = () => {
 
     observer.observe(iframeRef.current.parentElement);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleMessage = () => {
+      if (iframeRef.current) {
+        iframeRef.current.src = iframeRef.current.src;
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   return (

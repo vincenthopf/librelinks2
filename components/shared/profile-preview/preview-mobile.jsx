@@ -10,11 +10,14 @@ import { SocialCards } from '@/components/core/user-profile/social-cards';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import { X } from 'lucide-react';
 import { UserAvatarSetting } from '@/components/utils/avatar';
+import { getCurrentBaseURL } from '@/utils/helpers';
 
 const PreviewMobile = ({ close }) => {
   const [, setIsDataLoaded] = useState(false);
-
+  const iframeRef = useRef(null);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
+  const baseURL = getCurrentBaseURL();
+  const url = `${baseURL}/${currentUser?.handle}?isIframe=true`;
 
   const { data: userLinks } = useLinks(currentUser?.id);
 
@@ -44,6 +47,17 @@ const PreviewMobile = ({ close }) => {
     }
   }, [currentUser, userLinks]);
 
+  useEffect(() => {
+    const handleMessage = () => {
+      if (iframeRef.current) {
+        iframeRef.current.src = iframeRef.current.src;
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   if (isUserLoading) {
     return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
   }
@@ -58,99 +72,25 @@ const PreviewMobile = ({ close }) => {
         style={{ background: theme.primary }}
         className="h-[100vh] w-[100vw] overflow-auto"
       >
-        <div 
-          className="flex items-center w-full flex-col mx-auto max-w-3xl justify-center px-8"
-          style={{ 
-            paddingTop: `${currentUser?.headToPicturePadding || 40}px`,
-            paddingBottom: `${currentUser?.headToPicturePadding || 40}px`
-          }}
-        >
-          <UserAvatarSetting isPreview={true} />
-          <p
-            style={{ 
-              color: theme.accent,
-              fontSize: `${currentUser?.profileNameFontSize || 16}px`,
-              marginTop: `${currentUser?.pictureToNamePadding || 16}px`
-            }}
-            className="font-bold text-white text-center mb-2"
-          >
-            {currentUser?.name}
-          </p>
-          {currentUser?.bio && (
-            <div className="w-full">
-              <p
-                style={{ 
-                  color: theme.accent,
-                  fontSize: `${currentUser?.bioFontSize || 14}px`
-                }}
-                className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
-              >
-                {currentUser?.bio}
-              </p>
-            </div>
-          )}
-          <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">
-            {socialLinks?.map(({ title, url }) => (
-              <SocialCards
-                key={title}
-                title={title}
-                url={url}
-                color={theme.accent}
-              />
-            ))}
-          </div>
-          <div className="w-full flex flex-col" style={{ gap: `${currentUser?.betweenCardsPadding || 16}px` }}>
-            {nonSocialLinks?.map(({ id, ...link }) => (
-              <LinkCard
-                buttonStyle={currentUser?.buttonStyle}
-                theme={theme}
-                id={id}
-                key={id}
-                fontSize={currentUser?.linkTitleFontSize || 14}
-                cardHeight={currentUser?.linkCardHeight || 16}
-                {...link}
-              />
-            ))}
-          </div>
-
-          {nonSocialLinks?.length === 0 && socialLinks?.length === 0 && (
-            <div className="flex justify-center">
-              <h3
-                style={{ color: theme.neutral }}
-                className="pt-8 text-md text-white font-semibold lg:text-2xl"
-              >
-                Hello World 🚀
-              </h3>
-            </div>
-          )}
-        </div>
-        <div className="mt-10" />
-        {nonSocialLinks?.length > 0 && (
-          <footer className="relative left-1/2 bottom-0 transform -translate-x-1/2 w-[200px]">
-            <p
-              style={{ color: theme.accent }}
-              className="text-semibold text-center lg:text-lg"
-            >
-              Made with{' '}
-              <Link
-                className="font-semibold"
-                target="_blank"
-                href="https://twitter.com/NerdyProgramme2"
-              >
-                Librelinks
-              </Link>
-            </p>
-          </footer>
-        )}
-        <div className="rounded-full bottom-[1rem] absolute left-1/2 transform -translate-x-1/2 lg:hidden">
+        <div className="sticky top-0 right-0 p-4 z-50">
           <button
             onClick={close}
-            style={{ background: `${theme.neutral}` }}
-            className="flex justify-center items-center w-[45px] h-[45px] rounded-full bg-gray-500 text-black text-center font-bold text-lg shadow-lg hover:bg-slate-600"
+            className="ml-auto block p-2 rounded-full bg-black/10 hover:bg-black/20"
           >
-            <X color={theme.primary} size={30} />
+            <X className="w-6 h-6" color={theme.accent} />
           </button>
         </div>
+        <iframe
+          ref={iframeRef}
+          key={`${currentUser?.headToPicturePadding}-${currentUser?.pictureToNamePadding}-${currentUser?.betweenCardsPadding}-${currentUser?.linkCardHeight}-${currentUser?.profileImageSize}`}
+          seamless
+          loading="lazy"
+          title="preview"
+          id="preview-mobile"
+          className="w-full h-full"
+          style={{ height: '100%' }}
+          src={url}
+        />
       </section>
     </>
   );
