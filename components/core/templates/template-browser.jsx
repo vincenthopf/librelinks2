@@ -61,7 +61,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
                   <CloudinaryImage
                     src={template.thumbnailUrl}
                     alt={template.name}
-                    width={360}
+                    width={500}
                     height={760}
                     className="w-full h-full object-cover"
                     onError={() => handleImageError(template.id)}
@@ -72,7 +72,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
                     className="absolute inset-0 bg-gray-100 animate-pulse"
                     style={{
                       opacity: 0,
-                      animation: 'fadeOut 0.3s ease-in-out',
+                      animation: 'fadeOut 0.1s ease-in-out',
                     }}
                   />
                 </div>

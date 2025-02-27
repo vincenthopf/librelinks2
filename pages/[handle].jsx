@@ -90,6 +90,22 @@ const ProfilePage = () => {
     neutral: fetchedUser?.themePalette.palette[3],
   };
 
+  // Background image styles
+  // Include theme.primary as the background color behind the image
+  // This ensures the theme color shows while the image is loading
+  // and provides a fallback if the image fails to load
+  const backgroundImageStyles = fetchedUser?.backgroundImage
+    ? {
+        backgroundColor: theme.primary,
+        backgroundImage: `url(${fetchedUser.backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center', // Explicitly use center center
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed', // Keeps the background fixed during transitions
+        transition: 'background-color 0.3s ease-in-out', // Only transition the color, not the image position
+      }
+    : {};
+
   return (
     <>
       <Head>
@@ -106,14 +122,28 @@ const ProfilePage = () => {
         ''
       )}
       <section
-        style={{ background: theme.primary }}
+        style={{
+          // CSS precedence solution:
+          // If background image exists, use backgroundImageStyles which includes both
+          // the theme color and background image with proper layering
+          // If no background image, just use theme color with transition
+          ...(fetchedUser?.backgroundImage
+            ? backgroundImageStyles
+            : {
+                backgroundColor: theme.primary,
+                transition: 'background-color 0.3s ease-in-out',
+                // Set default background properties to avoid shift when adding image
+                backgroundPosition: 'center center',
+                backgroundSize: 'cover',
+              }),
+        }}
         className="h-[100vh] w-[100vw] overflow-auto"
       >
-        <div 
+        <div
           className="flex items-center w-full flex-col mx-auto max-w-3xl justify-center px-8"
-          style={{ 
+          style={{
             paddingTop: `${fetchedUser?.headToPicturePadding || 40}px`,
-            paddingBottom: `${fetchedUser?.headToPicturePadding || 40}px`
+            paddingBottom: `${fetchedUser?.headToPicturePadding || 40}px`,
           }}
         >
           {(isLinksFetching || isUserFetching) && (
@@ -128,10 +158,10 @@ const ProfilePage = () => {
           )}
           <UserAvatarSetting isPreview={true} handle={handle} />
           <p
-            style={{ 
+            style={{
               color: theme.accent,
               fontSize: `${fetchedUser?.profileNameFontSize || 16}px`,
-              marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`
+              marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`,
             }}
             className="font-bold text-white text-center mb-2 lg:mt-4"
           >
@@ -140,9 +170,9 @@ const ProfilePage = () => {
           {fetchedUser?.bio && (
             <div className="w-full">
               <p
-                style={{ 
+                style={{
                   color: theme.accent,
-                  fontSize: `${fetchedUser?.bioFontSize || 14}px`
+                  fontSize: `${fetchedUser?.bioFontSize || 14}px`,
                 }}
                 className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
               >
@@ -165,7 +195,10 @@ const ProfilePage = () => {
                 );
               })}
           </div>
-          <div className="w-full flex flex-col" style={{ gap: `${fetchedUser?.betweenCardsPadding || 16}px` }}>
+          <div
+            className="w-full flex flex-col"
+            style={{ gap: `${fetchedUser?.betweenCardsPadding || 16}px` }}
+          >
             {userLinks
               ?.filter((link) => !link.isSocial)
               .map(({ id, ...link }) => (

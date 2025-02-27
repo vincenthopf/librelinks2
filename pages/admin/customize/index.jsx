@@ -6,6 +6,7 @@ import ThemesPicker from '@/components/core/custom-page-themes/themes-picker';
 import FontSizeSelector from '@/components/core/custom-font-sizes/font-size-selector';
 import ImageSizeSelector from '@/components/core/custom-image-sizes/image-size-selector';
 import SizeSelector from '@/components/core/custom-sizes/size-selector';
+import BackgroundImageSelector from '@/components/core/background-images/background-image-selector';
 import Head from 'next/head';
 
 const Customize = () => {
@@ -17,6 +18,7 @@ const Customize = () => {
       <Layout>
         <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-auto">
           <ThemesPicker />
+          <BackgroundImageSelector />
           <ButtonSelector />
           <SizeSelector />
           <Footer />

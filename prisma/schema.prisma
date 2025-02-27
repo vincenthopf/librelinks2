@@ -43,8 +43,10 @@ model User {
   pictureRotation      Int         @default(0)
   syncRotation         Boolean     @default(true)
   frameAnimation       Json?       @default("{\"type\": null, \"enabled\": false, \"config\": {}}")
+  backgroundImage      String?     // URL to the selected background image
   accounts             Account[]
   images               UserImage[]
+  backgroundImages     BackgroundImage[]
 
   @@unique([handle, email])
 }
@@ -152,6 +154,20 @@ model Template {
   pictureToNamePadding Int     @default(16)
   betweenCardsPadding  Int     @default(16)
   linkCardHeight       Int     @default(16)
+
+  @@index([userId])
+}
+
+model BackgroundImage {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  imageUrl    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User     @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId
+  isPublic    Boolean  @default(true)
 
   @@index([userId])
 }

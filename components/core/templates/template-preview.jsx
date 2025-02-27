@@ -25,6 +25,7 @@ const TemplatePreview = ({ template }) => {
     pictureRotation: template.pictureRotation,
     syncRotation: template.syncRotation,
     frameAnimation: template.frameAnimation,
+    backgroundImage: session?.user?.backgroundImage, // Preserve user's background image in preview
   };
 
   return (

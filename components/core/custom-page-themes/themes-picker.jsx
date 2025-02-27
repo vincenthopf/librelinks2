@@ -40,13 +40,20 @@ const ThemesPicker = () => {
 
   const mutateTheme = useMutation(
     async (theme) => {
+      // Get current background image to preserve it when changing themes
+      // This prevents the background image from being reset when theme changes
+      const backgroundImage = currentUser?.backgroundImage;
+
       await axios.patch('/api/customize', {
         themePalette: theme,
+        backgroundImage: backgroundImage, // Explicitly preserve background image
       });
     },
     {
       onSuccess: () => {
+        // Invalidate both users and currentUser queries to ensure all data is refreshed
         queryClient.invalidateQueries('users');
+        queryClient.invalidateQueries(['currentUser']);
         signalIframe();
       },
     }

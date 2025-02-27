@@ -21,6 +21,8 @@ export default async function handler(req, res) {
       // Image sizes
       socialIconSize,
       faviconSize,
+      // Background image
+      backgroundImage,
       // Other customization fields
       ...otherFields
     } = req.body;
@@ -60,6 +62,29 @@ export default async function handler(req, res) {
         .json({ message: 'Favicon size must be between 16px and 64px' });
     }
 
+    // Validate background image if provided
+    if (
+      backgroundImage !== undefined &&
+      backgroundImage !== null &&
+      backgroundImage !== ''
+    ) {
+      // If it's not null or empty, verify it exists in the database
+      if (backgroundImage !== 'none') {
+        const bgImage = await db.backgroundImage.findFirst({
+          where: {
+            imageUrl: backgroundImage,
+            OR: [{ isPublic: true }, { userId: session.user.id }],
+          },
+        });
+
+        if (!bgImage) {
+          return res
+            .status(400)
+            .json({ message: 'Invalid background image selection' });
+        }
+      }
+    }
+
     const user = await db.user.update({
       where: {
         email: session.user.email,
@@ -72,6 +97,8 @@ export default async function handler(req, res) {
         // Image sizes
         socialIconSize,
         faviconSize,
+        // Background image - set to null if 'none' is selected
+        backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
         // Other customization fields
         ...otherFields,
       },

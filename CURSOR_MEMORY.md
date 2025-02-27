@@ -308,3 +308,259 @@ const FrameComponent = (props) => {
    - Keep consistent patterns across components
    - Use proper z-index management
    - Maintain clear separation of concerns
+
+# Project Dependencies
+
+## Essential Packages
+
+### date-fns
+
+- Used for formatting relative dates in the background image list component
+- Required import format: `import { formatDistanceToNow } from 'date-fns';`
+- Provides human-readable time formatting (e.g., "2 days ago")
+- Must be installed with: `npm install date-fns`
+- Used in components:
+  - BackgroundImageList.jsx - For displaying when images were added
+
+### Lessons Learned
+
+1. Always verify that all required dependencies are installed before deploying new features
+2. Use package.json to track all dependencies and their versions
+3. When encountering "Module not found" errors, first check if the package is properly installed
+4. Pay attention to the correct import paths for packages
+
+## UI Component System
+
+### Overview
+
+The application uses a custom UI component system based on React and Tailwind CSS. These components are found in the `components/ui/` directory and follow a consistent pattern.
+
+### Key Components
+
+- `Button`: Versatile button component with various styles and sizes
+- `Input`: Text input field with consistent styling
+- `Textarea`: Multi-line text input field
+- `Switch`: Toggle switch component with on/off state and keyboard accessibility
+- `Label`: Text label component for form elements with support for required fields
+
+### Implementation Pattern
+
+All UI components:
+
+1. Use the React.forwardRef pattern for ref forwarding
+2. Use the cn() utility from lib/utils.js for class name merging
+3. Have consistent focus and disabled states
+4. Export a named component for clear imports
+5. Include accessibility attributes
+6. Support keyboard navigation where appropriate
+
+### Switch Component
+
+The Switch component specifically:
+
+- Uses role="switch" and aria-checked for accessibility
+- Implements a sliding animation for state changes
+- Handles the checked state and change callback
+- Supports keyboard interaction (Enter and Space keys)
+- Includes screen reader text (sr-only) for on/off states
+- Has proper focus ring styling with offset
+- Properly handles disabled states
+
+### Label Component
+
+The Label component:
+
+- Associates with form controls via htmlFor attribute
+- Supports required field indication with red asterisk
+- Handles disabled state with reduced opacity
+- Maintains consistent text styling and spacing
+- Can be customized with additional classes
+
+### Accessibility Considerations
+
+1. Keyboard Navigation
+
+   - All interactive components are keyboard accessible
+   - Focus states are clearly visible
+   - Tab order follows logical document flow
+
+2. Screen Readers
+
+   - Appropriate ARIA attributes on all components
+   - Hidden descriptive text for visual-only elements
+   - Proper labeling of form controls
+
+3. Visual Accessibility
+   - Sufficient color contrast for text elements
+   - Focus indicators visible in all states
+   - Disabled states clearly indicated
+
+### Lessons Learned
+
+1. When encountering "Module not found" errors for UI components, check if the component exists in the components/ui directory
+2. Follow consistent patterns when creating new UI components to maintain design coherence
+3. All components should handle accessibility attributes appropriate to their function
+4. Remember to implement proper keyboard focus states on interactive elements
+5. Always include screen reader support for state changes in toggle components
+6. Handle disabled states consistently across all components
+
+## Background Image Persistence During Theme Changes
+
+### Issue Description
+
+When changing themes in the Customize tab, background images would temporarily disappear. The theme's background color would override the background image during the iframe refresh, and the background image would only reappear after a manual page refresh.
+
+### Root Cause
+
+1. **CSS Precedence Problem**: The theme's background color had higher precedence than the background image in the style application order.
+2. **State Update Sequence**: When changing themes, the background image state wasn't being explicitly preserved.
+3. **Iframe Refresh Timing**: The iframe was being refreshed before all state updates were complete.
+
+### Solution Implemented
+
+1. **Improved Background Image Styles**:
+
+   - Modified the backgroundImageStyles object to include the theme color as a fallback
+   - Used the CSS background shorthand property to properly layer the image over the theme color
+   - Added smooth transitions for theme and background image changes
+
+   ```jsx
+   const backgroundImageStyles = fetchedUser?.backgroundImage
+     ? {
+         background: `${theme.primary} url(${fetchedUser.backgroundImage})`,
+         backgroundSize: 'cover',
+         backgroundPosition: 'center',
+         backgroundRepeat: 'no-repeat',
+         transition: 'background 0.3s ease-in-out',
+       }
+     : {};
+   ```
+
+2. **Updated CSS Application Order**:
+
+   - Changed the style object to prioritize background image over theme color
+   - Used conditional rendering to apply the appropriate styles based on whether a background image exists
+
+   ```jsx
+   <section
+     style={{
+       ...(fetchedUser?.backgroundImage
+         ? backgroundImageStyles
+         : { background: theme.primary, transition: 'background 0.3s ease-in-out' })
+     }}
+     className="h-[100vh] w-[100vw] overflow-auto"
+   >
+   ```
+
+3. **Enhanced Theme Selection Handler**:
+
+   - Modified the theme selection handler to explicitly preserve the background image
+   - Updated the API call to include the current background image when changing themes
+
+   ```jsx
+   const mutateTheme = useMutation(
+     async (theme) => {
+       const backgroundImage = currentUser?.backgroundImage;
+
+       await axios.patch('/api/customize', {
+         themePalette: theme,
+         backgroundImage: backgroundImage,
+       });
+     }
+     // ...
+   );
+   ```
+
+4. **Improved Iframe Signaling**:
+
+   - Added a small delay to the signalIframe function to ensure all state updates are complete
+   - Used a more specific message type for better debugging
+
+   ```jsx
+   export const signalIframe = () => {
+     setTimeout(() => {
+       const iframe = document.getElementById('preview');
+       if (iframe) {
+         iframe.contentWindow.postMessage('refresh', '*');
+       }
+     }, 50);
+   };
+   ```
+
+### Lessons Learned
+
+1. **CSS Layering**: When using multiple background properties, be mindful of the precedence and layering order.
+2. **State Preservation**: When updating one aspect of state, explicitly preserve other related state to prevent unintended resets.
+3. **Timing Issues**: Use small delays when necessary to ensure state updates are complete before triggering UI refreshes.
+4. **Smooth Transitions**: Adding CSS transitions can help mask any brief flickering during state changes.
+
+### Best Practices
+
+1. Use the CSS background shorthand property to properly layer images over colors
+2. Explicitly preserve related state when making partial updates
+3. Add small delays to ensure state updates are complete before refreshing UI
+4. Use CSS transitions for smoother visual updates
+5. Include fallbacks for when images are loading or fail to load
+
+# Background Image Positioning Fixes
+
+## Issue Description
+
+When changing themes in the Customize tab, the background image would shift position and not remain centered, causing a jarring visual effect during transitions.
+
+## Root Cause
+
+1. **CSS Property Handling**: Using the shorthand `background` property caused inconsistent positioning during transitions.
+2. **Incomplete Background Properties**: Missing default background properties when no image was present caused positioning shifts when adding/removing images.
+3. **Transition Timing**: The transition was being applied to all background properties including position, which caused the shifting.
+
+## Solution Implemented
+
+1. **Separated Background Properties**:
+
+   - Split the shorthand `background` property into individual properties
+   - Used explicit `backgroundColor` and `backgroundImage` properties
+   - Applied more specific `backgroundPosition: 'center center'`
+   - Added `backgroundAttachment: 'fixed'` to prevent position shifts during transitions
+
+   ```jsx
+   const backgroundImageStyles = fetchedUser?.backgroundImage
+     ? {
+         backgroundColor: theme.primary,
+         backgroundImage: `url(${fetchedUser.backgroundImage})`,
+         backgroundSize: 'cover',
+         backgroundPosition: 'center center',
+         backgroundRepeat: 'no-repeat',
+         backgroundAttachment: 'fixed',
+         transition: 'background-color 0.3s ease-in-out',
+       }
+     : {};
+   ```
+
+2. **Consistent Default Properties**:
+
+   - Added default background properties even when no image is present
+   - Ensured `backgroundPosition` and `backgroundSize` are consistent
+
+   ```jsx
+   ...(fetchedUser?.backgroundImage
+     ? backgroundImageStyles
+     : {
+         backgroundColor: theme.primary,
+         transition: 'background-color 0.3s ease-in-out',
+         backgroundPosition: 'center center',
+         backgroundSize: 'cover'
+       })
+   ```
+
+3. **Improved Iframe Refresh Timing**:
+   - Increased the delay in `signalIframe` function to 100ms
+   - Ensures all style changes are fully applied before refreshing the preview
+
+## Lessons Learned
+
+1. **CSS Property Specificity**: Use individual CSS properties instead of shorthand when animations/transitions are involved.
+2. **Consistent Default Properties**: Always set the same positioning properties for both states to prevent shifts.
+3. **Selective Transitions**: Only transition specific properties (like color) rather than all properties.
+4. **Fixed Positioning**: For full-screen background images, consider using `backgroundAttachment: 'fixed'` for more stable positioning.
+5. **Transition Timing**: Ensure adequate delays for iframe refreshes when transitioning complex styles.

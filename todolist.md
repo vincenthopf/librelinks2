@@ -1722,3 +1722,143 @@ Note: TypeScript configuration warnings exist but are separate from the ESLint f
   - Update component documentation
   - Add responsive behavior notes
   - Document breakpoint logic
+
+# Background Image Feature Implementation
+
+## Database Schema Updates
+
+- [x] Update Prisma schema with BackgroundImage model
+  - Add BackgroundImage model with required fields
+  - Add backgroundImage field to User model
+  - Run prisma generate and migrate
+
+## API Endpoints
+
+- [x] Create background-images API endpoints
+  - Create GET /api/background-images endpoint
+  - Create POST /api/background-images endpoint
+  - Create DELETE /api/background-images/:id endpoint
+- [x] Update customize API to handle background image selection
+  - Modify PATCH /api/customize to accept backgroundImage field
+
+## Admin Interface
+
+- [x] Create background image uploader component
+  - Create file upload interface
+  - Add name and description fields
+  - Add public/private toggle
+  - Implement Cloudinary upload functionality
+- [x] Create background image list component
+  - Create grid view of uploaded images
+  - Add delete functionality
+  - Add image preview
+- [x] Update Templates Admin page
+  - Add Background Images section
+  - Integrate uploader and list components
+
+## User Interface
+
+- [x] Create background image selector component
+  - Create grid view of available images
+  - Add selection functionality
+  - Add "None" option to remove background
+- [x] Update Customize page
+  - Add Background Images section below Themes
+  - Integrate selector component
+
+## Profile Rendering
+
+- [x] Update profile rendering to support background images
+  - Modify CSS to apply background image as full-screen cover
+  - Ensure background image sits on top of theme background color
+  - Test with various themes and background images
+
+## Testing and Polishing
+
+- [x] Test background image upload and management
+  - Test file size limits
+  - Test supported file types
+  - Test error handling
+- [x] Test background image selection and application
+  - Test across different devices and screen sizes
+  - Test with various themes
+- [x] Final polish and bug fixes
+  - Address any UI/UX issues
+  - Optimize performance
+  - Final cross-browser testing
+
+## Implementation Complete ✅
+
+# Background Image Persistence Fix Todolist
+
+## Investigation Tasks
+
+- [x] Examine the signalIframe function implementation
+
+  - Locate the function in the codebase
+  - Understand how it communicates with the iframe
+  - Check for any timing or race condition issues
+
+- [x] Review profile page rendering in [handle].jsx
+
+  - Check how background images and theme colors are applied
+  - Identify the CSS precedence issue
+  - Understand the rendering sequence
+
+- [x] Investigate theme selection handler
+  - Check how theme changes are processed
+  - Understand how state is updated
+  - Identify any issues with background image preservation
+
+## Implementation Tasks
+
+- [x] Update background image styles in [handle].jsx
+
+  - Modify the backgroundImageStyles object to include theme as fallback
+  - Ensure background image takes precedence over theme color
+  - Add CSS transitions for smoother updates
+
+- [x] Improve CSS application order
+
+  - Update the style object to prioritize background image
+  - Ensure theme color is only applied when no background image exists
+  - Fix any z-index or layering issues
+
+- [x] Enhance iframe signaling mechanism
+  - Update signalIframe function if needed
+  - Ensure all state changes are complete before refreshing iframe
+  - Add any necessary delay or sequencing
+
+## Testing Tasks
+
+- [x] Test theme changes with background images
+
+  - Verify background image persists during theme changes
+  - Check for any flickering or temporary hiding
+  - Ensure smooth transitions between states
+
+- [x] Cross-browser testing
+
+  - Test in Chrome, Firefox, Safari, and Edge
+  - Verify consistent behavior across browsers
+  - Check for any browser-specific issues
+
+- [x] Responsive design testing
+  - Test on different screen sizes
+  - Verify background image displays correctly on all devices
+  - Check for any mobile-specific issues
+
+## Documentation Tasks
+
+- [x] Update CURSOR_MEMORY.md
+
+  - Document the issue and solution
+  - Add lessons learned
+  - Include best practices for future development
+
+- [x] Add code comments
+  - Explain the CSS precedence solution
+  - Document the background image handling
+  - Note any important considerations for future changes
+
+## Implementation Complete ✅
