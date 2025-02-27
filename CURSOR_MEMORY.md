@@ -564,3 +564,59 @@ When changing themes in the Customize tab, the background image would shift posi
 3. **Selective Transitions**: Only transition specific properties (like color) rather than all properties.
 4. **Fixed Positioning**: For full-screen background images, consider using `backgroundAttachment: 'fixed'` for more stable positioning.
 5. **Transition Timing**: Ensure adequate delays for iframe refreshes when transitioning complex styles.
+
+# Background Image Selection Persistence Fix
+
+## Issue Description
+
+When a user selected a background image and refreshed the page, the UI would reset to showing the "None" option as selected (checkmark), even though the actual background image was still applied to the profile.
+
+## Root Cause
+
+The `backgroundImage` field was missing from the `select` object in the `serverAuth.js` file, which meant that when the current user data was fetched, it didn't include the background image information. This caused the UI component to reset to its default state, showing the checkmark on the "None" option.
+
+## Solution Implemented
+
+1. **Updated serverAuth.js File**:
+
+   - Added `backgroundImage: true` to the `select` object in the user query
+   - This ensures the background image information is included in the current user data
+
+   ```javascript
+   const currentUser = await db.user.findUnique({
+     where: {
+       email: session.user.email,
+     },
+     select: {
+       // ... other fields
+       backgroundImage: true,
+       // ... other fields
+     },
+   });
+   ```
+
+2. **Improved State Management in Background Image Selector**:
+
+   - Enhanced the useEffect hook to explicitly handle both image selection and removal cases
+   - Updated the image selection and removal handlers to be more robust
+   - Added error handling for better debugging
+
+   ```javascript
+   useEffect(() => {
+     if (currentUser) {
+       if (currentUser.backgroundImage) {
+         setSelectedImage(currentUser.backgroundImage);
+       } else {
+         setSelectedImage(null);
+       }
+     }
+   }, [currentUser]);
+   ```
+
+## Lessons Learned
+
+1. **Complete Data Queries**: Always ensure that database queries select all fields needed by UI components.
+2. **Explicit State Handling**: Handle both the presence and absence of data explicitly in state management.
+3. **Robust Error Handling**: Include proper error handling in asynchronous operations.
+4. **State Consistency**: Ensure local state (selectedImage) stays consistent with server state (currentUser.backgroundImage).
+5. **Query Invalidation**: Use query invalidation to force data refreshes after state changes.
