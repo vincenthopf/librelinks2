@@ -76,7 +76,9 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
           }`}
         >
           {React.cloneElement(item.icon, { size: compact ? 16 : 18 })}
-          <span className={compact ? 'text-xs' : ''}>{item.title}</span>
+          <span className={`${compact ? 'text-xs' : 'text-sm'}`}>
+            {item.title}
+          </span>
         </div>
       </Link>
     </nav>

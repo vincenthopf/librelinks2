@@ -70,20 +70,8 @@ const PreviewMobile = ({ close }) => {
     <>
       <section
         style={{ background: theme.primary }}
-        className="h-[100vh] w-[100vw] overflow-auto"
+        className="h-[100vh] w-[100vw] overflow-auto relative"
       >
-        <div className="sticky top-0 right-0 p-4 z-50">
-          <button
-            onClick={close}
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(4px)',
-            }}
-            className="ml-auto block p-2 rounded-full text-white border-2 border-white hover:bg-black/50 transition-all duration-200"
-          >
-            <X className="w-6 h-6" color="white" />
-          </button>
-        </div>
         <iframe
           ref={iframeRef}
           key={`${currentUser?.headToPicturePadding}-${currentUser?.pictureToNamePadding}-${currentUser?.betweenCardsPadding}-${currentUser?.linkCardHeight}-${currentUser?.profileImageSize}`}
@@ -95,6 +83,18 @@ const PreviewMobile = ({ close }) => {
           style={{ height: '100%' }}
           src={url}
         />
+        <div className="fixed bottom-8 left-0 right-0 flex justify-center">
+          <button
+            onClick={close}
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(4px)',
+            }}
+            className="px-6 py-2 rounded-full text-white border-2 border-white hover:bg-black/50 transition-all duration-200"
+          >
+            Close
+          </button>
+        </div>
       </section>
     </>
   );
