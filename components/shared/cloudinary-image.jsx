@@ -18,9 +18,9 @@ export const CloudinaryImage = ({
 
   if (!src) {
     return (
-      <div 
+      <div
         className={cn(
-          "bg-gray-200 flex items-center justify-center",
+          'bg-gray-200 flex items-center justify-center',
           className
         )}
         style={{ width, height }}
@@ -32,14 +32,14 @@ export const CloudinaryImage = ({
 
   if (error) {
     return (
-      <div 
+      <div
         className={cn(
-          "bg-gray-200 flex items-center justify-center",
+          'bg-gray-200 flex items-center justify-center',
           className
         )}
         style={{ width, height }}
       >
-        <span className="text-gray-400 text-sm">Failed to load image</span>
+        <span className="text-gray-400 text-sm">No image</span>
       </div>
     );
   }
@@ -61,9 +61,9 @@ export const CloudinaryImage = ({
   return (
     <div className="relative">
       {isLoading && (
-        <div 
+        <div
           className={cn(
-            "absolute inset-0 bg-gray-200 animate-pulse",
+            'absolute inset-0 bg-gray-200 animate-pulse',
             className
           )}
           style={{ width, height }}
@@ -107,4 +107,4 @@ CloudinaryImage.propTypes = {
   onError: PropTypes.func,
 };
 
-export default CloudinaryImage; 
+export default CloudinaryImage;

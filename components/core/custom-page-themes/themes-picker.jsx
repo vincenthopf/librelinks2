@@ -6,12 +6,19 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signalIframe } from '@/utils/helpers';
+import ColorSpectrumSelector from './ColorSpectrumSelector';
 
 const ThemesPicker = () => {
   const { data: currentUser } = useCurrentUser();
   const [displayedThemes, setDisplayedThemes] = useState(themes.slice(0, 9));
   const [showAll, setShowAll] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(null);
+  const [customColors, setCustomColors] = useState({
+    background: '',
+    secondary: '',
+    text: '',
+    accent: '',
+  });
   const themeFromDB = currentUser?.themePalette.name;
 
   const queryClient = useQueryClient();
@@ -24,6 +31,12 @@ const ThemesPicker = () => {
       const theme = themes.find((t) => t.name === storedTheme);
       if (theme) {
         setSelectedTheme(theme);
+        setCustomColors({
+          background: theme.palette[0],
+          secondary: theme.palette[1],
+          text: theme.palette[2],
+          accent: theme.palette[3],
+        });
       }
     }
   }, [themeFromDB]);
@@ -39,19 +52,23 @@ const ThemesPicker = () => {
   };
 
   const mutateTheme = useMutation(
-    async (theme) => {
-      // Get current background image to preserve it when changing themes
-      // This prevents the background image from being reset when theme changes
+    async (themeData) => {
       const backgroundImage = currentUser?.backgroundImage;
-
       await axios.patch('/api/customize', {
-        themePalette: theme,
-        backgroundImage: backgroundImage, // Explicitly preserve background image
+        themePalette: {
+          ...themeData,
+          palette: [
+            themeData.customColors.background,
+            themeData.customColors.secondary,
+            themeData.customColors.text,
+            themeData.customColors.accent,
+          ],
+        },
+        backgroundImage,
       });
     },
     {
       onSuccess: () => {
-        // Invalidate both users and currentUser queries to ensure all data is refreshed
         queryClient.invalidateQueries('users');
         queryClient.invalidateQueries(['currentUser']);
         signalIframe();
@@ -60,13 +77,59 @@ const ThemesPicker = () => {
   );
 
   const handleThemeSelect = async (theme) => {
-    await toast.promise(mutateTheme.mutateAsync(theme), {
-      loading: 'Changing theme',
-      success: 'New theme applied',
-      error: 'An error occured',
-    });
     setSelectedTheme(theme);
+    setCustomColors({
+      background: theme.palette[0],
+      secondary: theme.palette[1],
+      text: theme.palette[2],
+      accent: theme.palette[3],
+    });
+
+    await toast.promise(
+      mutateTheme.mutateAsync({
+        ...theme,
+        customColors: {
+          background: theme.palette[0],
+          secondary: theme.palette[1],
+          text: theme.palette[2],
+          accent: theme.palette[3],
+        },
+      }),
+      {
+        loading: 'Changing theme',
+        success: 'New theme applied',
+        error: 'An error occurred',
+      }
+    );
     localStorage.setItem('selectedTheme', theme.name);
+  };
+
+  const handleColorChange = async (colorKey, value) => {
+    const newColors = { ...customColors, [colorKey]: value };
+    setCustomColors(newColors);
+
+    if (selectedTheme) {
+      await mutateTheme.mutateAsync({
+        ...selectedTheme,
+        customColors: newColors,
+      });
+    }
+  };
+
+  const handleResetColors = async () => {
+    if (selectedTheme) {
+      const originalColors = {
+        background: selectedTheme.palette[0],
+        secondary: selectedTheme.palette[1],
+        text: selectedTheme.palette[2],
+        accent: selectedTheme.palette[3],
+      };
+      setCustomColors(originalColors);
+      await mutateTheme.mutateAsync({
+        ...selectedTheme,
+        customColors: originalColors,
+      });
+    }
   };
 
   return (
@@ -125,6 +188,42 @@ const ThemesPicker = () => {
           >
             Show Less
           </button>
+        )}
+
+        {selectedTheme && (
+          <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-semibold">Customize Colors</h4>
+              <button
+                onClick={handleResetColors}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Reset to Original
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ColorSpectrumSelector
+                label="Background Color"
+                initialColor={customColors.background}
+                onChange={(color) => handleColorChange('background', color)}
+              />
+              <ColorSpectrumSelector
+                label="Secondary Color"
+                initialColor={customColors.secondary}
+                onChange={(color) => handleColorChange('secondary', color)}
+              />
+              <ColorSpectrumSelector
+                label="Text Color"
+                initialColor={customColors.text}
+                onChange={(color) => handleColorChange('text', color)}
+              />
+              <ColorSpectrumSelector
+                label="Accent Color"
+                initialColor={customColors.accent}
+                onChange={(color) => handleColorChange('accent', color)}
+              />
+            </div>
+          </div>
         )}
       </div>
     </>

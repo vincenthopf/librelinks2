@@ -21,27 +21,15 @@ import useMediaQuery from '@/hooks/use-media-query';
 
 const items = [
   {
-    title: 'Links',
-    href: '/admin',
-    icon: <Link2 color="black" size={18} />,
-    showForAll: true,
-  },
-  {
-    title: 'Customize',
-    href: '/admin/customize',
-    icon: <CircleDot size={18} />,
-    showForAll: true,
-  },
-  {
     title: 'Profile',
     href: '/admin/settings',
     icon: <Settings2 color="black" size={18} />,
     showForAll: true,
   },
   {
-    title: 'Analytics',
-    href: '/admin/analytics',
-    icon: <BarChart color="black" size={18} />,
+    title: 'Links',
+    href: '/admin',
+    icon: <Link2 color="black" size={18} />,
     showForAll: true,
   },
   {
@@ -50,6 +38,20 @@ const items = [
     icon: <Layout color="black" size={18} />,
     showForAll: true,
   },
+  {
+    title: 'Customize',
+    href: '/admin/customize',
+    icon: <CircleDot size={18} />,
+    showForAll: true,
+  },
+
+  {
+    title: 'Analytics',
+    href: '/admin/analytics',
+    icon: <BarChart color="black" size={18} />,
+    showForAll: true,
+  },
+
   {
     title: 'Templates Admin',
     href: '/admin/templates-admin',
@@ -76,7 +78,7 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
           }`}
         >
           {React.cloneElement(item.icon, { size: compact ? 16 : 18 })}
-          <span className={`${compact ? 'text-xs' : 'text-sm'}`}>
+          <span className={`${compact ? 'text-sm' : 'text-sm'}`}>
             {item.title}
           </span>
         </div>
