@@ -84,7 +84,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
             </div>
 
             <div className="p-4">
-              <h3 className="font-medium text-lg mb-4 text-center">
+              <h3 className="font-medium text-base mb-3 text-center">
                 {template.name}
               </h3>
               <div className="flex items-center justify-center">
@@ -93,7 +93,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
                     setSelectedTemplate(template);
                     setShowConfirmDialog(true);
                   }}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 text-xs"
                   variant="default"
                   size="sm"
                 >
@@ -147,7 +147,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
       {showConfirmDialog && selectedTemplate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-medium mb-4">Apply Template</h2>
+            <h2 className="text-lg font-medium mb-4">Apply Template</h2>
             <p className="text-gray-600 mb-6">
               Are you sure you want to apply this template? This will update
               your page appearance and layout.

@@ -75,9 +75,13 @@ const PreviewMobile = ({ close }) => {
         <div className="sticky top-0 right-0 p-4 z-50">
           <button
             onClick={close}
-            className="ml-auto block p-2 rounded-full bg-black/10 hover:bg-black/20"
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(4px)',
+            }}
+            className="ml-auto block p-2 rounded-full text-white border-2 border-white hover:bg-black/50 transition-all duration-200"
           >
-            <X className="w-6 h-6" color={theme.accent} />
+            <X className="w-6 h-6" color="white" />
           </button>
         </div>
         <iframe
