@@ -62,7 +62,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
                     src={template.thumbnailUrl}
                     alt={template.name}
                     width={500}
-                    height={760}
+                    height={1056}
                     className="w-full h-full object-cover"
                     onError={() => handleImageError(template.id)}
                     loading="eager"
