@@ -35,7 +35,8 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
   const initializeCount = useRef(0);
 
   // Get provider config
-  const providerConfig = EMBED_CONFIGS[link.providerName] || EMBED_CONFIGS.Generic;
+  const providerConfig =
+    EMBED_CONFIGS[link.providerName] || EMBED_CONFIGS.Generic;
   const mergedConfig = { ...providerConfig, ...config };
 
   // Debug the incoming link data
@@ -44,7 +45,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
       providerName: link.providerName,
       hasEmbedHtml: !!link.embedHtml,
       scriptLoaded,
-      isLoading
+      isLoading,
     });
   }, [link, scriptLoaded, isLoading]);
 
@@ -52,7 +53,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
   useEffect(() => {
     console.log('Script loading effect triggered:', {
       providerName: link.providerName,
-      hasScript: !!scriptRef.current
+      hasScript: !!scriptRef.current,
     });
 
     // Don't reload if script is already loaded
@@ -88,7 +89,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
         const mainScript = document.createElement('script');
         mainScript.async = true;
         mainScript.src = scriptConfig.main;
-        
+
         mainScript.onerror = () => {
           if (scriptConfig.fallback) {
             console.log('Main script failed, loading fallback');
@@ -146,7 +147,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
     console.log('Initializing embed:', {
       count: initializeCount.current,
       providerName: link.providerName,
-      hasEmbedHtml: !!link.embedHtml
+      hasEmbedHtml: !!link.embedHtml,
     });
 
     // Only reset loading state on first initialization
@@ -173,7 +174,12 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
   }, [link.embedHtml, scriptLoaded]);
 
   // Early return if no embed data
-  if (!link.embedHtml && (!link.thumbnails || !Array.isArray(link.thumbnails) || link.thumbnails.length === 0)) {
+  if (
+    !link.embedHtml &&
+    (!link.thumbnails ||
+      !Array.isArray(link.thumbnails) ||
+      link.thumbnails.length === 0)
+  ) {
     console.log('RichMediaPreview - No preview content available');
     return null;
   }
@@ -191,26 +197,30 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
   };
 
   const handleImageError = (error: Event) => {
-    console.error('Failed to load image:', error);
+    console.error('No image:', error);
     setIsLoading(false);
     setHasError(true);
     setErrorMessage('Failed to load preview image');
   };
 
   // Get the first valid thumbnail URL
-  const thumbnailUrl = link.thumbnails && Array.isArray(link.thumbnails) && link.thumbnails.length > 0
-    ? (link.thumbnails[0].href || link.thumbnails[0].url)
-    : null;
+  const thumbnailUrl =
+    link.thumbnails &&
+    Array.isArray(link.thumbnails) &&
+    link.thumbnails.length > 0
+      ? link.thumbnails[0].href || link.thumbnails[0].url
+      : null;
 
   // Process HTML if needed
-  const processedHtml = link.embedHtml && mergedConfig.processHtml
-    ? mergedConfig.processHtml(link.embedHtml)
-    : link.embedHtml;
+  const processedHtml =
+    link.embedHtml && mergedConfig.processHtml
+      ? mergedConfig.processHtml(link.embedHtml)
+      : link.embedHtml;
 
   // Render content based on provider
   const renderContent = () => {
     const content = processedHtml ? (
-      <div 
+      <div
         className="w-full h-full"
         dangerouslySetInnerHTML={{ __html: processedHtml }}
         onError={handleIframeError}
@@ -285,4 +295,4 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
   );
 };
 
-export default RichMediaPreview; 
+export default RichMediaPreview;

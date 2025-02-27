@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
+/// <reference types="react" />
+/** @jsxRuntime classic */
+/** @jsx React.createElement */
+import React, { useMemo } from 'react';
 import { FrameTemplate } from './frame-selector';
 
 // Cache for rendered frames
-const frameCache = new Map<string, JSX.Element>();
+const frameCache = new Map<string, React.ReactElement>();
 
 // Generate cache key from frame props
 export const getFrameCacheKey = (
@@ -38,7 +41,7 @@ export const optimizeSvgPaths = (path: string): string => {
 
 // Hook for optimized frame rendering
 export const useOptimizedFrame = (
-  renderFunction: () => JSX.Element,
+  renderFunction: () => React.ReactElement,
   cacheKey: string
 ) => {
   return useMemo(() => {
