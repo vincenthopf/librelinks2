@@ -1931,3 +1931,91 @@ Note: TypeScript configuration warnings exist but are separate from the ESLint f
   - ✓ Add code comments
 
 ## Implementation Complete ✅
+
+# Template Background Image Implementation
+
+## Database Changes
+
+- [x] Update Template model in schema.prisma
+  - Add backgroundImage field as optional String
+  - Run prisma generate after update
+
+## Template Data Preparation
+
+- [x] Update template-utils.js
+  - Modify prepareTemplateData function to include backgroundImage
+  - Add backgroundImage to returned template data
+  - Ensure null handling for cases without background image
+
+## Template Preview Updates
+
+- [x] Update template-preview.jsx
+  - Modify previewUser object to use template's backgroundImage
+  - Update preview rendering to handle background image
+  - Ensure fallback handling when no background image exists
+
+## API Updates
+
+- [x] Update save-current.js endpoint
+  - Add backgroundImage to template creation data
+  - Include backgroundImage in transaction
+  - Ensure proper null handling
+
+## Testing
+
+- [x] Test template creation with background image
+  - Test saving template with background image
+  - Test saving template without background image
+  - Verify preview shows correct background image
+  - Verify applying template transfers background image correctly
+
+## Documentation
+
+- [x] Update CURSOR_MEMORY.md
+  - Document background image implementation
+  - Note any important considerations
+  - Add lessons learned during implementation
+
+## Implementation Complete ✅
+
+# Apply Template Background Image Implementation
+
+## API Updates
+
+- [x] Update `/api/templates/apply` endpoint
+  - Include backgroundImage in user update data
+  - Ensure template's backgroundImage (or null) overwrites user's existing background
+  - No special handling needed for invalid URLs - let it fallback to no background
+
+## Frontend Updates
+
+- [x] Update Template Application Logic
+  - Modify useMutation in templates-user/index.jsx
+  - Ensure backgroundImage is included in the invalidation of currentUser query
+  - No loading state needed - immediate application
+
+## Testing
+
+- [x] Test Template Application Scenarios
+  - Test applying template with background image
+  - Test applying template with no background image
+  - Test applying template with invalid background image URL
+  - Verify immediate application without loading states
+  - Verify query invalidation updates UI correctly
+
+## Documentation
+
+- [x] Update CURSOR_MEMORY.md
+  - Document background image application behavior
+  - Note the immediate application without loading states
+  - Document fallback behavior for invalid URLs
+
+## Implementation Complete ✅
+
+## Implementation Notes
+
+- No transition/loading states needed
+- Invalid URLs should silently fallback to no background
+- Always overwrite existing background image with template's value (even if null)
+- Immediate application required
+- Use React Query invalidation for UI updates
