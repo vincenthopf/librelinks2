@@ -763,3 +763,76 @@ The background image selection component had an issue where images would disappe
 3. Implement progressive loading for large image collections
 4. Consider adding loading skeleton placeholders for better UX
 5. Implement proper caching strategies for frequently accessed images
+
+# Font Family Template Integration
+
+## Overview
+
+When implementing features that involve saving user settings as templates, it's important to ensure that all relevant fields are included in both:
+
+1. The data preparation function (e.g., `prepareTemplateData`)
+2. The database model for the template
+3. The template creation process
+4. The template application process
+5. The server authentication and user selection process
+
+## Implementation Details
+
+For the font family template integration, we needed to:
+
+1. Add `profileNameFontFamily`, `bioFontFamily`, and `linkTitleFontFamily` fields to the `select` object in `serverAuth.js`
+2. Ensure the `prepareTemplateData` function includes these font family fields
+3. Update the debug logging in `save-current.js` to include the font family fields
+4. Update the template application process in `apply.js` to include the font family fields
+
+## Key Lessons
+
+1. **Complete User Data Selection**: Always ensure that the `serverAuth.js` file includes all necessary fields in the `select` object. This is a critical step that's easy to overlook.
+2. **Field Synchronization**: When adding new customization fields to the User model, make sure to update all related code paths:
+   - Add the fields to the `serverAuth.js` file's `select` object
+   - Add the fields to the Template model in the Prisma schema
+   - Update the `prepareTemplateData` function to include the fields
+   - Update the template application process to apply the fields
+3. **Default Values**: Always provide sensible default values for fields that might be missing in older templates.
+4. **Debug Logging**: Include comprehensive debug logging that shows all relevant fields to help identify missing data.
+
+# Background Image Template Fix
+
+## Issue Description
+
+The "Apply Template" functionality was not loading the saved background image when a template was applied to a user's profile.
+
+## Root Cause
+
+The `backgroundImage` field was missing from the `prepareTemplateData` function in `lib/template-utils.js`. This meant that even though the background image URL was included in the user data and properly logged in the debug output, it wasn't being included in the template data that was saved to the database.
+
+## Solution Implemented
+
+1. **Updated Template Data Preparation**:
+   - Added the `backgroundImage` field to the return object in the `prepareTemplateData` function
+   - Included a fallback to `null` if the field is not present in the user data
+
+```javascript
+return {
+  // ... other fields ...
+
+  // Background image
+  backgroundImage: currentUser.backgroundImage || null,
+};
+```
+
+## Key Lessons
+
+1. **Complete Template Data**: When preparing template data, ensure ALL customizable fields are included in the returned object.
+2. **Field Consistency**: Maintain consistency between:
+   - The fields selected in `serverAuth.js`
+   - The fields included in the template data preparation
+   - The fields in the Template model
+   - The fields applied when a template is used
+3. **Comprehensive Testing**: Test the complete flow from saving a template to applying it, verifying that all fields are correctly transferred.
+4. **Systematic Approach**: When adding new customizable fields to the application, follow a systematic approach to update all related components:
+   - Database schema
+   - API endpoints
+   - Data preparation functions
+   - Application logic
+   - UI components
