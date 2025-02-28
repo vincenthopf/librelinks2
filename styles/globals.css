@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter&family=Roboto&family=Playfair+Display:wght@400;900&family=Lato&family=Bebas+Neue&family=Open+Sans&family=Cinzel&family=Space+Mono&family=Comfortaa&family=Alegreya&family=Oswald&family=Barlow&family=Lora&family=Montserrat&family=Poppins&family=Raleway&family=Source+Sans+Pro&family=Ubuntu&family=Merriweather&family=Nunito&family=Quicksand&family=Josefin+Sans&display=swap');
 
 /* @import url("https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap"); */
 
@@ -7,6 +7,148 @@
 @tailwind utilities;
 * {
   font-family: 'Inter', sans-serif;
+}
+
+/* Font family classes for custom fonts */
+
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-playfair-black {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+}
+
+.font-lato {
+  font-family: 'Lato', sans-serif;
+}
+
+.font-bebas {
+  font-family: 'Bebas Neue', sans-serif;
+}
+
+.font-open-sans {
+  font-family: 'Open Sans', sans-serif;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-space-mono {
+  font-family: 'Space Mono', monospace;
+}
+
+.font-comfortaa {
+  font-family: 'Comfortaa', cursive;
+}
+
+.font-alegreya {
+  font-family: 'Alegreya', serif;
+}
+
+.font-oswald {
+  font-family: 'Oswald', sans-serif;
+}
+
+.font-barlow {
+  font-family: 'Barlow', sans-serif;
+}
+
+.font-lora {
+  font-family: 'Lora', serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-raleway {
+  font-family: 'Raleway', sans-serif;
+}
+
+.font-source-sans-pro {
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.font-ubuntu {
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.font-merriweather {
+  font-family: 'Merriweather', serif;
+}
+
+.font-nunito {
+  font-family: 'Nunito', sans-serif;
+}
+
+.font-quicksand {
+  font-family: 'Quicksand', sans-serif;
+}
+
+.font-josefin-sans {
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+/* Font grid layout */
+
+.font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.font-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.font-card:hover {
+  border-color: #d1d5db;
+  background-color: #f9fafb;
+}
+
+.font-card.selected {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.font-preview {
+  font-size: 24px;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.font-meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+/* Responsive adjustments */
+
+@media (max-width: 640px) {
+  .font-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .font-preview {
+    font-size: 20px;
+  }
 }
 
 .gradient-btn {

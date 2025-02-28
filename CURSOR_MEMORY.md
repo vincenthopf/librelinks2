@@ -620,3 +620,96 @@ The `backgroundImage` field was missing from the `select` object in the `serverA
 3. **Robust Error Handling**: Include proper error handling in asynchronous operations.
 4. **State Consistency**: Ensure local state (selectedImage) stays consistent with server state (currentUser.backgroundImage).
 5. **Query Invalidation**: Use query invalidation to force data refreshes after state changes.
+
+# Font Customization Feature
+
+## Overview
+
+The font customization feature allows users to personalize the typography of their profile page by selecting different font families for various text elements. This includes:
+
+- Profile name font family
+- Bio text font family
+- Link title font family
+
+## Implementation Details
+
+### Database Schema
+
+```prisma
+model User {
+  // ... other fields ...
+  profileNameFontFamily String @default("Inter")
+  bioFontFamily String @default("Inter")
+  linkTitleFontFamily String @default("Inter")
+}
+
+model Template {
+  // ... other fields ...
+  profileNameFontFamily String @default("Inter")
+  bioFontFamily String @default("Inter")
+  linkTitleFontFamily String @default("Inter")
+}
+```
+
+### API Endpoint
+
+The `/api/customize` endpoint handles font family updates through a PATCH request:
+
+```javascript
+{
+  profileNameFontFamily: string,
+  bioFontFamily: string,
+  linkTitleFontFamily: string
+}
+```
+
+### Components
+
+- `FontSelector`: Main component for selecting font families
+- `FontCard`: Component for displaying each font option in the grid
+- Grid layout for easy visual selection
+- Preview updates in real-time through React Query and iframe signaling
+- Reset to default button for returning to the default font
+
+### Font Loading Strategy
+
+- All fonts are preloaded in the global CSS using Google Fonts
+- CSS classes are defined for each font family for consistent styling
+- Inline style application for dynamic font changes
+
+### Best Practices
+
+1. Always use the default font ('Inter') as fallback
+2. Ensure font changes are reflected immediately in previews
+3. Maintain consistent font options across all selectable elements
+4. Consider font weight and style for optimal readability
+5. Include font family in template settings for complete theme application
+
+### Lessons Learned
+
+1. **Font Loading Optimization**: Preloading all fonts in the global CSS ensures they're available when needed, but consider implementing a more efficient loading strategy for production (like loading only the fonts in use).
+
+2. **Style Application**: Using inline styles for font application provides immediate visual feedback but consider using CSS classes for better performance in production.
+
+3. **Template Integration**: When adding new customizable elements, always update the template system to include these new properties for a complete user experience.
+
+4. **Preview Synchronization**: Real-time preview updates are essential for font selection, as users need immediate feedback to make informed choices.
+
+5. **Default Values**: Always provide sensible defaults and fallbacks to ensure the UI remains consistent even if specific fonts fail to load.
+
+6. **Component Structure**: Organizing font selection in a grid layout provides a clear visual representation of available options and simplifies the user experience.
+
+7. **Unified Font Application**: Applying the same font to all text elements creates a more cohesive design and simplifies the user experience.
+
+8. **Font Metadata**: Including designer/source information adds context and credibility to the font selection process.
+
+### Future Considerations
+
+1. Consider adding font weight options for more typography control
+2. Implement font loading optimization to reduce initial page load time
+3. Add font pairing recommendations for cohesive design
+4. Consider adding custom font upload capability
+5. Implement font filtering by style categories (serif, sans-serif, display, etc.)
+6. Add font search functionality for larger font collections
+7. Consider adding font categories or tags for easier navigation
+8. Implement font favoriting for quick access to frequently used fonts

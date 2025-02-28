@@ -18,6 +18,10 @@ export default async function handler(req, res) {
       profileNameFontSize,
       bioFontSize,
       linkTitleFontSize,
+      // Font families
+      profileNameFontFamily,
+      bioFontFamily,
+      linkTitleFontFamily,
       // Image sizes
       socialIconSize,
       faviconSize,
@@ -94,6 +98,10 @@ export default async function handler(req, res) {
         profileNameFontSize,
         bioFontSize,
         linkTitleFontSize,
+        // Font families
+        profileNameFontFamily,
+        bioFontFamily,
+        linkTitleFontFamily,
         // Image sizes
         socialIconSize,
         faviconSize,

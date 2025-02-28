@@ -4,6 +4,7 @@ import Footer from '@/components/layout/footer/footer';
 import ButtonSelector from '@/components/core/custom-buttons/buttons-selector';
 import ThemesPicker from '@/components/core/custom-page-themes/themes-picker';
 import FontSizeSelector from '@/components/core/custom-font-sizes/font-size-selector';
+import FontSelector from '@/components/core/custom-fonts/font-selector';
 import ImageSizeSelector from '@/components/core/custom-image-sizes/image-size-selector';
 import SizeSelector from '@/components/core/custom-sizes/size-selector';
 import BackgroundImageSelector from '@/components/core/background-images/background-image-selector';
@@ -23,7 +24,7 @@ const Customize = () => {
             <h1 className="text-2xl font-bold mb-6">Customize</h1>
 
             {/* Tab Navigation */}
-            <div className="flex border-b mb-8">
+            <div className="flex border-b mb-8 flex-wrap">
               <button
                 className={`py-2 px-4 font-medium ${
                   activeTab === 'themes'
@@ -56,6 +57,16 @@ const Customize = () => {
               </button>
               <button
                 className={`py-2 px-4 font-medium ${
+                  activeTab === 'fonts'
+                    ? 'border-b-2 border-blue-500 text-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setActiveTab('fonts')}
+              >
+                Fonts
+              </button>
+              <button
+                className={`py-2 px-4 font-medium ${
                   activeTab === 'sizes'
                     ? 'border-b-2 border-blue-500 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -84,6 +95,13 @@ const Customize = () => {
             {activeTab === 'buttons' && (
               <div className="space-y-8">
                 <ButtonSelector />
+              </div>
+            )}
+
+            {/* Fonts Tab */}
+            {activeTab === 'fonts' && (
+              <div className="space-y-8">
+                <FontSelector />
               </div>
             )}
 

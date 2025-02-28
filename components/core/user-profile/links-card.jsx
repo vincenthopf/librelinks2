@@ -31,7 +31,9 @@ const LinkCard = (props) => {
     iframelyMeta: props.iframelyMeta,
   };
 
-  const hasPreview = iframelyData.embedHtml || (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
+  const hasPreview =
+    iframelyData.embedHtml ||
+    (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
 
   return (
     <div className="w-full transition-all duration-300">
@@ -46,20 +48,29 @@ const LinkCard = (props) => {
         >
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3 flex-grow pr-8">
-              <div style={{ width: `${faviconSize}px`, height: `${faviconSize}px` }}>
+              <div
+                style={{
+                  width: `${faviconSize}px`,
+                  height: `${faviconSize}px`,
+                }}
+              >
                 <img
                   src={`${GOOGLE_FAVICON_URL}${getApexDomain(props.url)}`}
                   alt={props.title}
-                  style={{ width: `${faviconSize}px`, height: `${faviconSize}px` }}
+                  style={{
+                    width: `${faviconSize}px`,
+                    height: `${faviconSize}px`,
+                  }}
                   className="rounded-full"
                   loading="lazy"
                 />
               </div>
-              <h2 
+              <h2
                 className="font-medium"
-                style={{ 
+                style={{
                   fontSize: `${props.fontSize || 14}px`,
-                  color: props.theme.accent
+                  fontFamily: props.fontFamily || 'Inter',
+                  color: props.theme.accent,
                 }}
               >
                 {props.title}
@@ -74,19 +85,27 @@ const LinkCard = (props) => {
                 setShowPreview(!showPreview);
               }}
               className="absolute right-[10px] top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label={showPreview ? "Hide preview" : "Show preview"}
+              aria-label={showPreview ? 'Hide preview' : 'Show preview'}
             >
               {showPreview ? (
-                <ChevronUp className="w-5 h-5" style={{ color: props.theme.accent }} />
+                <ChevronUp
+                  className="w-5 h-5"
+                  style={{ color: props.theme.accent }}
+                />
               ) : (
-                <ChevronDown className="w-5 h-5" style={{ color: props.theme.accent }} />
+                <ChevronDown
+                  className="w-5 h-5"
+                  style={{ color: props.theme.accent }}
+                />
               )}
             </button>
           )}
         </a>
       </div>
-      
-      <div className={`transition-all duration-300 ${showPreview ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0 '}`}>
+
+      <div
+        className={`transition-all duration-300 ${showPreview ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0 '}`}
+      >
         <RichMediaPreview link={iframelyData} />
       </div>
     </div>

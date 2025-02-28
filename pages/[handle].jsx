@@ -161,6 +161,7 @@ const ProfilePage = () => {
             style={{
               color: theme.accent,
               fontSize: `${fetchedUser?.profileNameFontSize || 16}px`,
+              fontFamily: fetchedUser?.profileNameFontFamily || 'Inter',
               marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`,
             }}
             className="font-bold text-white text-center mb-2 lg:mt-4"
@@ -173,6 +174,7 @@ const ProfilePage = () => {
                 style={{
                   color: theme.accent,
                   fontSize: `${fetchedUser?.bioFontSize || 14}px`,
+                  fontFamily: fetchedUser?.bioFontFamily || 'Inter',
                 }}
                 className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
               >
@@ -208,6 +210,7 @@ const ProfilePage = () => {
                   id={id}
                   key={id}
                   fontSize={fetchedUser?.linkTitleFontSize || 14}
+                  fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
                   cardHeight={fetchedUser?.linkCardHeight || 16}
                   {...link}
                   registerClicks={() => handleRegisterClick(id)}

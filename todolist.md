@@ -2019,3 +2019,113 @@ Note: TypeScript configuration warnings exist but are separate from the ESLint f
 - Always overwrite existing background image with template's value (even if null)
 - Immediate application required
 - Use React Query invalidation for UI updates
+
+# Fonts Subtab Implementation Todolist
+
+## Database Updates
+
+- [x] Update User model in Prisma schema
+  - Add profileNameFontFamily field
+  - Add bioFontFamily field
+  - Add linkTitleFontFamily field
+- [x] Update Template model in Prisma schema
+  - Add profileNameFontFamily field
+  - Add bioFontFamily field
+  - Add linkTitleFontFamily field
+
+## API Updates
+
+- [x] Update /api/customize endpoint
+  - Add handling for font family fields
+  - Add validation if needed
+
+## Component Creation
+
+- [x] Create FontSelector component
+  - Create file structure
+  - Implement font selection UI
+  - Add font preview functionality
+  - Add reset to default button
+  - Implement font change handling
+
+## UI Integration
+
+- [x] Update Customize page
+  - Add Fonts tab to navigation
+  - Integrate FontSelector component
+
+## Font Application
+
+- [x] Update Profile page
+  - Apply selected fonts to profile name
+  - Apply selected fonts to bio
+- [x] Update Link Card component
+  - Apply selected fonts to link titles
+
+## Font Loading
+
+- [x] Update global CSS
+  - Add necessary font imports
+
+## Template Integration
+
+- [x] Update template functionality
+  - Include font family settings in templates
+
+## Testing
+
+- [ ] Test database updates
+- [ ] Test API endpoint
+- [ ] Test font selection UI
+- [ ] Test font preview
+- [ ] Test font application on profile
+- [ ] Test font application on link cards
+- [ ] Test reset to default functionality
+- [ ] Test template integration
+- [ ] Test iframe refresh
+
+# Font Selector Grid Implementation Todolist
+
+## Component Structure
+
+- [x] Create FontCard component
+
+  - Display font name in its own typeface
+  - Add selection state styling
+  - Implement click handler for immediate font application
+
+- [x] Modify FontSelector component
+  - Replace tab-based UI with grid layout
+  - Update state management for single font selection
+  - Implement immediate application on selection
+  - Keep reset functionality
+
+## Styling
+
+- [x] Create CSS for grid layout
+  - Implement responsive grid
+  - Style font cards with proper spacing and borders
+  - Add hover and selection states
+
+## Font Application Logic
+
+- [x] Update mutation function
+  - Apply same font to all three text elements
+  - Ensure immediate preview update
+  - Add toast notifications for feedback
+
+## Testing
+
+- [x] Test font selection
+  - Verify immediate application
+  - Check preview updates
+  - Test reset functionality
+
+## Final Review
+
+- [x] Review responsive behavior
+  - Test on different screen sizes
+  - Ensure proper spacing and alignment
+- [x] Verify accessibility
+  - Check keyboard navigation
+  - Ensure proper ARIA attributes
