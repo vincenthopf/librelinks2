@@ -713,3 +713,53 @@ The `/api/customize` endpoint handles font family updates through a PATCH reques
 6. Add font search functionality for larger font collections
 7. Consider adding font categories or tags for easier navigation
 8. Implement font favoriting for quick access to frequently used fonts
+
+# Background Image Loading Optimization
+
+## Issue Overview
+
+The background image selection component had an issue where images would disappear and enter a loading state when hovered over, even though they were already loaded. This created a poor user experience with unnecessary flickering.
+
+## Implementation Decisions
+
+### Loading State Management
+
+- Removed the `onMouseEnter` event handler that was triggering loading state on hover
+- Implemented proper initialization of loading states when component mounts
+- Used `useEffect` to set initial loading states for all images
+- Maintained loading state only during actual image loading
+
+### Image Loading Optimization
+
+- Added `loading="eager"` attribute to prioritize visible images
+- Added `decoding="async"` attribute to optimize browser image decoding
+- Kept proper error handling for failed image loads
+- Maintained loading indicators only during actual loading
+
+## Lessons Learned
+
+1. **Event Handler Caution**: Be careful with event handlers like `onMouseEnter` that might trigger state changes leading to unnecessary re-renders or visual flickering.
+
+2. **Loading State Management**: Initialize loading states properly at component mount rather than on user interactions for resources that should load once.
+
+3. **Image Optimization Attributes**: Use modern HTML attributes like `loading="eager"` and `decoding="async"` to optimize image loading performance.
+
+4. **Component Lifecycle Awareness**: Be mindful of when components should load resources - typically on mount rather than on user interaction for static resources.
+
+5. **User Experience Priority**: Prioritize smooth user experience by avoiding unnecessary loading states or flickering, especially for already-loaded content.
+
+## Best Practices
+
+1. Use `useEffect` with appropriate dependencies to initialize component state
+2. Leverage modern HTML attributes for optimized resource loading
+3. Avoid triggering loading states for already-loaded resources
+4. Implement proper error handling for failed resource loads
+5. Test interactions like hovering to ensure they don't cause visual disruptions
+
+## Future Considerations
+
+1. Consider implementing image preloading for critical resources
+2. Monitor loading performance across different network conditions
+3. Implement progressive loading for large image collections
+4. Consider adding loading skeleton placeholders for better UX
+5. Implement proper caching strategies for frequently accessed images

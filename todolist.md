@@ -2129,3 +2129,81 @@ Note: TypeScript configuration warnings exist but are separate from the ESLint f
 - [x] Verify accessibility
   - Check keyboard navigation
   - Ensure proper ARIA attributes
+
+# Background Image Loading Fix Todolist
+
+- [x] 1. Remove `onMouseEnter` event handler from image container div
+
+  - Find the `onMouseEnter` handler in the BackgroundImageGrid component
+  - Remove it to prevent triggering loading state on hover
+
+- [x] 2. Initialize loading state for all images on component mount
+
+  - Add useEffect to initialize loadingImages state when component mounts
+  - Set all images to loading state initially
+
+- [x] 3. Optimize image loading attributes
+
+  - Add `loading="eager"` attribute to images
+  - Add `decoding="async"` attribute to images
+
+- [x] 4. Update image loading state management
+
+  - Keep onLoad handler to set loading to false when images finish loading
+  - Ensure loading spinner only shows for images that haven't loaded yet
+
+- [x] 5. Test the changes
+  - Verify images load correctly with appropriate loading indicators
+  - Verify hovering over images doesn't trigger reloading
+  - Test with different network conditions
+  - Test in different browsers
+
+## Test Plan Details
+
+### Initial Load Testing
+
+1. Open the page and observe the loading behavior
+2. Verify that loading spinners appear initially
+3. Verify that loading spinners disappear once images are loaded
+4. Verify that images remain visible after loading
+
+### Hover Testing
+
+1. Hover over each image
+2. Verify that hovering does not trigger reloading
+3. Verify that no loading spinners appear on hover
+4. Verify that images remain visible during hover
+
+### Network Condition Testing
+
+1. Use browser dev tools to simulate slow 3G connection
+2. Verify loading spinners appear during slow loading
+3. Verify images load correctly even with slow connection
+4. Verify no unnecessary reloading occurs
+
+### Browser Compatibility Testing
+
+1. Test in Chrome
+2. Test in Firefox
+3. Test in Safari
+4. Test in Edge
+5. Verify consistent behavior across all browsers
+
+## Summary of Changes
+
+The background image loading issue has been fixed by making the following changes:
+
+1. **Removed hover trigger**: Eliminated the `onMouseEnter` event handler that was causing images to enter loading state when hovered over.
+
+2. **Improved initial loading**: Added a `useEffect` hook to properly initialize the loading state for all images when the component mounts.
+
+3. **Optimized image loading**: Added `loading="eager"` and `decoding="async"` attributes to images for better performance.
+
+4. **Enhanced loading state management**: Updated the loading state management to ensure loading spinners only appear during the initial load.
+
+These changes ensure that:
+
+- Images only load once when the component mounts
+- Hovering over images doesn't trigger unnecessary reloading
+- Loading indicators only appear when images are actually loading
+- The user experience is smoother with no flickering or disappearing images on hover

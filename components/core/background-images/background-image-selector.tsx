@@ -47,10 +47,20 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
     {}
   );
 
+  // Initialize loading state for all images when component mounts or backgroundImages changes
+  useEffect(() => {
+    const initialLoadingState: Record<string, boolean> = {};
+    backgroundImages.forEach((image) => {
+      initialLoadingState[image.id] = true;
+    });
+    setLoadingImages(initialLoadingState);
+  }, [backgroundImages]);
+
   const handleImageLoad = (imageId: string) => {
     setLoadingImages((prev) => ({ ...prev, [imageId]: false }));
   };
 
+  // We'll keep this function for potential future use but won't call it on hover
   const handleImageLoadStart = (imageId: string) => {
     setLoadingImages((prev) => ({ ...prev, [imageId]: true }));
   };
@@ -92,7 +102,6 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
           onClick={
             !isUpdating ? () => onImageSelect(image.imageUrl) : undefined
           }
-          onMouseEnter={() => handleImageLoadStart(image.id)}
         >
           {loadingImages[image.id] && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -103,6 +112,8 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
             src={image.imageUrl}
             alt={image.name}
             className="w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
             onLoad={() => handleImageLoad(image.id)}
             onError={(e) => {
               handleImageLoad(image.id);
