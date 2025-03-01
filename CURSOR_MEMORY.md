@@ -1239,3 +1239,24 @@ const toggleExpand = (e) => {
 2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
 3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
 4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
