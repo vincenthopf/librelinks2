@@ -1,12 +1,13 @@
 import useCurrentUser from '@/hooks/useCurrentUser';
 import { getCurrentBaseURL } from '@/utils/helpers';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const Preview = () => {
   const { data: currentUser } = useCurrentUser();
   const baseURL = getCurrentBaseURL();
-  const url = `${baseURL}/${currentUser?.handle}?isIframe=true`;
+  const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}`;
   const iframeRef = useRef(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!iframeRef.current) return;
@@ -25,15 +26,23 @@ const Preview = () => {
   }, []);
 
   useEffect(() => {
-    const handleMessage = () => {
-      if (iframeRef.current) {
-        iframeRef.current.src = iframeRef.current.src;
+    const handleMessage = (event) => {
+      if (event.data === 'refresh' && iframeRef.current) {
+        // Force a complete iframe refresh by updating the key
+        setRefreshKey((prev) => prev + 1);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Re-render iframe when photoBookLayout changes
+  useEffect(() => {
+    if (currentUser?.photoBookLayout) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [currentUser?.photoBookLayout]);
 
   return (
     <>
@@ -42,7 +51,7 @@ const Preview = () => {
           {currentUser && (
             <iframe
               ref={iframeRef}
-              key={`${currentUser.headToPicturePadding}-${currentUser.pictureToNamePadding}-${currentUser.betweenCardsPadding}-${currentUser.linkCardHeight}-${currentUser.profileImageSize}`}
+              key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}`}
               seamless
               loading="lazy"
               title="preview"

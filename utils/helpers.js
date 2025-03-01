@@ -95,9 +95,16 @@ export const getInitials = (name) => {
 export const signalIframe = () => {
   // Use setTimeout to ensure this runs after all state updates are complete
   setTimeout(() => {
+    // Refresh desktop preview
     const iframe = document.getElementById('preview');
     if (iframe) {
       iframe.contentWindow.postMessage('refresh', '*');
+    }
+
+    // Refresh mobile preview
+    const mobileIframe = document.getElementById('preview-mobile');
+    if (mobileIframe) {
+      mobileIframe.contentWindow.postMessage('refresh', '*');
     }
   }, 100); // Increased delay to ensure all style updates are processed
 };

@@ -1,5 +1,5 @@
 import { CldImage } from 'next-cloudinary';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 
@@ -12,9 +12,18 @@ export const CloudinaryImage = ({
   sizes = '100vw',
   priority = false,
   onError,
+  preserveAspectRatio = false,
 }) => {
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(!priority);
+  const [naturalAspectRatio, setNaturalAspectRatio] = useState(null);
+  const [imgDimensions, setImgDimensions] = useState({ width, height });
+
+  // Reset loading state when src changes
+  useEffect(() => {
+    setIsLoading(!priority);
+    setError(false);
+  }, [src, priority]);
 
   if (!src) {
     return (
@@ -58,40 +67,86 @@ export const CloudinaryImage = ({
   console.log('Original src:', src);
   console.log('Using publicId:', publicId);
 
+  // Calculate container dimensions based on natural aspect ratio if available
+  const containerStyle =
+    preserveAspectRatio && naturalAspectRatio
+      ? {
+          paddingTop: `${(1 / naturalAspectRatio) * 100}%`,
+          width: '100%',
+          height: 0,
+          position: 'relative',
+        }
+      : { width: imgDimensions.width, height: imgDimensions.height };
+
+  const imageStyle =
+    preserveAspectRatio && naturalAspectRatio
+      ? {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+        }
+      : {};
+
   return (
-    <div className="relative">
+    <div className={cn('relative', preserveAspectRatio ? 'w-full' : '')}>
       {isLoading && (
         <div
           className={cn(
-            'absolute inset-0 bg-gray-200 animate-pulse',
-            className
+            'bg-gray-200 animate-pulse',
+            preserveAspectRatio ? 'w-full' : ''
           )}
-          style={{ width, height }}
+          style={
+            preserveAspectRatio && naturalAspectRatio
+              ? containerStyle
+              : { width, height, minHeight: '100px' }
+          }
         />
       )}
-      <CldImage
-        src={publicId}
-        alt={alt}
-        width={width}
-        height={height}
-        className={cn(
-          isLoading ? 'opacity-0' : 'opacity-100',
-          'transition-opacity duration-200',
-          className
-        )}
-        sizes={sizes}
-        priority={priority}
-        onError={(e) => {
-          console.error('CldImage error:', e);
-          setError(true);
-          onError?.();
-        }}
-        onLoad={() => setIsLoading(false)}
-        loading={priority ? 'eager' : 'lazy'}
-        crop="fill"
-        quality="auto"
-        format="auto"
-      />
+
+      <div style={preserveAspectRatio ? containerStyle : {}}>
+        <CldImage
+          src={publicId}
+          alt={alt}
+          width={width}
+          height={height}
+          className={cn(
+            isLoading ? 'opacity-0' : 'opacity-100',
+            'transition-opacity duration-200',
+            className,
+            preserveAspectRatio ? 'w-full h-auto' : ''
+          )}
+          style={imageStyle}
+          sizes={sizes}
+          priority={priority}
+          onError={(e) => {
+            console.error('CldImage error:', e);
+            setError(true);
+            onError?.();
+          }}
+          onLoad={(e) => {
+            setIsLoading(false);
+            // If we care about preserving aspect ratio, capture the natural dimensions
+            if (preserveAspectRatio && e.target) {
+              const { naturalWidth, naturalHeight } = e.target;
+              if (naturalWidth && naturalHeight) {
+                setNaturalAspectRatio(naturalWidth / naturalHeight);
+                setImgDimensions({
+                  width: naturalWidth,
+                  height: naturalHeight,
+                });
+              }
+            }
+          }}
+          loading={priority ? 'eager' : 'lazy'}
+          quality="auto"
+          format="auto"
+          // Only apply crop="fill" when not preserving aspect ratio
+          {...(!preserveAspectRatio && { crop: 'fill' })}
+        />
+      </div>
     </div>
   );
 };
@@ -105,6 +160,7 @@ CloudinaryImage.propTypes = {
   sizes: PropTypes.string,
   priority: PropTypes.bool,
   onError: PropTypes.func,
+  preserveAspectRatio: PropTypes.bool,
 };
 
 export default CloudinaryImage;

@@ -13,22 +13,23 @@ import { UserAvatarSetting } from '@/components/utils/avatar';
 import { getCurrentBaseURL } from '@/utils/helpers';
 
 const PreviewMobile = ({ close }) => {
-  const [, setIsDataLoaded] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const iframeRef = useRef(null);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
   const baseURL = getCurrentBaseURL();
-  const url = `${baseURL}/${currentUser?.handle}?isIframe=true`;
+  const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}`;
 
   const { data: userLinks } = useLinks(currentUser?.id);
 
   const theme = useMemo(
     () => ({
-      primary: currentUser?.themePalette.palette[0],
-      secondary: currentUser?.themePalette.palette[1],
-      accent: currentUser?.themePalette.palette[2],
-      neutral: currentUser?.themePalette.palette[3],
+      primary: currentUser?.themePalette?.palette?.[0] || '#ffffff',
+      secondary: currentUser?.themePalette?.palette?.[1] || '#f8f8f8',
+      accent: currentUser?.themePalette?.palette?.[2] || '#000000',
+      neutral: currentUser?.themePalette?.palette?.[3] || '#888888',
     }),
-    [currentUser?.themePalette.palette]
+    [currentUser?.themePalette?.palette]
   );
 
   const socialLinks = useMemo(
@@ -48,15 +49,23 @@ const PreviewMobile = ({ close }) => {
   }, [currentUser, userLinks]);
 
   useEffect(() => {
-    const handleMessage = () => {
-      if (iframeRef.current) {
-        iframeRef.current.src = iframeRef.current.src;
+    const handleMessage = (event) => {
+      if (event.data === 'refresh' && iframeRef.current) {
+        // Force a complete iframe refresh by updating the key
+        setRefreshKey((prev) => prev + 1);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Re-render iframe when photoBookLayout changes
+  useEffect(() => {
+    if (currentUser?.photoBookLayout) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [currentUser?.photoBookLayout]);
 
   if (isUserLoading) {
     return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
@@ -74,7 +83,7 @@ const PreviewMobile = ({ close }) => {
       >
         <iframe
           ref={iframeRef}
-          key={`${currentUser?.headToPicturePadding}-${currentUser?.pictureToNamePadding}-${currentUser?.betweenCardsPadding}-${currentUser?.linkCardHeight}-${currentUser?.profileImageSize}`}
+          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}`}
           seamless
           loading="lazy"
           title="preview"

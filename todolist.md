@@ -2207,3 +2207,74 @@ These changes ensure that:
 - Hovering over images doesn't trigger unnecessary reloading
 - Loading indicators only appear when images are actually loading
 - The user experience is smoother with no flickering or disappearing images on hover
+
+# Photo Book Feature Implementation Checklist
+
+## Database & API
+
+- [x] Update Prisma Schema
+
+  - ✓ Add PhotoBookImage model
+  - ✓ Add relation to User model
+  - ✓ Run prisma generate to update client
+
+- [x] Create API Endpoints
+  - [x] Create /api/photobook/upload endpoint
+    - ✓ Handle image upload to Cloudinary
+    - ✓ Store metadata in database
+    - ✓ Add proper validation and error handling
+  - [x] Create /api/photobook/photos endpoint
+    - ✓ Fetch all photos for current user
+    - ✓ Support sorting by order field
+  - [x] Create /api/photobook/photos/[id] endpoint
+    - ✓ Support PATCH for updating metadata
+    - ✓ Support DELETE for removing photos
+
+## Components
+
+- [x] Create Photo Book UI Components
+
+  - [x] Create PhotoBookTab component
+    - ✓ Add layout style options (Portfolio, Masonry, Grid)
+    - ✓ Implement layout switching functionality
+  - [x] Create PhotoUpload component
+    - ✓ Implement drag-and-drop functionality
+    - ✓ Add file type and size validation
+    - ✓ Show upload progress
+  - [x] Create layout components
+    - ✓ Create Portfolio layout
+    - ✓ Create Masonry layout
+    - ✓ Create Grid layout
+  - [x] Create PhotoEditModal component
+    - ✓ Allow editing title and description
+    - ✓ Add delete functionality
+
+- [x] Create Custom Hooks
+  - ✓ Create usePhotoBook hook
+    - ✓ Add functions for fetching photos
+    - ✓ Add functions for uploading photos
+    - ✓ Add functions for updating photos
+    - ✓ Add functions for deleting photos
+
+## Preview Integration
+
+- [x] Update Preview Components
+  - [x] Modify preview.jsx to display photo book
+    - ✓ Render photos according to selected layout
+    - ✓ Ensure responsive design
+  - [x] Modify preview-mobile.jsx for mobile view
+    - ✓ Optimize layout for mobile screens
+
+## Testing & Refinement
+
+- [ ] Test all functionality
+  - Test photo upload
+  - Test layout switching
+  - Test editing and deleting photos
+  - Test preview rendering
+- [ ] Performance optimization
+  - Implement lazy loading for images
+  - Add pagination for large collections
+- [ ] Final polish
+  - Add animations and transitions
+  - Ensure consistent styling

@@ -15,10 +15,31 @@ import Script from 'next/script';
 import { SocialCards } from '@/components/core/user-profile/social-cards';
 import Head from 'next/head';
 import { UserAvatarSetting } from '@/components/utils/avatar';
+import { useQuery } from '@tanstack/react-query';
+import PortfolioLayout from '@/components/core/photo-book/layouts/portfolio-layout';
+import MasonryLayout from '@/components/core/photo-book/layouts/masonry-layout';
+import GridLayout from '@/components/core/photo-book/layouts/grid-layout';
+import CarouselLayout from '@/components/core/photo-book/layouts/carousel-layout';
 
 const ProfilePage = () => {
   const { query } = useRouter();
-  const { handle } = query;
+  const { handle, photoBookLayout: queryLayout } = query;
+
+  // Add a useEffect to handle the message event when in iframe mode
+  useEffect(() => {
+    if (query.isIframe) {
+      // Listen for the refresh message from the parent
+      const handleMessage = (event) => {
+        if (event.data === 'refresh') {
+          // Force a reload of the current page
+          window.location.reload();
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, [query.isIframe]);
 
   const {
     data: fetchedUser,
@@ -28,6 +49,29 @@ const ProfilePage = () => {
 
   const { data: userLinks, isFetching: isLinksFetching } = useLinks(
     fetchedUser?.id
+  );
+
+  // Fetch photo book images
+  const { data: photos } = useQuery(
+    ['photobook', fetchedUser?.id],
+    async () => {
+      if (!fetchedUser || !fetchedUser.id) {
+        return [];
+      }
+      try {
+        const { data } = await axios.get(
+          `/api/photobook/photos?userId=${fetchedUser.id}`
+        );
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Failed to fetch photos:', error);
+        return [];
+      }
+    },
+    {
+      enabled: !!fetchedUser?.id,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    }
   );
 
   const queryClient = useQueryClient();
@@ -105,6 +149,52 @@ const ProfilePage = () => {
         transition: 'background-color 0.3s ease-in-out', // Only transition the color, not the image position
       }
     : {};
+
+  // Function to render photo book based on layout
+  const renderPhotoBook = () => {
+    if (!photos || !Array.isArray(photos) || photos.length === 0) {
+      return null;
+    }
+
+    const layout = queryLayout || fetchedUser?.photoBookLayout || 'grid';
+
+    try {
+      switch (layout) {
+        case 'portfolio':
+          return (
+            <PortfolioLayout
+              photos={photos}
+              isPublicView={true}
+              showTitle={true}
+            />
+          );
+        case 'masonry':
+          return (
+            <MasonryLayout
+              photos={photos}
+              isPublicView={true}
+              showTitle={true}
+            />
+          );
+        case 'carousel':
+          return (
+            <CarouselLayout
+              photos={photos}
+              isPublicView={true}
+              showTitle={true}
+            />
+          );
+        case 'grid':
+        default:
+          return (
+            <GridLayout photos={photos} isPublicView={true} showTitle={true} />
+          );
+      }
+    } catch (error) {
+      console.error('Error rendering photo book:', error);
+      return null;
+    }
+  };
 
   return (
     <>
@@ -227,6 +317,11 @@ const ProfilePage = () => {
                 Hello World 🚀
               </h3>
             </div>
+          )}
+
+          {/* Photo Book Section */}
+          {photos && photos.length > 0 && (
+            <div className="w-full mt-8">{renderPhotoBook()}</div>
           )}
         </div>
         <div className="my-10 lg:my-24" />

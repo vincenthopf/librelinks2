@@ -192,7 +192,7 @@ All frame templates follow a consistent optimization pattern:
 const FrameComponent = (props) => {
   const cacheKey = getFrameCacheKey(/* frame properties */);
   const isAnimated = animation?.enabled && animation.type !== null;
-  const optimizedStyles = getOptimizedStyles(isAnimated);
+  const optimizedStyles = getOptimizedStyles(isAnimated || false);
   const renderFrame = () => (/* SVG rendering logic */);
   return useOptimizedFrame(renderFrame, cacheKey);
 };
@@ -836,3 +836,256 @@ return {
    - Data preparation functions
    - Application logic
    - UI components
+
+# Cursor Memory for Librelinks Project
+
+## Type Safety Issues
+
+### Frame Templates Type Error Pattern
+
+- Issue: In frame template components, `getOptimizedStyles(isAnimated)` is called where `isAnimated` could be `undefined`
+- Fix pattern: Change to `getOptimizedStyles(isAnimated || false)` to ensure a boolean is always passed
+- Files that need fixing:
+  - components/core/profile-frames/frame-templates/circle-frame.tsx
+  - components/core/profile-frames/frame-templates/polaroid-classic-frame.tsx
+  - components/core/profile-frames/frame-templates/polaroid-rounded-frame.tsx
+  - components/core/profile-frames/frame-templates/square-frame.tsx
+  - components/core/profile-frames/frame-templates/hexagon-frame.tsx
+  - components/core/profile-frames/frame-templates/octagon-frame.tsx
+  - components/core/profile-frames/frame-templates/pentagon-frame.tsx
+  - components/core/profile-frames/frame-templates/star-frame.tsx
+  - components/core/profile-frames/frame-templates/triangle-frame.tsx
+
+This pattern occurs when optional chaining is used with the animation prop: `animation?.enabled && animation.type !== null`. The expression can evaluate to undefined if animation is undefined, but getOptimizedStyles expects a boolean parameter.
+
+### Fix Implementation Issues
+
+When attempting to fix the frame template files, we encountered an issue where code was being added at the top level of the files outside of any component function. This caused errors like:
+
+- "Cannot find name 'animation'" - because animation is not defined in that scope
+- "Cannot find name 'getAnimationProps'" - because this function isn't imported or defined
+
+The correct approach is to:
+
+1. Remove any floating code at the top level of the files
+2. Find the `getOptimizedStyles` call within the component function
+3. Modify it there to add the `|| false` fallback
+
+### Manual Fix Instructions
+
+For each file listed above:
+
+1. Open the file in a code editor
+2. Remove any floating code at the top level (outside of component functions)
+3. Find the line within the component: `const optimizedStyles = getOptimizedStyles(isAnimated);`
+4. Change it to: `const optimizedStyles = getOptimizedStyles(isAnimated || false);`
+5. Save the file
+
+### Lessons Learned
+
+1. When editing files, be careful to modify code in its proper context (inside functions/components)
+2. Check for linter errors after making changes to catch issues early
+3. Be precise with edits to avoid introducing new problems
+4. When fixing type safety issues, ensure the fix is applied in the correct scope
+
+## Photo Book Feature Implementation
+
+### Database Structure
+
+- Added `PhotoBookImage` model to store user-uploaded photos
+- Added `photoBookLayout` field to `User` model to store layout preference
+- Used Cloudinary for image storage and transformations
+
+### API Endpoints
+
+- Created `/api/photobook/upload` for uploading images
+- Created `/api/photobook/photos` for fetching all photos
+- Created `/api/photobook/photos/[id]` for updating and deleting photos
+
+### UI Components
+
+- Implemented four layout styles: Portfolio, Masonry, Grid, and Carousel
+- Created drag-and-drop upload functionality with validation
+- Added photo editing modal for updating metadata and deleting photos
+- Implemented drag-and-drop reordering for all layout types
+
+### Photo Book Layout Options
+
+#### Grid Layout
+
+- Simple grid-based layout with equal-sized cells
+- Photos maintain their natural aspect ratios
+- Photos can be clicked to view/edit details
+- Drag and drop to reorder
+
+#### Masonry Layout
+
+- Column-based layout with varied heights
+- Photos arranged in columns based on screen size
+- Natural aspect ratios preserved
+- Responsive to different screen sizes
+
+#### Portfolio Layout
+
+- Creative asymmetrical layout with different patterns
+- Multiple layout patterns based on number of photos
+- Pattern groups: 7-photo grid (3-3-1), 5-photo grid (2-2-1), 3-photo grid (2-1)
+- Visual variety while maintaining photo emphasis
+
+#### Carousel Layout
+
+- Instagram-style one-photo-at-a-time slideshow
+- Shows a single photo with previous/next controls
+- Thumbnail strip for navigation and drag-and-drop reordering
+- Dynamic container sizing to accommodate photo aspect ratios
+- Dot indicators showing current position in the photo sequence
+- Keyboard navigation with left/right arrow keys
+
+### Carousel Layout Details
+
+The Carousel layout provides a focused, one-at-a-time viewing experience:
+
+1. **Main Features**:
+
+   - Full-width display of individual photos
+   - Navigation buttons for previous/next photos
+   - Dot indicators showing current position and total photos
+   - Thumbnail strip for quick navigation and drag-and-drop reordering
+   - Keyboard navigation support (arrow keys)
+   - Dynamic height adjustment based on photo aspect ratio
+
+2. **Implementation Details**:
+
+   - Main container adapts to photo dimensions
+   - Thumbnails show a small preview of each photo
+   - Current photo is highlighted in the thumbnail strip
+   - Navigation is circular (loops back to beginning/end)
+   - Uses modern animation and transitions for smooth changes
+   - Drag-and-drop reordering updates both UI and database
+
+3. **Usage Scenarios**:
+
+   - Ideal for showcasing high-quality photos one at a time
+   - Perfect for portfolios where each image deserves focused attention
+   - Good for storytelling with sequential images
+   - Works well for photo series or process documentation
+
+4. **Accessibility Features**:
+
+   - Keyboard navigation support
+   - ARIA labels on controls
+   - Screen reader compatible indicators
+   - Focus indication on interactive elements
+
+5. **Technical Implementation**:
+   - Uses React state for tracking current photo index
+   - Leverages CSS transitions for smooth animations
+   - Implements dnd-kit for drag-and-drop functionality
+   - Auto-adjusts to different screen sizes and orientations
+   - Responds to user image uploads/deletions in real-time
+
+### Lessons Learned
+
+1. **Responsive Design**: Implemented layouts that work well across different screen sizes and orientations.
+2. **Dynamic Aspect Ratios**: Preserved natural photo aspect ratios for all layout types.
+3. **Drag-and-Drop Implementation**: Created intuitive interfaces for photo reordering with immediate visual feedback.
+4. **Visual Hierarchy**: Designed layouts to highlight photos without distracting elements.
+5. **Performance Optimization**: Optimized image loading and rendering for smooth user experience.
+
+### Future Improvements
+
+- Add animation transitions between photos in carousel view
+- Implement fullscreen viewing mode for photos
+- Add more advanced filtering and sorting options
+- Enhance the photo viewer with lightbox functionality
+- Add batch upload and editing capabilities
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options

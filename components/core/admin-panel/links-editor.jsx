@@ -27,6 +27,7 @@ import axios from 'axios';
 import { signalIframe } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 import LinkSkeleton from './link-skeleton';
+import PhotoBookTab from '../photo-book/photo-book-tab';
 
 const LinksEditor = () => {
   const { data: currentUser } = useCurrentUser();
@@ -131,6 +132,11 @@ const LinksEditor = () => {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Photo Book Section */}
+        <div className="mt-12 border-t pt-8">
+          <PhotoBookTab />
         </div>
       </div>
       <div className="h-[40px] mb-12" />
