@@ -1,9 +1,12 @@
 import { Plus } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import AddLinkModal from '../../shared/modals/add-new-link';
+import AddTextModal from '../../shared/modals/add-new-text';
+import AddPhotoBookModal from '../../shared/modals/add-new-photo-book';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from './link';
+import TextItem from './text-item';
 import PhotoBookItem from './photo-book-item';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import {
@@ -22,13 +25,14 @@ import {
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import useLinks from '@/hooks/useLinks';
+import useTexts from '@/hooks/useTexts';
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { signalIframe } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 import LinkSkeleton from './link-skeleton';
-import usePhotoBook from '@/hooks/usePhotoBook';
+import { usePhotoBook } from '@/hooks/usePhotoBook';
 
 // Special ID for the photo book item
 const PHOTO_BOOK_ID = 'photo-book-item';
@@ -46,31 +50,37 @@ const LinksEditor = () => {
 
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
-  const { data: userLinks, isLoading } = useLinks(userId);
+  const { data: userLinks, isLoading: isLinksLoading } = useLinks(userId);
+  const { data: userTexts, isLoading: isTextsLoading } = useTexts(userId);
   const queryClient = useQueryClient();
 
-  // Combined items array that includes links and the photo book item
+  // Combined items array that includes links, texts, and the photo book item
   const [sortableItems, setSortableItems] = useState([]);
 
-  // Update sortable items when links or photo book order changes
+  // Update sortable items when links, texts, or photo book order changes
   useEffect(() => {
-    if (!userLinks) return;
+    if (!userLinks && !userTexts) return;
 
-    // Create a combined array of link IDs and the photo book ID
-    // Position the photo book based on the photoBookOrder
-    const allItems = [...userLinks];
+    // Create arrays for links and texts (or empty arrays if none)
+    const links = userLinks || [];
+    const texts = userTexts || [];
 
-    // Only include photo book if the user has photos
-    if (hasPhotos) {
-      // Sort links by order to ensure correct positioning
-      const sortedLinks = [...allItems].sort((a, b) => a.order - b.order);
+    // Combine all items and sort by order
+    let allItems = [...links, ...texts].sort((a, b) => a.order - b.order);
 
+    // Check if we should display the photo book item
+    // Only show photo book if photoBookOrder is explicitly set (not null/undefined)
+    // When a photo book is deleted, photoBookOrder is set to null
+    const shouldShowPhotoBook =
+      photoBookOrder !== null && photoBookOrder !== undefined;
+
+    if (shouldShowPhotoBook) {
       // Find the correct position for the photo book
-      const photoBookPosition = Math.min(photoBookOrder, sortedLinks.length);
+      const photoBookPosition = Math.min(photoBookOrder, allItems.length);
 
       // Split the array and insert the photo book at the correct position
-      const itemsBeforePhotoBook = sortedLinks.slice(0, photoBookPosition);
-      const itemsAfterPhotoBook = sortedLinks.slice(photoBookPosition);
+      const itemsBeforePhotoBook = allItems.slice(0, photoBookPosition);
+      const itemsAfterPhotoBook = allItems.slice(photoBookPosition);
 
       // Reconstruct the array with the photo book at the correct position
       setSortableItems([
@@ -79,10 +89,10 @@ const LinksEditor = () => {
         ...itemsAfterPhotoBook,
       ]);
     } else {
-      // If no photos, just use the links
+      // If photoBookOrder is null or undefined, just use the links and texts
       setSortableItems(allItems);
     }
-  }, [userLinks, photoBookOrder, hasPhotos]);
+  }, [userLinks, userTexts, photoBookOrder]);
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
@@ -137,12 +147,19 @@ const LinksEditor = () => {
         setSortableItems(oldItems);
       }
     } else if (over.id === PHOTO_BOOK_ID) {
-      // A link was moved to the position of the photo book
-      // Extract only the links for updating
+      // A link or text was moved to the position of the photo book
+      // Extract only the non-photo book items for updating
       const newLinks = newItems
-        .filter((item) => !item.isPhotoBook)
+        .filter((item) => !item.isPhotoBook && !('content' in item))
         .map((link, index) => ({
           ...link,
+          order: index,
+        }));
+
+      const newTexts = newItems
+        .filter((item) => !item.isPhotoBook && 'content' in item)
+        .map((text, index) => ({
+          ...text,
           order: index,
         }));
 
@@ -151,10 +168,17 @@ const LinksEditor = () => {
         (item) => item.id === PHOTO_BOOK_ID
       );
 
-      // Update both link order and photo book order
+      // Update link order, text order, and photo book order
       try {
-        // Update links order
-        await updateLinksOrderMutation.mutateAsync(newLinks);
+        // Update links order if there are any links
+        if (newLinks.length > 0) {
+          await updateLinksOrderMutation.mutateAsync(newLinks);
+        }
+
+        // Update texts order if there are any texts
+        if (newTexts.length > 0) {
+          await updateTextsOrderMutation.mutateAsync(newTexts);
+        }
 
         // Update photo book order
         await axios.patch('/api/users/update', {
@@ -178,20 +202,35 @@ const LinksEditor = () => {
         setSortableItems(oldItems);
       }
     } else {
-      // Link was moved to another link's position
-      // Extract only the links for updating
+      // Item was moved to another item's position
+      // Extract the links and texts for updating
       const newLinks = newItems
-        .filter((item) => !item.isPhotoBook)
+        .filter((item) => !item.isPhotoBook && !('content' in item))
         .map((link, index) => ({
           ...link,
           order: index,
         }));
 
-      // Update link order
+      const newTexts = newItems
+        .filter((item) => !item.isPhotoBook && 'content' in item)
+        .map((text, index) => ({
+          ...text,
+          order: index,
+        }));
+
+      // Update orders
       try {
-        await updateLinksOrderMutation.mutateAsync(newLinks);
+        // Update links order if there are any links
+        if (newLinks.length > 0) {
+          await updateLinksOrderMutation.mutateAsync(newLinks);
+        }
+
+        // Update texts order if there are any texts
+        if (newTexts.length > 0) {
+          await updateTextsOrderMutation.mutateAsync(newTexts);
+        }
       } catch (error) {
-        console.error('Error updating link order:', error);
+        console.error('Error updating orders:', error);
         // Revert to original state on error
         setSortableItems(oldItems);
       }
@@ -212,6 +251,20 @@ const LinksEditor = () => {
     }
   );
 
+  const updateTextsOrderMutation = useMutation(
+    async (newTexts) => {
+      await axios.put(`/api/texts`, {
+        texts: newTexts,
+      });
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['texts', currentUser?.id]);
+        signalIframe();
+      },
+    }
+  );
+
   return (
     <DndContext
       sensors={sensors}
@@ -220,22 +273,50 @@ const LinksEditor = () => {
       modifiers={[restrictToVerticalAxis]}
     >
       <div className="max-w-[640px] mx-auto my-10">
-        <Dialog.Root>
-          <Dialog.Trigger asChild>
-            <div className="">
+        {/* Three buttons container */}
+        <div className="grid grid-cols-3 gap-2">
+          {/* Add Link Button */}
+          <Dialog.Root>
+            <Dialog.Trigger asChild>
               <button
-                className="bg-slate-900 w-full font-medium flex justify-center gap-1 
-                				items-center h-12 px-8 rounded-3xl text-white hover:bg-slate-700"
+                className="bg-slate-900 font-medium flex justify-center gap-1 
+                items-center h-12 px-4 rounded-3xl text-white hover:bg-slate-700"
               >
-                <Plus /> Add link
+                <Plus /> Add Link
               </button>
-            </div>
-          </Dialog.Trigger>
-          <AddLinkModal />
-        </Dialog.Root>
+            </Dialog.Trigger>
+            <AddLinkModal />
+          </Dialog.Root>
+
+          {/* Add Text Button */}
+          <Dialog.Root>
+            <Dialog.Trigger asChild>
+              <button
+                className="bg-slate-900 font-medium flex justify-center gap-1 
+                items-center h-12 px-4 rounded-3xl text-white hover:bg-slate-700"
+              >
+                <Plus /> Add Text
+              </button>
+            </Dialog.Trigger>
+            <AddTextModal />
+          </Dialog.Root>
+
+          {/* Add Photo Button */}
+          <Dialog.Root>
+            <Dialog.Trigger asChild>
+              <button
+                className="bg-slate-900 font-medium flex justify-center gap-1 
+                items-center h-12 px-4 rounded-3xl text-white hover:bg-slate-700"
+              >
+                <Plus /> Add Photo
+              </button>
+            </Dialog.Trigger>
+            <AddPhotoBookModal />
+          </Dialog.Root>
+        </div>
 
         <div className="my-10">
-          {!isLoading && sortableItems.length > 0 ? (
+          {!isLinksLoading && !isTextsLoading && sortableItems.length > 0 ? (
             <SortableContext
               items={sortableItems}
               strategy={verticalListSortingStrategy}
@@ -256,6 +337,22 @@ const LinksEditor = () => {
                   );
                 }
 
+                // Check if it's a text item (has content property) or a link
+                if ('content' in item) {
+                  // Render TextItem for text items
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <TextItem key={item.id} id={item.id} {...item} />
+                    </motion.div>
+                  );
+                }
+
                 // Render Link for regular links
                 return (
                   <motion.div
@@ -270,7 +367,7 @@ const LinksEditor = () => {
                 );
               })}
             </SortableContext>
-          ) : isLoading ? (
+          ) : isLinksLoading || isTextsLoading ? (
             Array.from({ length: 4 }).map((_, i) => <LinkSkeleton key={i} />)
           ) : (
             <div className="mt-4 w-[245px] h-auto flex flex-col mx-auto">

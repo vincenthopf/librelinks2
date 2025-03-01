@@ -244,3 +244,55 @@ isValidUrl('example.com'); // returns true
 isValidUrl('not a url'); // returns false
 isValidUrl('http://example.com'); // returns true
 ```
+
+## TextCard Component
+
+The TextCard component displays text content with an expandable/collapsible view.
+
+### Props
+
+```typescript
+interface TextCardProps {
+  title: string;
+  content: string;
+  buttonStyle: string;
+  theme: {
+    primary: string;
+    secondary: string;
+    neutral: string;
+    accent: string;
+  };
+  fontSize: number;
+  fontFamily: string;
+  cardHeight: number;
+  archived?: boolean;
+}
+```
+
+### Features
+
+- Displays text title and content
+- Expandable/collapsible content view
+- "Read more"/"Show less" toggle for long content
+- Consistent styling with LinkCard component
+- Customizable font sizes and families
+- Theme-aware styling
+
+### Usage
+
+```jsx
+<TextCard
+  title="About Me"
+  content="This is my bio information that can be expanded to show more text..."
+  buttonStyle="rounded-lg"
+  theme={{
+    primary: '#ffffff',
+    secondary: '#f3f4f6',
+    neutral: '#9ca3af',
+    accent: '#1f2937',
+  }}
+  fontSize={14}
+  fontFamily="Inter"
+  cardHeight={16}
+/>
+```

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import useCurrentUser from './useCurrentUser';
 
-const usePhotoBook = () => {
+export const usePhotoBook = () => {
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
 
@@ -48,6 +48,30 @@ const usePhotoBook = () => {
     onError: (error) => {
       console.error('Upload error:', error);
       toast.error(error.response?.data?.message || 'Failed to upload photo');
+    },
+  });
+
+  // Upload multiple photos at once
+  const uploadMultipleMutation = useMutation({
+    mutationFn: async ({ photos }) => {
+      // Check if photos is provided and is an array
+      if (!photos || !Array.isArray(photos) || photos.length === 0) {
+        throw new Error('No photos to upload');
+      }
+
+      // Send photos to the new batch upload endpoint
+      const { data } = await axios.post('/api/photobook/upload-batch', {
+        photos,
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['photobook', currentUser?.id]);
+      // Toast message is handled by the component to show the count
+    },
+    onError: (error) => {
+      console.error('Batch upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload photos');
     },
   });
 
@@ -123,8 +147,9 @@ const usePhotoBook = () => {
     photos: Array.isArray(photos) ? photos : [],
     isLoadingPhotos,
     photosError,
-    uploadPhoto: uploadMutation.mutateAsync,
-    isUploading: uploadMutation.isLoading,
+    uploadMutation,
+    uploadMultipleMutation,
+    isUploading: uploadMutation.isLoading || uploadMultipleMutation.isLoading,
     updatePhoto: updateMutation.mutateAsync,
     isUpdating: updateMutation.isLoading,
     deletePhoto: deleteMutation.mutateAsync,
@@ -136,4 +161,5 @@ const usePhotoBook = () => {
   };
 };
 
+// For backward compatibility with any code that might be using default import
 export default usePhotoBook;

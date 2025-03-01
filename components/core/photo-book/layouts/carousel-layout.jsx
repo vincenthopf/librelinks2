@@ -16,7 +16,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import usePhotoBook from '@/hooks/usePhotoBook';
+import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable thumbnail component for the carousel
@@ -101,7 +101,7 @@ const CarouselLayout = ({
         setCurrentIndex(0);
       }
     }
-  }, [photos]);
+  }, [photos, currentIndex]);
 
   // Handle image load to adjust container size
   const handleImageLoad = () => {
@@ -145,23 +145,24 @@ const CarouselLayout = ({
     setCurrentIndex(newIndex);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'ArrowLeft') {
-      goToPrevious();
-    } else if (e.key === 'ArrowRight') {
-      goToNext();
-    }
-  };
-
   // Add keyboard navigation
   useEffect(() => {
     if (!isPublicView) {
+      // Move handleKeyDown inside useEffect
+      const handleKeyDown = (e) => {
+        if (e.key === 'ArrowLeft') {
+          goToPrevious();
+        } else if (e.key === 'ArrowRight') {
+          goToNext();
+        }
+      };
+
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [currentIndex, isPublicView]);
+  }, [isPublicView, goToPrevious, goToNext]);
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;

@@ -16,7 +16,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import usePhotoBook from '@/hooks/usePhotoBook';
+import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable photo item component

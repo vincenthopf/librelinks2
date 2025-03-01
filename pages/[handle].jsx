@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import LinkCard from '@/components/core/user-profile/links-card';
+import TextCard from '@/components/core/user-profile/text-card';
 import * as Avatar from '@radix-ui/react-avatar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -11,6 +12,7 @@ import useUser from '@/hooks/useUser';
 import Loader from '@/components/utils/loading-spinner';
 import NotFound from '@/components/utils/not-found';
 import useLinks from '@/hooks/useLinks';
+import useTexts from '@/hooks/useTexts';
 import Script from 'next/script';
 import { SocialCards } from '@/components/core/user-profile/social-cards';
 import Head from 'next/head';
@@ -48,6 +50,11 @@ const ProfilePage = () => {
   } = useUser(handle);
 
   const { data: userLinks, isFetching: isLinksFetching } = useLinks(
+    fetchedUser?.id
+  );
+
+  // Fetch text items
+  const { data: userTexts, isFetching: isTextsFetching } = useTexts(
     fetchedUser?.id
   );
 
@@ -297,105 +304,168 @@ const ProfilePage = () => {
             {(() => {
               // If there are no photos or no links, just render what exists
               if (!photos || photos.length === 0) {
-                // Just render links (no photo book)
-                return userLinks
-                  ?.filter((link) => !link.isSocial && !link.archived)
-                  .map(({ id, ...link }) => (
-                    <LinkCard
-                      buttonStyle={buttonStyle}
-                      theme={theme}
-                      id={id}
-                      key={id}
-                      fontSize={fetchedUser?.linkTitleFontSize || 14}
-                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                      cardHeight={fetchedUser?.linkCardHeight || 16}
-                      {...link}
-                      registerClicks={() => handleRegisterClick(id)}
-                    />
-                  ));
+                // Combine links and texts
+                const allItems = [
+                  ...(userLinks?.filter(
+                    (link) => !link.isSocial && !link.archived
+                  ) || []),
+                  ...(userTexts || []),
+                ].sort((a, b) => a.order - b.order);
+
+                return allItems.map((item) => {
+                  // If it has URL property, it's a link
+                  if ('url' in item) {
+                    return (
+                      <LinkCard
+                        buttonStyle={buttonStyle}
+                        theme={theme}
+                        id={item.id}
+                        key={item.id}
+                        fontSize={fetchedUser?.linkTitleFontSize || 14}
+                        fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                        cardHeight={fetchedUser?.linkCardHeight || 16}
+                        {...item}
+                        registerClicks={() => handleRegisterClick(item.id)}
+                      />
+                    );
+                  } else {
+                    // Otherwise it's a text item
+                    return (
+                      <TextCard
+                        buttonStyle={buttonStyle}
+                        theme={theme}
+                        id={item.id}
+                        key={item.id}
+                        fontSize={fetchedUser?.linkTitleFontSize || 14}
+                        fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                        cardHeight={fetchedUser?.linkCardHeight || 16}
+                        {...item}
+                      />
+                    );
+                  }
+                });
               }
 
               if (
-                !userLinks ||
-                userLinks.filter((l) => !l.isSocial && !l.archived).length === 0
+                !userLinks &&
+                !userTexts &&
+                !userLinks?.filter((l) => !l.isSocial && !l.archived).length ===
+                  0 &&
+                !userTexts?.length === 0
               ) {
-                // Just render photo book (no links)
+                // Just render photo book (no links or texts)
                 return <div className="w-full">{renderPhotoBook()}</div>;
               }
 
-              // Get non-social links
+              // Combine regular links and texts
               const regularLinks =
                 userLinks?.filter((link) => !link.isSocial && !link.archived) ||
                 [];
+              const allItems = [...regularLinks, ...(userTexts || [])].sort(
+                (a, b) => a.order - b.order
+              );
 
               // Determine photo book position based on photoBookOrder
               const photoBookOrder = fetchedUser?.photoBookOrder || 9999;
               const photoBookPosition = Math.min(
                 photoBookOrder,
-                regularLinks.length
+                allItems.length
               );
 
-              // Split links into before and after photo book
-              const linksBeforePhotoBook = regularLinks.slice(
-                0,
-                photoBookPosition
-              );
-              const linksAfterPhotoBook = regularLinks.slice(photoBookPosition);
+              // Split items into before and after photo book
+              const itemsBeforePhotoBook = allItems.slice(0, photoBookPosition);
+              const itemsAfterPhotoBook = allItems.slice(photoBookPosition);
 
-              // Render links before photo book
-              const beforeContent = linksBeforePhotoBook.map(
-                ({ id, ...link }) => (
-                  <LinkCard
-                    buttonStyle={buttonStyle}
-                    theme={theme}
-                    id={id}
-                    key={id}
-                    fontSize={fetchedUser?.linkTitleFontSize || 14}
-                    fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                    cardHeight={fetchedUser?.linkCardHeight || 16}
-                    {...link}
-                    registerClicks={() => handleRegisterClick(id)}
-                  />
-                )
-              );
+              // Render items before photo book
+              const beforeContent = itemsBeforePhotoBook.map((item) => {
+                // If it has URL property, it's a link
+                if ('url' in item) {
+                  return (
+                    <LinkCard
+                      buttonStyle={buttonStyle}
+                      theme={theme}
+                      id={item.id}
+                      key={item.id}
+                      fontSize={fetchedUser?.linkTitleFontSize || 14}
+                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                      cardHeight={fetchedUser?.linkCardHeight || 16}
+                      {...item}
+                      registerClicks={() => handleRegisterClick(item.id)}
+                    />
+                  );
+                } else {
+                  // Otherwise it's a text item
+                  return (
+                    <TextCard
+                      buttonStyle={buttonStyle}
+                      theme={theme}
+                      id={item.id}
+                      key={item.id}
+                      fontSize={fetchedUser?.linkTitleFontSize || 14}
+                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                      cardHeight={fetchedUser?.linkCardHeight || 16}
+                      {...item}
+                    />
+                  );
+                }
+              });
 
               // Render photo book
               const photoBookContent = (
                 <div className="w-full">{renderPhotoBook()}</div>
               );
 
-              // Render links after photo book
-              const afterContent = linksAfterPhotoBook.map(
-                ({ id, ...link }) => (
-                  <LinkCard
-                    buttonStyle={buttonStyle}
-                    theme={theme}
-                    id={id}
-                    key={id}
-                    fontSize={fetchedUser?.linkTitleFontSize || 14}
-                    fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                    cardHeight={fetchedUser?.linkCardHeight || 16}
-                    {...link}
-                    registerClicks={() => handleRegisterClick(id)}
-                  />
-                )
-              );
+              // Render items after photo book
+              const afterContent = itemsAfterPhotoBook.map((item) => {
+                // If it has URL property, it's a link
+                if ('url' in item) {
+                  return (
+                    <LinkCard
+                      buttonStyle={buttonStyle}
+                      theme={theme}
+                      id={item.id}
+                      key={item.id}
+                      fontSize={fetchedUser?.linkTitleFontSize || 14}
+                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                      cardHeight={fetchedUser?.linkCardHeight || 16}
+                      {...item}
+                      registerClicks={() => handleRegisterClick(item.id)}
+                    />
+                  );
+                } else {
+                  // Otherwise it's a text item
+                  return (
+                    <TextCard
+                      buttonStyle={buttonStyle}
+                      theme={theme}
+                      id={item.id}
+                      key={item.id}
+                      fontSize={fetchedUser?.linkTitleFontSize || 14}
+                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                      cardHeight={fetchedUser?.linkCardHeight || 16}
+                      {...item}
+                    />
+                  );
+                }
+              });
 
               // Combine all content in the correct order
               return [...beforeContent, photoBookContent, ...afterContent];
             })()}
           </div>
 
-          {userLinks?.length === 0 && !photos?.length && (
-            <div className="flex justify-center">
-              <h3
-                style={{ color: theme.neutral }}
-                className="pt-8 text-md text-white font-semibold lg:text-2xl"
-              >
-                Hello World 🚀
-              </h3>
-            </div>
-          )}
+          {userLinks?.length === 0 &&
+            !photos?.length &&
+            (!userTexts || userTexts.length === 0) && (
+              <div className="flex justify-center">
+                <h3
+                  style={{ color: theme.neutral }}
+                  className="pt-8 text-md text-white font-semibold lg:text-2xl"
+                >
+                  Hello World 🚀
+                </h3>
+              </div>
+            )}
         </div>
         <div className="my-10 lg:my-24" />
         {userLinks?.length > 0 ? (

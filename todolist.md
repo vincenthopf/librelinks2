@@ -36,6 +36,54 @@
   - ✓ Implement proper error boundaries
   - ✓ Add loading states
 
+# Photo Book Implementation
+
+## Basic Photo Book Functionality
+
+- [x] Connect "Add Photo" button to modal
+
+  - ✓ Implement AddPhotoBookModal component
+  - ✓ Add modal trigger to LinksEditor
+  - ✓ Ensure modal opens correctly when clicking "Add Photo"
+
+- [x] Create Photo Book Item
+
+  - ✓ Implement PhotoBookItem component
+  - ✓ Display photo count badge
+  - ✓ Add expandable interface for photo management
+  - ✓ Ensure LinksEditor displays PhotoBookItem even with no photos
+
+- [x] Improve Photo Book management
+  - ✓ Add delete button that removes entire Photo Book section
+  - ✓ Store and display photo book title and description
+  - ✓ Handle re-creating photo books after deletion
+  - ✓ Properly clear metadata when deleting photo book
+
+## Multiple Photo Books Implementation
+
+- [ ] Update Photo Book Data Model
+
+  - [ ] Create PhotoBook model in database schema
+  - [ ] Add relations to User and Photo models
+  - [ ] Migrate existing photo data to new model
+
+- [ ] Create Add Photo Book Modal
+
+  - [ ] Implement modal for adding new photo books
+  - [ ] Add form fields for title, description, and layout
+  - [ ] Support uploading photos during creation
+
+- [ ] Modify PhotoBookItem Component
+
+  - [ ] Update to support multiple photo books
+  - [ ] Add navigation between photo books
+  - [ ] Implement photo book-specific actions
+
+- [ ] Implement Backend APIs
+  - [ ] Create CRUD endpoints for photo books
+  - [ ] Add photo assignment to specific photo books
+  - [ ] Implement ordering within photo books
+
 ## Testing & Validation
 
 - [ ] Test Link Creation

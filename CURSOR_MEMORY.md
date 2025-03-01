@@ -1260,3 +1260,4903 @@ const toggleExpand = (e) => {
   - The field was correctly defined in the schema and updated in the database
   - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
   - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+3. Enhance the UI for managing multiple books
+4. Provide more options for organizing and displaying photos
+
+# Cursor Memory - Photo Book Layout Enhancements
+
+## Photo Layout Aspect Ratio Improvements
+
+### Problem
+
+Previously, the photo layouts (Grid, Masonry, Portfolio) were using fixed-size containers with forced aspect ratios. This resulted in:
+
+- Images being cropped to fit the containers
+- Loss of visual content due to cropping
+- Distortion of the original image aspect ratios
+- Reduced visual quality in the photo displays
+
+### Solution
+
+Updated the image handling to respect native aspect ratios:
+
+1. Enhanced the `CloudinaryImage` component with:
+
+   - Added a `preserveAspectRatio` prop to control aspect ratio behavior
+   - Removed forced cropping when preserving aspect ratio
+   - Implemented proper padding-based container sizing based on natural image dimensions
+   - Added proper loading states that maintain layout stability
+
+2. Updated the Grid, Masonry, and Portfolio layouts:
+
+   - Removed all fixed height classes
+   - Enabled preserveAspectRatio on all image components
+   - Simplified container structures to allow images to define their own dimensions
+   - Provided fallback minimum heights for error states
+
+3. For Masonry layout specifically:
+   - Simplified the column distribution to round-robin assignment
+   - This works better with natural aspect ratios as heights are now determined by image content
+
+### Benefits
+
+- Images display with their natural proportions
+- No content is cropped or distorted
+- Layouts adapt to the actual image dimensions
+- Visual quality is improved across all layouts
+- Better user experience with photos displayed as intended
+
+### Implementation
+
+- All image containers now adapt to the natural aspect ratio of the uploaded photos
+- Layout structure is maintained while allowing images to dictate their own dimensions
+- Each layout still maintains its unique presentation style while respecting image proportions
+
+## Photo Container Style Improvements
+
+### Problem
+
+The photo containers had rounded corners and excessive spacing between images, which:
+
+- Created inconsistency with other UI elements that may have square corners
+- Reduced the amount of visible photo content due to larger gaps
+- Resulted in a more spaced-out, less cohesive visual appearance
+- Made the photo book layouts appear less like a traditional photo album or gallery
+
+### Solution
+
+Updated the photo containers to have square corners and minimal spacing:
+
+1. Removed rounded corners:
+
+   - Removed all `rounded-md` classes from image containers in all layouts
+   - Created clean, 90-degree corner containers for a more modern look
+   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
+
+2. Reduced spacing between images:
+   - Changed Grid layout from `gap-3` to `gap-1`
+   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
+   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
+   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
+
+### Benefits
+
+- More content-focused display with less wasted space
+- Cleaner, more professional appearance with square corners
+- More photos visible in the same viewport area
+- Better use of available screen real estate
+- More cohesive, grid-like appearance across all layouts
+
+### Implementation
+
+- All image containers now have 90-degree corners instead of rounded ones
+- Spacing between images is minimal but still present to prevent images from bleeding together
+- Consistency maintained across all three layout options
+
+# Reorderable Photo Book Feature
+
+## Overview
+
+The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
+
+## Implementation Details
+
+### Database Schema
+
+Added a new field to the User model to track the position of the Photo Book:
+
+```prisma
+model User {
+  // ... other fields ...
+  photoBookLayout      String      @default("grid") // Layout style for photo book
+  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
+}
+```
+
+- The `photoBookOrder` field determines where the Photo Book appears relative to links.
+- By default, it's set to 9999 to position it at the end of all links.
+
+### Components
+
+#### PhotoBookItem
+
+- Created a new draggable component that represents the Photo Book in the admin UI.
+- Visually resembles the Link component for a consistent user experience.
+- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
+
+#### LinksEditor
+
+- Updated to include the Photo Book as a draggable item alongside links.
+- Maintains a combined array of both link items and the Photo Book item.
+- Handles repositioning of the Photo Book with respect to links.
+- Updates both link order and Photo Book order when items are repositioned.
+
+### Profile Page Rendering
+
+- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
+- Splits regular links into two groups: before and after the Photo Book.
+- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
+- Gracefully handles edge cases when there are no links or no photos.
+
+### API Endpoints
+
+- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
+- The links API endpoint continues to handle link order updates.
+
+## Usage
+
+1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
+2. The Photo Book position persists and appears in the correct position on the public profile.
+3. The Photo Book and links can be freely reordered without limitations.
+
+## Technical Considerations
+
+1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
+2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
+3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
+4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
+
+## Future Enhancements
+
+1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
+2. Allow toggling Photo Book visibility without removing all photos.
+3. Consider extending this pattern to other content sections that may be added in the future.
+
+# Collapsible Photo Book Implementation
+
+## Overview
+
+The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
+
+## Implementation Details
+
+### Component Structure
+
+1. **PhotoBookItem Component**
+
+   - Added collapsible functionality using `useState` hook
+   - Implemented toggle button with chevron indicators
+   - Used Framer Motion for smooth animation effects
+   - Maintained drag-and-drop functionality for reordering
+
+2. **PhotoBookTab Adaptation**
+   - Added `embedded` prop to modify styling when used in the collapsible panel
+   - Conditionally renders heading based on context
+   - Adjusted spacing for better integration in the collapsible panel
+   - Maintained all functionality (layout selection, photo upload, etc.)
+
+### Animation
+
+- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
+- Implemented height and opacity transitions
+- Added border separation between header and content
+- Ensured smooth performance even with many photos
+
+### User Experience Improvements
+
+- Users can now manage photos without leaving the main admin interface
+- Consistent drag-and-drop behavior between links and the photo book
+- Clear visual indication of expandable content
+- Seamless transitions between collapsed and expanded states
+
+## Code Implementation
+
+```jsx
+// Collapsible toggle in PhotoBookItem
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Toggle function
+const toggleExpand = (e) => {
+  e.preventDefault();
+  setIsExpanded(!isExpanded);
+};
+
+// Animation container
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden border-t"
+    >
+      <div className="p-4">
+        <PhotoBookTab embedded={true} />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>;
+```
+
+## Future Considerations
+
+1. Consider adding a photo count indicator in the collapsed state
+2. Explore adding a mini preview of the photos in the collapsed state
+3. Monitor performance with large photo collections
+4. Consider adding a "quick edit" mode for faster photo management
+
+## Lessons Learned
+
+1. **Component Adaptability**: Components should be designed to work in multiple contexts
+2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
+3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
+4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
+
+## API Select Clause Completeness
+
+### Field Selection in API Endpoints
+
+- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
+  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
+  - The select clause determines which fields are returned in the API response
+  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
+
+### Debugging Drag-and-Drop Issues
+
+- When drag-and-drop functionality doesn't work as expected:
+  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
+  2. Ensure the field is returned by the user data fetch operations
+  3. Verify the field is being correctly updated in the database
+  4. Check that the client-side state is updated with the new value
+- The `photoBookOrder` field issue:
+  - The field was correctly defined in the schema and updated in the database
+  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
+  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
+
+# Project Knowledge Base
+
+## Project Structure
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
+
+- **Component Types**: The project supports multiple component types:
+
+  - Links (original functionality)
+  - Text components (recently implemented)
+  - Photo Books (partially implemented)
+
+- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
+
+## Component Architecture
+
+- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
+- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
+- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
+
+## Database Models
+
+- **User**: Central model with relations to all content types
+- **Link**: For URL links with optional rich media previews
+- **Text**: For text-only content
+- **PhotoBookImage**: For images in photo albums
+
+## Implementation Lessons
+
+1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
+
+2. **Data Flow**:
+
+   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
+   - Preview components load the actual user profile through an iframe
+   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
+
+3. **Rendering Logic in [handle].jsx**:
+
+   - The profile page renders different content types based on their properties
+   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
+   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
+
+4. **Theme System**:
+   - Components should respect the user's theme preferences
+   - Theme colors are passed to components via props
+   - Consistent styling should be maintained across component types
+
+# Photo Book Implementation
+
+## Current State and Implementation
+
+The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
+
+### Key Components:
+
+1. **PhotoBookItem Component**:
+
+   - Displays a draggable photo book item in the links editor
+   - Shows photo count and provides options to expand/collapse and delete
+   - When expanded, shows the PhotoBookTab component
+
+2. **PhotoBookTab Component**:
+
+   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
+   - Contains the photo upload interface
+   - Handles layout switching and display options
+
+3. **PhotoUpload Component**:
+
+   - Provides drag-and-drop file upload functionality
+   - Handles validation and Cloudinary uploading
+   - Allows adding title and description to photos
+
+4. **AddPhotoBookModal Component**:
+   - Allows creating a new photo book
+   - For existing photos: Shows direct upload interface
+   - For new users: Collects title/description and then shows upload interface
+
+### Data Flow:
+
+1. **usePhotoBook Hook**:
+
+   - Provides data and mutations for photo management
+   - Handles CRUD operations for photos
+   - Manages layout preferences
+
+2. **API Endpoints**:
+
+   - `/api/photobook/photos`: Fetches all photos for the current user
+   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
+   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
+
+3. **Database Structure**:
+   - `PhotoBookImage` model in Prisma for storing photo metadata
+   - Currently linked directly to `User` model (will be updated for multiple books)
+   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
+
+## Add Photo Button Fix
+
+The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
+
+1. Creating a new `AddPhotoBookModal` component that:
+
+   - Handles both new photo book creation and adding to existing photo books
+   - Uses a two-step process for new users (collect info, then upload)
+   - Integrates with the existing photo upload component
+
+2. Updating the `LinksEditor` component to:
+
+   - Connect the "Add Photo" button to the new modal
+   - Show the photo book item in the sortable list even when no photos exist yet
+   - Properly handle the photo book order in the list
+
+3. Enhancing the `PhotoBookItem` component to:
+   - Show the count of photos in the book
+   - Provide better visual feedback about the photo book contents
+
+### Implementation Details:
+
+For the initial implementation (before multiple photo books are supported):
+
+- We use the `photoBookOrder` field to indicate that a photo book should be displayed
+- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
+- The actual PhotoBookImage records are created when photos are uploaded
+- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
+
+## Future Enhancements:
+
+The multiple photo books implementation plan outlines a more robust approach that will:
+
+1. Create a dedicated PhotoBook model in the database
+2. Allow multiple photo books per user with different metadata
+
+- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/

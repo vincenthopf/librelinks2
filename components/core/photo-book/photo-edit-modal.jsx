@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CloudinaryImage } from '@/components/shared/cloudinary-image';
 import { Trash2, X } from 'lucide-react';
-import usePhotoBook from '@/hooks/usePhotoBook';
+import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { toast } from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
 

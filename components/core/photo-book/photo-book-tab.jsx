@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Grid, LayoutGrid, Rows } from 'lucide-react';
-import usePhotoBook from '@/hooks/usePhotoBook';
+import { usePhotoBook } from '@/hooks/usePhotoBook';
 import PhotoUpload from './photo-upload';
 import PortfolioLayout from './layouts/portfolio-layout';
 import MasonryLayout from './layouts/masonry-layout';
