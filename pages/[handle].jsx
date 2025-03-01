@@ -287,28 +287,106 @@ const ProfilePage = () => {
                 );
               })}
           </div>
+
+          {/* Combined Links and Photo Book Section */}
           <div
             className="w-full flex flex-col"
             style={{ gap: `${fetchedUser?.betweenCardsPadding || 16}px` }}
           >
-            {userLinks
-              ?.filter((link) => !link.isSocial)
-              .map(({ id, ...link }) => (
-                <LinkCard
-                  buttonStyle={buttonStyle}
-                  theme={theme}
-                  id={id}
-                  key={id}
-                  fontSize={fetchedUser?.linkTitleFontSize || 14}
-                  fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                  cardHeight={fetchedUser?.linkCardHeight || 16}
-                  {...link}
-                  registerClicks={() => handleRegisterClick(id)}
-                />
-              ))}
+            {/* Render content based on photoBookOrder */}
+            {(() => {
+              // If there are no photos or no links, just render what exists
+              if (!photos || photos.length === 0) {
+                // Just render links (no photo book)
+                return userLinks
+                  ?.filter((link) => !link.isSocial && !link.archived)
+                  .map(({ id, ...link }) => (
+                    <LinkCard
+                      buttonStyle={buttonStyle}
+                      theme={theme}
+                      id={id}
+                      key={id}
+                      fontSize={fetchedUser?.linkTitleFontSize || 14}
+                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                      cardHeight={fetchedUser?.linkCardHeight || 16}
+                      {...link}
+                      registerClicks={() => handleRegisterClick(id)}
+                    />
+                  ));
+              }
+
+              if (
+                !userLinks ||
+                userLinks.filter((l) => !l.isSocial && !l.archived).length === 0
+              ) {
+                // Just render photo book (no links)
+                return <div className="w-full">{renderPhotoBook()}</div>;
+              }
+
+              // Get non-social links
+              const regularLinks =
+                userLinks?.filter((link) => !link.isSocial && !link.archived) ||
+                [];
+
+              // Determine photo book position based on photoBookOrder
+              const photoBookOrder = fetchedUser?.photoBookOrder || 9999;
+              const photoBookPosition = Math.min(
+                photoBookOrder,
+                regularLinks.length
+              );
+
+              // Split links into before and after photo book
+              const linksBeforePhotoBook = regularLinks.slice(
+                0,
+                photoBookPosition
+              );
+              const linksAfterPhotoBook = regularLinks.slice(photoBookPosition);
+
+              // Render links before photo book
+              const beforeContent = linksBeforePhotoBook.map(
+                ({ id, ...link }) => (
+                  <LinkCard
+                    buttonStyle={buttonStyle}
+                    theme={theme}
+                    id={id}
+                    key={id}
+                    fontSize={fetchedUser?.linkTitleFontSize || 14}
+                    fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                    cardHeight={fetchedUser?.linkCardHeight || 16}
+                    {...link}
+                    registerClicks={() => handleRegisterClick(id)}
+                  />
+                )
+              );
+
+              // Render photo book
+              const photoBookContent = (
+                <div className="w-full">{renderPhotoBook()}</div>
+              );
+
+              // Render links after photo book
+              const afterContent = linksAfterPhotoBook.map(
+                ({ id, ...link }) => (
+                  <LinkCard
+                    buttonStyle={buttonStyle}
+                    theme={theme}
+                    id={id}
+                    key={id}
+                    fontSize={fetchedUser?.linkTitleFontSize || 14}
+                    fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
+                    cardHeight={fetchedUser?.linkCardHeight || 16}
+                    {...link}
+                    registerClicks={() => handleRegisterClick(id)}
+                  />
+                )
+              );
+
+              // Combine all content in the correct order
+              return [...beforeContent, photoBookContent, ...afterContent];
+            })()}
           </div>
 
-          {userLinks?.length === 0 && (
+          {userLinks?.length === 0 && !photos?.length && (
             <div className="flex justify-center">
               <h3
                 style={{ color: theme.neutral }}
@@ -317,11 +395,6 @@ const ProfilePage = () => {
                 Hello World 🚀
               </h3>
             </div>
-          )}
-
-          {/* Photo Book Section */}
-          {photos && photos.length > 0 && (
-            <div className="w-full mt-8">{renderPhotoBook()}</div>
           )}
         </div>
         <div className="my-10 lg:my-24" />

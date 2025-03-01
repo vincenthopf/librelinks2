@@ -9,7 +9,7 @@ import CarouselLayout from './layouts/carousel-layout';
 import { Button } from '@/components/ui/button';
 import { signalIframe } from '@/utils/helpers';
 
-const PhotoBookTab = () => {
+const PhotoBookTab = ({ embedded = false }) => {
   const {
     photos,
     isLoadingPhotos,
@@ -82,9 +82,9 @@ const PhotoBookTab = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={embedded ? 'space-y-4' : 'space-y-6'}>
       <div className="flex flex-col space-y-4">
-        <h3 className="text-xl font-semibold">Photo Book</h3>
+        {!embedded && <h3 className="text-xl font-semibold">Photo Book</h3>}
 
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col space-y-4">
@@ -189,7 +189,7 @@ const PhotoBookTab = () => {
         </div>
       </div>
 
-      <div className="mt-6">{renderLayoutContent()}</div>
+      <div className={embedded ? 'mt-4' : 'mt-6'}>{renderLayoutContent()}</div>
     </div>
   );
 };
