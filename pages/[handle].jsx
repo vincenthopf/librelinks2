@@ -303,7 +303,10 @@ const ProfilePage = () => {
           {/* Combined Links and Photo Book Section */}
           <div
             className="w-full flex flex-col"
-            style={{ gap: `${fetchedUser?.betweenCardsPadding || 16}px` }}
+            style={{
+              gap: `${fetchedUser?.betweenCardsPadding || 16}px`,
+              marginTop: `${fetchedUser?.bioToFirstCardPadding || 24}px`,
+            }}
           >
             {/* Render content based on photoBookOrder */}
             {(() => {

@@ -13,6 +13,7 @@ const PaddingSelector = () => {
     betweenCards: 16,
     cardHeight: 16,
     nameToBio: 10,
+    bioToFirstCard: 16,
   });
   const debounceTimerRef = useRef(null);
   const pendingUpdatesRef = useRef({});
@@ -50,6 +51,7 @@ const PaddingSelector = () => {
         betweenCards: currentUser.betweenCardsPadding ?? 16,
         cardHeight: currentUser.linkCardHeight ?? 16,
         nameToBio: currentUser.nameToBioPadding ?? 10,
+        bioToFirstCard: currentUser.bioToFirstCardPadding ?? 16,
       };
 
       // Compare values individually to prevent unnecessary updates
@@ -76,6 +78,7 @@ const PaddingSelector = () => {
         betweenCardsPadding: newPaddingValues.betweenCards,
         linkCardHeight: newPaddingValues.cardHeight,
         nameToBioPadding: newPaddingValues.nameToBio,
+        bioToFirstCardPadding: newPaddingValues.bioToFirstCard,
       });
     },
     {
@@ -160,7 +163,7 @@ const PaddingSelector = () => {
 
       // Round to nearest 5
       const roundedValue = Math.round(value / 5) * 5;
-      // Clamp between -200 and 200
+      // Clamp between -500 and 500
       const clampedValue = Math.max(-500, Math.min(500, roundedValue));
 
       // Update local state immediately
@@ -175,8 +178,11 @@ const PaddingSelector = () => {
     [debouncedApiUpdate]
   );
 
-  // Generate padding options from -200 to 200 in steps of 5
-  const paddingOptions = Array.from({ length: 61 }, (_, i) => -500 + i * 5);
+  // Generate padding options from -500 to 500 in steps of 5
+  const paddingOptions = Array.from({ length: 201 }, (_, i) => -500 + i * 5);
+
+  // Generate card height options from 40 to 200 in steps of 5
+  const cardHeightOptions = Array.from({ length: 33 }, (_, i) => (i + 8) * 5);
 
   // Reset to defaults handler
   const handleResetToDefaults = useCallback(() => {
@@ -186,6 +192,7 @@ const PaddingSelector = () => {
       betweenCards: 16,
       cardHeight: 16,
       nameToBio: 10,
+      bioToFirstCard: 16,
     };
 
     // Update local state immediately
@@ -260,15 +267,15 @@ const PaddingSelector = () => {
                   <div className="w-full px-1">
                     <input
                       type="range"
-                      min="-100"
-                      max="200"
+                      min="-500"
+                      max="500"
                       step="5"
                       value={paddingValues.headToPicture}
                       onChange={e => handlePaddingChange('headToPicture', parseInt(e.target.value))}
                       className="w-full"
                     />
                   </div>
-                  <span className="text-xs text-gray-500 ml-2">200px</span>
+                  <span className="text-xs text-gray-500 ml-2">500px</span>
                 </div>
               </div>
             </div>
@@ -310,14 +317,14 @@ const PaddingSelector = () => {
                     <input
                       type="range"
                       min="-500"
-                      max="200"
+                      max="500"
                       step="5"
                       value={paddingValues.pictureToName}
                       onChange={e => handlePaddingChange('pictureToName', parseInt(e.target.value))}
                       className="w-full"
                     />
                   </div>
-                  <span className="text-xs text-gray-500 ml-2">200px</span>
+                  <span className="text-xs text-gray-500 ml-2">500px</span>
                 </div>
               </div>
             </div>
@@ -358,15 +365,15 @@ const PaddingSelector = () => {
                   <div className="w-full px-1">
                     <input
                       type="range"
-                      min="-200"
-                      max="200"
+                      min="-500"
+                      max="500"
                       step="5"
                       value={paddingValues.nameToBio}
                       onChange={e => handlePaddingChange('nameToBio', parseInt(e.target.value))}
                       className="w-full"
                     />
                   </div>
-                  <span className="text-xs text-gray-500 ml-2">200px</span>
+                  <span className="text-xs text-gray-500 ml-2">500px</span>
                 </div>
               </div>
             </div>
@@ -378,6 +385,57 @@ const PaddingSelector = () => {
                   style={{ height: `${Math.abs(paddingValues.nameToBio)}px` }}
                 >
                   Overlap: {paddingValues.nameToBio}px
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bio to First Link Card - New padding control */}
+          <div>
+            <p className="text-inherit pb-2">
+              Bio to First Link Card{' '}
+              <span className="text-xs text-blue-500">(negative values = overlap)</span>
+            </p>
+            <div className="flex space-x-4">
+              <select
+                value={paddingValues.bioToFirstCard}
+                onChange={e => handlePaddingChange('bioToFirstCard', parseInt(e.target.value))}
+                className="w-1/3 p-2 border rounded-md"
+              >
+                {paddingOptions.map(size => (
+                  <option key={size} value={size}>
+                    {size}px
+                  </option>
+                ))}
+              </select>
+              <div className="w-2/3">
+                <div className="flex items-center">
+                  <span className="text-xs text-gray-500 mr-2">-500px</span>
+                  <div className="w-full px-1">
+                    <input
+                      type="range"
+                      min="-500"
+                      max="500"
+                      step="5"
+                      value={paddingValues.bioToFirstCard}
+                      onChange={e =>
+                        handlePaddingChange('bioToFirstCard', parseInt(e.target.value))
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  <span className="text-xs text-gray-500 ml-2">500px</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-2 bg-gray-200 rounded relative">
+              <div style={{ height: `${Math.max(0, paddingValues.bioToFirstCard)}px` }}></div>
+              {paddingValues.bioToFirstCard < 0 && (
+                <div
+                  className="bg-red-200 opacity-40 w-full flex items-center justify-center text-red-600 text-xs font-bold"
+                  style={{ height: `${Math.abs(paddingValues.bioToFirstCard)}px` }}
+                >
+                  Overlap: {paddingValues.bioToFirstCard}px
                 </div>
               )}
             </div>
@@ -407,15 +465,15 @@ const PaddingSelector = () => {
                   <div className="w-full px-1">
                     <input
                       type="range"
-                      min="-100"
-                      max="200"
+                      min="-500"
+                      max="500"
                       step="5"
                       value={paddingValues.betweenCards}
                       onChange={e => handlePaddingChange('betweenCards', parseInt(e.target.value))}
                       className="w-full"
                     />
                   </div>
-                  <span className="text-xs text-gray-500 ml-2">200px</span>
+                  <span className="text-xs text-gray-500 ml-2">500px</span>
                 </div>
               </div>
             </div>
@@ -441,7 +499,7 @@ const PaddingSelector = () => {
                 onChange={e => handlePaddingChange('cardHeight', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {Array.from({ length: 33 }, (_, i) => (i + 8) * 5).map(size => (
+                {cardHeightOptions.map(size => (
                   <option key={size} value={size}>
                     {size}px
                   </option>

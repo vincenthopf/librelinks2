@@ -29,6 +29,8 @@ export default async function handler(req, res) {
       faviconSize,
       // Background image
       backgroundImage,
+      // Spacing fields
+      bioToFirstCardPadding,
       // Other customization fields
       ...otherFields
     } = req.body;
@@ -97,6 +99,8 @@ export default async function handler(req, res) {
         faviconSize,
         // Background image - set to null if 'none' is selected
         backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
+        // Spacing fields
+        bioToFirstCardPadding,
         // Other customization fields
         ...otherFields,
       },
