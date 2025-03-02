@@ -221,6 +221,9 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
         />
       </div>
 
+      {/* Frame-specific controls - MOVED HERE */}
+      {template === 'rounded-corners' && renderFrameSpecificControls()}
+
       {/* Color and Thickness Controls */}
       {template !== 'none' && (
         <div className="flex flex-col md:flex-row gap-8">
@@ -354,9 +357,6 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
           </div>
         </div>
       )}
-
-      {/* Frame-specific controls */}
-      {renderFrameSpecificControls()}
     </div>
   );
 };
