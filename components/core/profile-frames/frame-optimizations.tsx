@@ -3,6 +3,7 @@
 /** @jsx React.createElement */
 import React, { useMemo } from 'react';
 import { FrameTemplate } from './frame-selector';
+import { CornerStyle } from './frame-templates/rounded-corners-frame';
 
 // Cache for rendered frames
 const frameCache = new Map<string, React.ReactElement>();
@@ -19,9 +20,24 @@ export const getFrameCacheKey = (
     type: string | null;
     enabled: boolean;
     config: Record<string, any>;
-  }
+  },
+  cornerStyle?: CornerStyle,
+  borderRadius?: number,
+  allCorners?: boolean,
+  topLeftRadius?: number,
+  topRightRadius?: number,
+  bottomLeftRadius?: number,
+  bottomRightRadius?: number
 ) => {
-  return `${template}-${size}-${color}-${rotation}-${thickness}-${name}-${JSON.stringify(animation)}`;
+  // Create a base key with common properties
+  let key = `${template}-${size}-${color}-${rotation}-${thickness}-${name}-${JSON.stringify(animation)}`;
+
+  // Add rounded corners properties if applicable
+  if (template === 'rounded-corners') {
+    key += `-${cornerStyle}-${borderRadius}-${allCorners}-${topLeftRadius}-${topRightRadius}-${bottomLeftRadius}-${bottomRightRadius}`;
+  }
+
+  return key;
 };
 
 // SVG optimization function
@@ -40,15 +56,14 @@ export const optimizeSvgPaths = (path: string): string => {
 };
 
 // Hook for optimized frame rendering
-export const useOptimizedFrame = (
-  renderFunction: () => React.ReactElement,
-  cacheKey: string
-) => {
+export const useOptimizedFrame = (renderFunction: () => React.ReactElement, cacheKey: string) => {
   return useMemo(() => {
+    // Check if we have a cached version
     if (frameCache.has(cacheKey)) {
-      return frameCache.get(cacheKey);
+      return frameCache.get(cacheKey)!;
     }
 
+    // Render and cache the frame
     const renderedFrame = renderFunction();
     frameCache.set(cacheKey, renderedFrame);
     return renderedFrame;
@@ -56,16 +71,15 @@ export const useOptimizedFrame = (
 };
 
 // Performance optimization styles
-export const getOptimizedStyles = (
-  isAnimated: boolean
-): React.CSSProperties => {
+export const getOptimizedStyles = (isAnimated: boolean) => {
+  // For animated frames, we need to avoid certain optimizations
+  if (isAnimated) {
+    return {};
+  }
+
+  // For static frames, apply performance optimizations
   return {
-    // Use hardware acceleration for animations
-    transform: 'translate3d(0,0,0)',
-    backfaceVisibility: 'hidden',
-    perspective: '1000px',
-    // Add will-change hint for animated elements
-    willChange: isAnimated ? 'transform, filter' : 'auto',
+    willChange: 'transform',
   };
 };
 

@@ -3,13 +3,15 @@ import { motion } from 'framer-motion';
 import { CircleFrame } from './frame-templates/circle-frame';
 import { PolaroidClassicFrame } from './frame-templates/polaroid-classic-frame';
 import { PolaroidPatternFrame } from './frame-templates/polaroid-pattern-frame';
+import { RoundedCornersFrame } from './frame-templates/rounded-corners-frame';
 import { FrameAnimation } from './frame-animations';
 
 export type FrameTemplate =
   | 'none'
   | 'circle'
   | 'polaroid-classic'
-  | 'polaroid-pattern';
+  | 'polaroid-pattern'
+  | 'rounded-corners';
 
 interface FrameSelectorProps {
   selectedTemplate: FrameTemplate;
@@ -25,6 +27,7 @@ const FRAME_TEMPLATES: { id: FrameTemplate; label: string }[] = [
   { id: 'circle', label: 'Circle' },
   { id: 'polaroid-classic', label: 'Polaroid Classic' },
   { id: 'polaroid-pattern', label: 'Square' },
+  { id: 'rounded-corners', label: 'Rounded Corners' },
 ];
 
 const PREVIEW_ANIMATION: FrameAnimation = {
@@ -63,6 +66,19 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
         return <PolaroidClassicFrame {...props} />;
       case 'polaroid-pattern':
         return <PolaroidPatternFrame {...props} />;
+      case 'rounded-corners':
+        return (
+          <RoundedCornersFrame
+            {...props}
+            cornerStyle="squircle"
+            borderRadius={20}
+            allCorners={true}
+            topLeftRadius={20}
+            topRightRadius={20}
+            bottomLeftRadius={20}
+            bottomRightRadius={20}
+          />
+        );
       default:
         return null;
     }

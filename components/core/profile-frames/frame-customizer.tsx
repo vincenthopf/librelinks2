@@ -2,11 +2,9 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { TransformControls } from './frame-transformations';
 import { FrameTemplate, FrameSelector } from './frame-selector';
-import {
-  FrameAnimation,
-  FRAME_ANIMATION_PRESETS,
-  FrameAnimationType,
-} from './frame-animations';
+import { FrameAnimation, FRAME_ANIMATION_PRESETS, FrameAnimationType } from './frame-animations';
+import { RoundedCornersCustomizer } from './rounded-corners-customizer';
+import { CornerStyle } from './frame-templates/rounded-corners-frame';
 import debounce from 'lodash/debounce';
 
 interface FrameCustomizerProps {
@@ -18,6 +16,13 @@ interface FrameCustomizerProps {
   syncRotation: boolean;
   animation: FrameAnimation;
   name: string;
+  cornerStyle?: CornerStyle;
+  borderRadius?: number;
+  allCorners?: boolean;
+  topLeftRadius?: number;
+  topRightRadius?: number;
+  bottomLeftRadius?: number;
+  bottomRightRadius?: number;
   onTemplateChange: (template: FrameTemplate) => void;
   onColorChange: (color: string) => void;
   onThicknessChange: (thickness: number) => void;
@@ -25,6 +30,13 @@ interface FrameCustomizerProps {
   onPictureRotationChange: (rotation: number) => void;
   onSyncRotationChange: (sync: boolean) => void;
   onAnimationChange: (animation: FrameAnimation) => void;
+  onCornerStyleChange?: (style: CornerStyle) => void;
+  onBorderRadiusChange?: (radius: number) => void;
+  onAllCornersChange?: (allCorners: boolean) => void;
+  onTopLeftRadiusChange?: (radius: number) => void;
+  onTopRightRadiusChange?: (radius: number) => void;
+  onBottomLeftRadiusChange?: (radius: number) => void;
+  onBottomRightRadiusChange?: (radius: number) => void;
   className?: string;
 }
 
@@ -39,6 +51,13 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
   syncRotation,
   animation,
   name,
+  cornerStyle = 'squircle',
+  borderRadius = 20,
+  allCorners = true,
+  topLeftRadius = 20,
+  topRightRadius = 20,
+  bottomLeftRadius = 20,
+  bottomRightRadius = 20,
   onTemplateChange,
   onColorChange,
   onThicknessChange,
@@ -46,13 +65,19 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
   onPictureRotationChange,
   onSyncRotationChange,
   onAnimationChange,
+  onCornerStyleChange,
+  onBorderRadiusChange,
+  onAllCornersChange,
+  onTopLeftRadiusChange,
+  onTopRightRadiusChange,
+  onBottomLeftRadiusChange,
+  onBottomRightRadiusChange,
   className,
 }) => {
   const [isUpdatingSync, setIsUpdatingSync] = useState(false);
   const [localColor, setLocalColor] = useState(color);
   const [localFrameRotation, setLocalFrameRotation] = useState(rotation);
-  const [localPictureRotation, setLocalPictureRotation] =
-    useState(pictureRotation);
+  const [localPictureRotation, setLocalPictureRotation] = useState(pictureRotation);
 
   // Update local state when props change
   useEffect(() => {
@@ -94,9 +119,7 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
     debouncedColorChange(newColor);
   };
 
-  const handleFrameTransformChange = (transformations: {
-    rotation: number;
-  }) => {
+  const handleFrameTransformChange = (transformations: { rotation: number }) => {
     const newRotation = transformations.rotation;
     setLocalFrameRotation(newRotation);
     onRotationChange(newRotation); // Remove debounce for immediate update
@@ -108,9 +131,7 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
     }
   };
 
-  const handlePictureTransformChange = (transformations: {
-    rotation: number;
-  }) => {
+  const handlePictureTransformChange = (transformations: { rotation: number }) => {
     const newRotation = transformations.rotation;
     setLocalPictureRotation(newRotation);
     onPictureRotationChange(newRotation); // Remove debounce for immediate update
@@ -137,13 +158,46 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
     onAnimationChange(FRAME_ANIMATION_PRESETS[type]);
   };
 
+  // Add this section to render the rounded corners customizer
+  const renderFrameSpecificControls = () => {
+    if (
+      template === 'rounded-corners' &&
+      onCornerStyleChange &&
+      onBorderRadiusChange &&
+      onAllCornersChange &&
+      onTopLeftRadiusChange &&
+      onTopRightRadiusChange &&
+      onBottomLeftRadiusChange &&
+      onBottomRightRadiusChange
+    ) {
+      return (
+        <RoundedCornersCustomizer
+          cornerStyle={cornerStyle}
+          borderRadius={borderRadius}
+          allCorners={allCorners}
+          topLeftRadius={topLeftRadius}
+          topRightRadius={topRightRadius}
+          bottomLeftRadius={bottomLeftRadius}
+          bottomRightRadius={bottomRightRadius}
+          onCornerStyleChange={onCornerStyleChange}
+          onBorderRadiusChange={onBorderRadiusChange}
+          onAllCornersChange={onAllCornersChange}
+          onTopLeftRadiusChange={onTopLeftRadiusChange}
+          onTopRightRadiusChange={onTopRightRadiusChange}
+          onBottomLeftRadiusChange={onBottomLeftRadiusChange}
+          onBottomRightRadiusChange={onBottomRightRadiusChange}
+          className="mt-6"
+        />
+      );
+    }
+    return null;
+  };
+
   return (
     <div className={`space-y-8 ${className || ''}`}>
       {/* Frame Template Selection */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Frame Style
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Frame Style</h3>
         <FrameSelector
           selectedTemplate={template}
           color={color}
@@ -158,9 +212,7 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
         <div className="flex flex-col md:flex-row gap-8">
           {/* Color Picker */}
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Frame Color
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Frame Color</h3>
             <div className="flex items-start gap-4">
               <HexColorPicker
                 color={localColor}
@@ -176,7 +228,7 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
                 <input
                   type="text"
                   value={localColor}
-                  onChange={(e) => handleColorChange(e.target.value)}
+                  onChange={e => handleColorChange(e.target.value)}
                   className="w-20 text-sm border rounded px-2 py-1"
                   title="Color hex value"
                 />
@@ -186,20 +238,18 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
 
           {/* Frame Thickness */}
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Frame Thickness
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Frame Thickness</h3>
             <div className="flex items-start">
               <select
                 value={thickness}
-                onChange={(e) => {
+                onChange={e => {
                   const value = parseInt(e.target.value, 10);
                   onThicknessChange(value);
                 }}
                 className="block w-32 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 title="Select frame thickness"
               >
-                {THICKNESS_OPTIONS.map((value) => (
+                {THICKNESS_OPTIONS.map(value => (
                   <option key={value} value={value}>
                     {value}px
                   </option>
@@ -221,12 +271,8 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
             <button
               onClick={handleSyncChange}
               disabled={isUpdatingSync}
-              title={
-                syncRotation ? 'Disable rotation sync' : 'Enable rotation sync'
-              }
-              aria-label={
-                syncRotation ? 'Disable rotation sync' : 'Enable rotation sync'
-              }
+              title={syncRotation ? 'Disable rotation sync' : 'Enable rotation sync'}
+              aria-label={syncRotation ? 'Disable rotation sync' : 'Enable rotation sync'}
               className={`
                 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
                 transition-colors duration-200 ease-in-out focus:outline-none
@@ -250,9 +296,7 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
 
           {/* Frame Rotation */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Frame Rotation
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Frame Rotation</h3>
             <TransformControls
               transformations={{ rotation: localFrameRotation }}
               onChange={handleFrameTransformChange}
@@ -262,9 +306,7 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
           {/* Picture Rotation (only shown when not synced) */}
           {!syncRotation && (
             <div className="mt-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Picture Rotation
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Picture Rotation</h3>
               <TransformControls
                 transformations={{ rotation: localPictureRotation }}
                 onChange={handlePictureTransformChange}
@@ -277,16 +319,13 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
       {/* Animation Selection */}
       {template !== 'none' && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Frame Animation
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Frame Animation</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {(Object.keys(FRAME_ANIMATION_PRESETS) as FrameAnimationType[]).map(
-              (type) => (
-                <button
-                  key={type}
-                  onClick={() => handleAnimationSelect(type)}
-                  className={`
+            {(Object.keys(FRAME_ANIMATION_PRESETS) as FrameAnimationType[]).map(type => (
+              <button
+                key={type}
+                onClick={() => handleAnimationSelect(type)}
+                className={`
                   px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium
                   ${
                     animation.type === type
@@ -294,14 +333,16 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
                       : 'border-gray-200 hover:border-blue-300 text-gray-700 hover:bg-gray-50'
                   }
                 `}
-                >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </button>
-              )
-            )}
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Frame-specific controls */}
+      {renderFrameSpecificControls()}
     </div>
   );
 };

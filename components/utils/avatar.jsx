@@ -5,9 +5,13 @@ import { CloudinaryImage } from '@/components/shared/cloudinary-image';
 import { CircleFrame } from '@/components/core/profile-frames/frame-templates/circle-frame';
 import { PolaroidClassicFrame } from '@/components/core/profile-frames/frame-templates/polaroid-classic-frame';
 import { PolaroidPatternFrame } from '@/components/core/profile-frames/frame-templates/polaroid-pattern-frame';
+import { RoundedCornersFrame } from '@/components/core/profile-frames/frame-templates/rounded-corners-frame';
 import { getFrameAnimationProps } from '@/components/core/profile-frames/frame-animations';
 
 const renderFrame = (template, props) => {
+  // Log the template and props for debugging
+  console.log('renderFrame:', { template, props });
+
   switch (template) {
     case 'circle':
       return <CircleFrame {...props} />;
@@ -15,12 +19,14 @@ const renderFrame = (template, props) => {
       return <PolaroidClassicFrame {...props} />;
     case 'polaroid-pattern':
       return <PolaroidPatternFrame {...props} />;
+    case 'rounded-corners':
+      return <RoundedCornersFrame {...props} />;
     default:
       return null;
   }
 };
 
-const getFrameSpecificStyles = (template, thickness) => {
+const getFrameSpecificStyles = (template, thickness, props = {}) => {
   const baseStyles = {
     transition: 'transform 0.3s ease',
   };
@@ -46,6 +52,14 @@ const getFrameSpecificStyles = (template, thickness) => {
         overflow: 'hidden',
         transform: `scale(${(100 - thickness) / 100})`,
       };
+    case 'rounded-corners': {
+      // For rounded corners, we don't need to apply border-radius to the image container
+      // since the SVG frame will handle the corner styling
+      return {
+        ...baseStyles,
+        overflow: 'hidden',
+      };
+    }
     default:
       return baseStyles;
   }
@@ -86,7 +100,19 @@ export const UserAvatar = () => {
   const pictureRotation = fetchedUser.syncRotation
     ? frameRotation
     : fetchedUser.pictureRotation || 0;
-  const frameStyles = getFrameSpecificStyles(fetchedUser.frameTemplate, thickness);
+
+  // Create props object for rounded corners
+  const frameProps = {
+    cornerStyle: fetchedUser?.frameCornerStyle || 'squircle',
+    borderRadius: fetchedUser?.frameBorderRadius || 20,
+    allCorners: fetchedUser?.frameAllCorners ?? true,
+    topLeftRadius: fetchedUser?.frameTopLeftRadius || 20,
+    topRightRadius: fetchedUser?.frameTopRightRadius || 20,
+    bottomLeftRadius: fetchedUser?.frameBottomLeftRadius || 20,
+    bottomRightRadius: fetchedUser?.frameBottomRightRadius || 20,
+  };
+
+  const frameStyles = getFrameSpecificStyles(fetchedUser.frameTemplate, thickness, frameProps);
 
   // Show framed image for other frame types
   return (
@@ -110,6 +136,7 @@ export const UserAvatar = () => {
             enabled: false,
             config: {},
           },
+          ...frameProps, // Add rounded corners properties
         })}
       </div>
 
@@ -174,7 +201,19 @@ export const UserAvatarSetting = ({ isPreview = false, handle }) => {
   const pictureRotation = fetchedUser.syncRotation
     ? frameRotation
     : fetchedUser.pictureRotation || 0;
-  const frameStyles = getFrameSpecificStyles(fetchedUser.frameTemplate, thickness);
+
+  // Create props object for rounded corners
+  const frameProps = {
+    cornerStyle: fetchedUser?.frameCornerStyle || 'squircle',
+    borderRadius: fetchedUser?.frameBorderRadius || 20,
+    allCorners: fetchedUser?.frameAllCorners ?? true,
+    topLeftRadius: fetchedUser?.frameTopLeftRadius || 20,
+    topRightRadius: fetchedUser?.frameTopRightRadius || 20,
+    bottomLeftRadius: fetchedUser?.frameBottomLeftRadius || 20,
+    bottomRightRadius: fetchedUser?.frameBottomRightRadius || 20,
+  };
+
+  const frameStyles = getFrameSpecificStyles(fetchedUser.frameTemplate, thickness, frameProps);
 
   // Show framed image for other frame types
   return (
@@ -187,7 +226,7 @@ export const UserAvatarSetting = ({ isPreview = false, handle }) => {
       }}
     >
       {/* Frame layer */}
-      <div className="absolute inset-0 z-1" style={getRotationStyles(frameRotation)}>
+      <div className="absolute inset-0 z-10" style={getRotationStyles(frameRotation)}>
         {renderFrame(fetchedUser.frameTemplate, {
           size,
           color: fetchedUser.frameColor || '#000000',
@@ -199,6 +238,7 @@ export const UserAvatarSetting = ({ isPreview = false, handle }) => {
             enabled: false,
             config: {},
           },
+          ...frameProps, // Add rounded corners properties
         })}
       </div>
 

@@ -5,6 +5,7 @@ import { CloudinaryImage } from '@/components/shared/cloudinary-image';
 import { CircleFrame } from '@/components/core/profile-frames/frame-templates/circle-frame';
 import { PolaroidClassicFrame } from '@/components/core/profile-frames/frame-templates/polaroid-classic-frame';
 import { PolaroidPatternFrame } from '@/components/core/profile-frames/frame-templates/polaroid-pattern-frame';
+import { RoundedCornersFrame } from '@/components/core/profile-frames/frame-templates/rounded-corners-frame';
 import { getFrameAnimationProps } from '@/components/core/profile-frames/frame-animations';
 
 const renderFrame = (template, props) => {
@@ -15,12 +16,14 @@ const renderFrame = (template, props) => {
       return <PolaroidClassicFrame {...props} />;
     case 'polaroid-pattern':
       return <PolaroidPatternFrame {...props} />;
+    case 'rounded-corners':
+      return <RoundedCornersFrame {...props} />;
     default:
       return null;
   }
 };
 
-const getFrameSpecificStyles = (template, thickness, pictureRotation) => {
+const getFrameSpecificStyles = (template, thickness, pictureRotation, props = {}) => {
   const baseStyles = {
     transform: pictureRotation ? `rotate(${pictureRotation}deg)` : undefined,
     transition: 'transform 0.3s ease',
@@ -39,17 +42,23 @@ const getFrameSpecificStyles = (template, thickness, pictureRotation) => {
         borderRadius: '20px',
         overflow: 'hidden',
         // Adjust container to account for frame thickness
-        transform:
-          `${baseStyles.transform || ''} scale(${(100 - thickness) / 100})`.trim(),
+        transform: `${baseStyles.transform || ''} scale(${(100 - thickness) / 100})`.trim(),
       };
     case 'polaroid-pattern':
       return {
         ...baseStyles,
         borderRadius: '1px',
         overflow: 'hidden',
-        transform:
-          `${baseStyles.transform || ''} scale(${(100 - thickness) / 100})`.trim(),
+        transform: `${baseStyles.transform || ''} scale(${(100 - thickness) / 100})`.trim(),
       };
+    case 'rounded-corners': {
+      // For rounded corners, we don't need to apply border-radius to the image container
+      // since the SVG frame will handle the corner styling
+      return {
+        ...baseStyles,
+        overflow: 'hidden',
+      };
+    }
     default:
       return baseStyles;
   }
@@ -88,10 +97,23 @@ export const HeaderAvatar = ({ onClick }) => {
   const pictureRotation = fetchedUser.syncRotation
     ? frameRotation
     : fetchedUser.pictureRotation || 0;
+
+  // Create props object for rounded corners
+  const frameProps = {
+    cornerStyle: fetchedUser?.frameCornerStyle || 'squircle',
+    borderRadius: fetchedUser?.frameBorderRadius || 20,
+    allCorners: fetchedUser?.frameAllCorners ?? true,
+    topLeftRadius: fetchedUser?.frameTopLeftRadius || 20,
+    topRightRadius: fetchedUser?.frameTopRightRadius || 20,
+    bottomLeftRadius: fetchedUser?.frameBottomLeftRadius || 20,
+    bottomRightRadius: fetchedUser?.frameBottomRightRadius || 20,
+  };
+
   const frameStyles = getFrameSpecificStyles(
     fetchedUser.frameTemplate,
     thickness,
-    pictureRotation
+    pictureRotation,
+    frameProps
   );
 
   // Show framed image for other frame types
@@ -119,6 +141,7 @@ export const HeaderAvatar = ({ onClick }) => {
             enabled: false,
             config: {},
           },
+          ...frameProps, // Add rounded corners properties
         })}
       </div>
 

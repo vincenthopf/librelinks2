@@ -48,6 +48,14 @@ model User {
   pictureRotation      Int         @default(0)
   syncRotation         Boolean     @default(true)
   frameAnimation       Json?       @default("{\"type\": null, \"enabled\": false, \"config\": {}}")
+  // Rounded corners frame properties
+  frameCornerStyle     String      @default("squircle")
+  frameBorderRadius    Int         @default(20)
+  frameAllCorners      Boolean     @default(true)
+  frameTopLeftRadius   Int         @default(20)
+  frameTopRightRadius  Int         @default(20)
+  frameBottomLeftRadius Int        @default(20)
+  frameBottomRightRadius Int       @default(20)
   backgroundImage      String?     // URL to the selected background image
   photoBookLayout      String      @default("grid") // Layout style for photo book: "portfolio", "masonry", "grid", or "carousel"
   photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links (high number = at the end)

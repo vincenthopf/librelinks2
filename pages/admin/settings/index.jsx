@@ -42,12 +42,7 @@ const Settings = () => {
     setBio(fetchedUser?.bio);
     setImage(fetchedUser?.image);
     setHandle(fetchedUser?.handle);
-  }, [
-    fetchedUser?.name,
-    fetchedUser?.bio,
-    fetchedUser?.image,
-    fetchedUser?.handle,
-  ]);
+  }, [fetchedUser?.name, fetchedUser?.bio, fetchedUser?.image, fetchedUser?.handle]);
 
   // edit profile details
   const editMutation = useMutation(
@@ -190,7 +185,7 @@ const Settings = () => {
                           </Dialog.Trigger>
                           <UploadModal
                             value={image}
-                            onChange={(image) => setImage(image)}
+                            onChange={image => setImage(image)}
                             submit={handleSubmit}
                           />
                         </Dialog.Root>
@@ -210,7 +205,7 @@ const Settings = () => {
                   <div className="px-10">
                     <textarea
                       value={bio ?? ''}
-                      onChange={(e) => setBio(e.target.value)}
+                      onChange={e => setBio(e.target.value)}
                       onBlur={handleSubmit}
                       placeholder="@Bio"
                       className="outline-none w-full p-4 h-[120px] rounded-lg border-2
@@ -240,7 +235,14 @@ const Settings = () => {
                         }
                       }
                       name={fetchedUser?.name || ''}
-                      onTemplateChange={async (template) => {
+                      cornerStyle={fetchedUser?.frameCornerStyle || 'squircle'}
+                      borderRadius={fetchedUser?.frameBorderRadius || 20}
+                      allCorners={fetchedUser?.frameAllCorners ?? true}
+                      topLeftRadius={fetchedUser?.frameTopLeftRadius || 20}
+                      topRightRadius={fetchedUser?.frameTopRightRadius || 20}
+                      bottomLeftRadius={fetchedUser?.frameBottomLeftRadius || 20}
+                      bottomRightRadius={fetchedUser?.frameBottomRightRadius || 20}
+                      onTemplateChange={async template => {
                         try {
                           await axios.patch('/api/frame', {
                             frameTemplate: template,
@@ -252,7 +254,7 @@ const Settings = () => {
                           toast.error('Failed to update frame template');
                         }
                       }}
-                      onColorChange={async (color) => {
+                      onColorChange={async color => {
                         try {
                           await axios.patch('/api/frame', {
                             frameColor: color,
@@ -264,7 +266,7 @@ const Settings = () => {
                           toast.error('Failed to update frame color');
                         }
                       }}
-                      onThicknessChange={async (thickness) => {
+                      onThicknessChange={async thickness => {
                         try {
                           await axios.patch('/api/frame', {
                             frameThickness: thickness,
@@ -277,7 +279,7 @@ const Settings = () => {
                           toast.error('Failed to update frame thickness');
                         }
                       }}
-                      onRotationChange={async (rotation) => {
+                      onRotationChange={async rotation => {
                         try {
                           await axios.patch('/api/frame', {
                             frameRotation: rotation,
@@ -289,7 +291,7 @@ const Settings = () => {
                           toast.error('Failed to update frame rotation');
                         }
                       }}
-                      onPictureRotationChange={async (rotation) => {
+                      onPictureRotationChange={async rotation => {
                         try {
                           await axios.patch('/api/frame', {
                             pictureRotation: rotation,
@@ -301,22 +303,19 @@ const Settings = () => {
                           toast.error('Failed to update picture rotation');
                         }
                       }}
-                      onSyncRotationChange={async (sync) => {
+                      onSyncRotationChange={async sync => {
                         try {
                           await axios.patch('/api/frame', {
                             syncRotation: sync,
                           });
                           queryClient.invalidateQueries('users');
                           signalIframe();
-                          toast.success('Rotation sync updated');
-                          return true;
+                          toast.success('Sync rotation updated');
                         } catch (error) {
-                          console.error('Sync rotation update error:', error);
-                          toast.error('Failed to update rotation sync');
-                          throw error;
+                          toast.error('Failed to update sync rotation');
                         }
                       }}
-                      onAnimationChange={async (animation) => {
+                      onAnimationChange={async animation => {
                         try {
                           await axios.patch('/api/frame', {
                             frameAnimation: animation,
@@ -326,6 +325,90 @@ const Settings = () => {
                           toast.success('Frame animation updated');
                         } catch (error) {
                           toast.error('Failed to update frame animation');
+                        }
+                      }}
+                      onCornerStyleChange={async style => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameCornerStyle: style,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Corner style updated');
+                        } catch (error) {
+                          toast.error('Failed to update corner style');
+                        }
+                      }}
+                      onBorderRadiusChange={async radius => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameBorderRadius: radius,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Border radius updated');
+                        } catch (error) {
+                          toast.error('Failed to update border radius');
+                        }
+                      }}
+                      onAllCornersChange={async allCorners => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameAllCorners: allCorners,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('All corners setting updated');
+                        } catch (error) {
+                          toast.error('Failed to update all corners setting');
+                        }
+                      }}
+                      onTopLeftRadiusChange={async radius => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameTopLeftRadius: radius,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Top left radius updated');
+                        } catch (error) {
+                          toast.error('Failed to update top left radius');
+                        }
+                      }}
+                      onTopRightRadiusChange={async radius => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameTopRightRadius: radius,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Top right radius updated');
+                        } catch (error) {
+                          toast.error('Failed to update top right radius');
+                        }
+                      }}
+                      onBottomLeftRadiusChange={async radius => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameBottomLeftRadius: radius,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Bottom left radius updated');
+                        } catch (error) {
+                          toast.error('Failed to update bottom left radius');
+                        }
+                      }}
+                      onBottomRightRadiusChange={async radius => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameBottomRightRadius: radius,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Bottom right radius updated');
+                        } catch (error) {
+                          toast.error('Failed to update bottom right radius');
                         }
                       }}
                     />
@@ -348,8 +431,7 @@ const Settings = () => {
               <div>
                 <h3 className="mb-4 text-gray-600 text-sm">
                   <Balancer>
-                    Deleting your account permanently deletes your page and all
-                    your data.
+                    Deleting your account permanently deletes your page and all your data.
                   </Balancer>
                 </h3>
                 <div className="w-full h-auto border bg-white rounded-lg p-6">
@@ -369,11 +451,7 @@ const Settings = () => {
             )}
           </div>
 
-          {isMobile ? (
-            <div className="h-[100px] mb-24" />
-          ) : (
-            <div className="h-[40px] mb-12" />
-          )}
+          {isMobile ? <div className="h-[100px] mb-24" /> : <div className="h-[40px] mb-12" />}
         </div>
       </Layout>
     </>
