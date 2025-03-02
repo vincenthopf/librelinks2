@@ -18,11 +18,7 @@ import {
   TouchSensor,
   KeyboardSensor,
 } from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import useLinks from '@/hooks/useLinks';
 import useTexts from '@/hooks/useTexts';
@@ -71,8 +67,7 @@ const LinksEditor = () => {
     // Check if we should display the photo book item
     // Only show photo book if photoBookOrder is explicitly set (not null/undefined)
     // When a photo book is deleted, photoBookOrder is set to null
-    const shouldShowPhotoBook =
-      photoBookOrder !== null && photoBookOrder !== undefined;
+    const shouldShowPhotoBook = photoBookOrder !== null && photoBookOrder !== undefined;
 
     if (shouldShowPhotoBook) {
       // Find the correct position for the photo book
@@ -94,7 +89,7 @@ const LinksEditor = () => {
     }
   }, [userLinks, userTexts, photoBookOrder]);
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async event => {
     const { active, over } = event;
 
     // If nothing changed, do nothing
@@ -104,8 +99,8 @@ const LinksEditor = () => {
     const oldItems = [...sortableItems];
 
     // Find indices
-    const activeIndex = oldItems.findIndex((item) => item.id === active.id);
-    const overIndex = oldItems.findIndex((item) => item.id === over.id);
+    const activeIndex = oldItems.findIndex(item => item.id === active.id);
+    const overIndex = oldItems.findIndex(item => item.id === over.id);
 
     // Move the dragged item in the array
     const newItems = arrayMove(oldItems, activeIndex, overIndex);
@@ -131,7 +126,7 @@ const LinksEditor = () => {
         );
 
         // Update client-side data
-        queryClient.setQueryData(['users'], (oldData) => {
+        queryClient.setQueryData(['users'], oldData => {
           if (!oldData) return oldData;
           return {
             ...oldData,
@@ -140,7 +135,7 @@ const LinksEditor = () => {
         });
 
         // Signal iframe to refresh
-        signalIframe();
+        signalIframe('update_user');
       } catch (error) {
         console.error('Error updating photo book position:', error);
         // Revert to original state on error
@@ -150,23 +145,21 @@ const LinksEditor = () => {
       // A link or text was moved to the position of the photo book
       // Extract only the non-photo book items for updating
       const newLinks = newItems
-        .filter((item) => !item.isPhotoBook && !('content' in item))
+        .filter(item => !item.isPhotoBook && !('content' in item))
         .map((link, index) => ({
           ...link,
           order: index,
         }));
 
       const newTexts = newItems
-        .filter((item) => !item.isPhotoBook && 'content' in item)
+        .filter(item => !item.isPhotoBook && 'content' in item)
         .map((text, index) => ({
           ...text,
           order: index,
         }));
 
       // Find the new photo book order (its index in the new items array)
-      const newPhotoBookOrder = newItems.findIndex(
-        (item) => item.id === PHOTO_BOOK_ID
-      );
+      const newPhotoBookOrder = newItems.findIndex(item => item.id === PHOTO_BOOK_ID);
 
       // Update link order, text order, and photo book order
       try {
@@ -186,7 +179,7 @@ const LinksEditor = () => {
         });
 
         // Update photo book order in client cache
-        queryClient.setQueryData(['users'], (oldData) => {
+        queryClient.setQueryData(['users'], oldData => {
           if (!oldData) return oldData;
           return {
             ...oldData,
@@ -195,7 +188,7 @@ const LinksEditor = () => {
         });
 
         // Signal iframe to refresh
-        signalIframe();
+        signalIframe('update_user');
       } catch (error) {
         console.error('Error updating orders:', error);
         // Revert to original state on error
@@ -205,14 +198,14 @@ const LinksEditor = () => {
       // Item was moved to another item's position
       // Extract the links and texts for updating
       const newLinks = newItems
-        .filter((item) => !item.isPhotoBook && !('content' in item))
+        .filter(item => !item.isPhotoBook && !('content' in item))
         .map((link, index) => ({
           ...link,
           order: index,
         }));
 
       const newTexts = newItems
-        .filter((item) => !item.isPhotoBook && 'content' in item)
+        .filter(item => !item.isPhotoBook && 'content' in item)
         .map((text, index) => ({
           ...text,
           order: index,
@@ -238,7 +231,7 @@ const LinksEditor = () => {
   };
 
   const updateLinksOrderMutation = useMutation(
-    async (newLinks) => {
+    async newLinks => {
       await axios.put(`/api/links`, {
         links: newLinks,
       });
@@ -246,13 +239,13 @@ const LinksEditor = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['links', currentUser?.id]);
-        signalIframe();
+        signalIframe('update_links');
       },
     }
   );
 
   const updateTextsOrderMutation = useMutation(
-    async (newTexts) => {
+    async newTexts => {
       await axios.put(`/api/texts`, {
         texts: newTexts,
       });
@@ -260,7 +253,7 @@ const LinksEditor = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['texts', currentUser?.id]);
-        signalIframe();
+        signalIframe('update_links');
       },
     }
   );
@@ -317,11 +310,8 @@ const LinksEditor = () => {
 
         <div className="my-10">
           {!isLinksLoading && !isTextsLoading && sortableItems.length > 0 ? (
-            <SortableContext
-              items={sortableItems}
-              strategy={verticalListSortingStrategy}
-            >
-              {sortableItems.map((item) => {
+            <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
+              {sortableItems.map(item => {
                 // Render PhotoBookItem if this is the photo book
                 if (item.isPhotoBook) {
                   return (

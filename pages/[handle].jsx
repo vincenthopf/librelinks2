@@ -4,7 +4,7 @@ import TextCard from '@/components/core/user-profile/text-card';
 import * as Avatar from '@radix-ui/react-avatar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -27,21 +27,51 @@ const ProfilePage = () => {
   const { query } = useRouter();
   const { handle, photoBookLayout: queryLayout } = query;
 
-  // Add a useEffect to handle the message event when in iframe mode
-  useEffect(() => {
-    if (query.isIframe) {
-      // Listen for the refresh message from the parent
-      const handleMessage = (event) => {
-        if (event.data === 'refresh') {
-          // Force a reload of the current page
-          window.location.reload();
-        }
-      };
+  // Initialize QueryClient at the top of the component
+  const queryClient = useQueryClient();
 
+  // Replace the message handler with a more optimized version that uses data fetching instead of invalidation
+  const handleMessage = useCallback(
+    event => {
+      if (!event.data || typeof event.data !== 'string') return;
+
+      try {
+        const userId = handle; // Use handle as the id for queries
+
+        // Don't process if we don't have a valid user ID
+        if (!userId) return;
+
+        // Use direct refetch instead of invalidation for faster updates
+        if (event.data === 'update_links') {
+          // Use fetchQuery for immediate data fetch without waiting for components
+          queryClient.refetchQueries({ queryKey: ['links', userId], type: 'active' });
+        } else if (event.data === 'update_user') {
+          queryClient.refetchQueries({ queryKey: ['users', userId], type: 'active' });
+        } else if (event.data === 'refresh') {
+          // Batch refetches for better performance
+          Promise.all([
+            queryClient.refetchQueries({ queryKey: ['links', userId], type: 'active' }),
+            queryClient.refetchQueries({ queryKey: ['users', userId], type: 'active' }),
+            queryClient.refetchQueries({ queryKey: ['photobook', userId], type: 'active' }),
+          ]);
+        }
+      } catch (error) {
+        console.error('Error handling iframe message:', error);
+      }
+    },
+    [handle, queryClient]
+  );
+
+  // Only add the listener when in iframe mode
+  useEffect(() => {
+    if (query.isIframe && handle) {
       window.addEventListener('message', handleMessage);
-      return () => window.removeEventListener('message', handleMessage);
+
+      return () => {
+        window.removeEventListener('message', handleMessage);
+      };
     }
-  }, [query.isIframe]);
+  }, [query.isIframe, handle, handleMessage]);
 
   const {
     data: fetchedUser,
@@ -49,14 +79,10 @@ const ProfilePage = () => {
     isFetching: isUserFetching,
   } = useUser(handle);
 
-  const { data: userLinks, isFetching: isLinksFetching } = useLinks(
-    fetchedUser?.id
-  );
+  const { data: userLinks, isFetching: isLinksFetching } = useLinks(fetchedUser?.id);
 
   // Fetch text items
-  const { data: userTexts, isFetching: isTextsFetching } = useTexts(
-    fetchedUser?.id
-  );
+  const { data: userTexts, isFetching: isTextsFetching } = useTexts(fetchedUser?.id);
 
   // Fetch photo book images
   const { data: photos } = useQuery(
@@ -66,9 +92,7 @@ const ProfilePage = () => {
         return [];
       }
       try {
-        const { data } = await axios.get(
-          `/api/photobook/photos?userId=${fetchedUser.id}`
-        );
+        const { data } = await axios.get(`/api/photobook/photos?userId=${fetchedUser.id}`);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Failed to fetch photos:', error);
@@ -81,18 +105,15 @@ const ProfilePage = () => {
     }
   );
 
-  const queryClient = useQueryClient();
   const [, setIsDataLoaded] = useState(false);
 
   const mutation = useMutation(
-    async (id) => {
+    async id => {
       await axios.patch(`/api/analytics/clicks/${id}`);
     },
     {
-      onError: (error) => {
-        toast.error(
-          (error.response && error.response.data.message) || 'An error occurred'
-        );
+      onError: error => {
+        toast.error((error.response && error.response.data.message) || 'An error occurred');
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['links', fetchedUser?.id] });
@@ -101,23 +122,9 @@ const ProfilePage = () => {
     }
   );
 
-  const handleRegisterClick = async (id) => {
+  const handleRegisterClick = async id => {
     await mutation.mutateAsync(id);
   };
-
-  useEffect(() => {
-    window.addEventListener('message', () => {
-      queryClient.invalidateQueries({ queryKey: ['links'] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    });
-
-    return () => {
-      window.removeEventListener('message', () => {
-        queryClient.invalidateQueries({ queryKey: ['links'] });
-        queryClient.invalidateQueries({ queryKey: ['users'] });
-      });
-    };
-  }, [queryClient]);
 
   useEffect(() => {
     if (fetchedUser && userLinks) {
@@ -168,34 +175,14 @@ const ProfilePage = () => {
     try {
       switch (layout) {
         case 'portfolio':
-          return (
-            <PortfolioLayout
-              photos={photos}
-              isPublicView={true}
-              showTitle={true}
-            />
-          );
+          return <PortfolioLayout photos={photos} isPublicView={true} showTitle={true} />;
         case 'masonry':
-          return (
-            <MasonryLayout
-              photos={photos}
-              isPublicView={true}
-              showTitle={true}
-            />
-          );
+          return <MasonryLayout photos={photos} isPublicView={true} showTitle={true} />;
         case 'carousel':
-          return (
-            <CarouselLayout
-              photos={photos}
-              isPublicView={true}
-              showTitle={true}
-            />
-          );
+          return <CarouselLayout photos={photos} isPublicView={true} showTitle={true} />;
         case 'grid':
         default:
-          return (
-            <GridLayout photos={photos} isPublicView={true} showTitle={true} />
-          );
+          return <GridLayout photos={photos} isPublicView={true} showTitle={true} />;
       }
     } catch (error) {
       console.error('Error rendering photo book:', error);
@@ -245,43 +232,56 @@ const ProfilePage = () => {
         >
           {(isLinksFetching || isUserFetching) && (
             <div className="absolute -top-5 left-2">
-              <Loader
-                strokeWidth={7}
-                width={15}
-                height={15}
-                bgColor={theme.accent}
-              />
+              <Loader strokeWidth={7} width={15} height={15} bgColor={theme.accent} />
             </div>
           )}
-          <UserAvatarSetting isPreview={true} handle={handle} />
-          <p
-            style={{
-              color: theme.accent,
-              fontSize: `${fetchedUser?.profileNameFontSize || 16}px`,
-              fontFamily: fetchedUser?.profileNameFontFamily || 'Inter',
-              marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`,
-            }}
-            className="font-bold text-white text-center mb-2 lg:mt-4"
-          >
-            {fetchedUser?.name}
-          </p>
-          {fetchedUser?.bio && (
-            <div className="w-full">
+
+          {/* Profile section with improved z-index management */}
+          <div className="relative flex flex-col items-center">
+            {/* Avatar wrapper with lower z-index */}
+            <div className="relative" style={{ zIndex: 5 }}>
+              <UserAvatarSetting isPreview={true} handle={handle} />
+            </div>
+
+            {/* Text content with higher z-index to ensure it's above the image */}
+            <div
+              className="relative"
+              style={{
+                zIndex: 15,
+                marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`,
+              }}
+            >
               <p
                 style={{
                   color: theme.accent,
-                  fontSize: `${fetchedUser?.bioFontSize || 14}px`,
-                  fontFamily: fetchedUser?.bioFontFamily || 'Inter',
+                  fontSize: `${fetchedUser?.profileNameFontSize || 16}px`,
+                  fontFamily: fetchedUser?.profileNameFontFamily || 'Inter',
                 }}
-                className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
+                className="font-bold text-white text-center mb-2 lg:mt-4"
               >
-                {fetchedUser?.bio}
+                {fetchedUser?.name}
               </p>
+
+              {fetchedUser?.bio && (
+                <div className="w-full">
+                  <p
+                    style={{
+                      color: theme.accent,
+                      fontSize: `${fetchedUser?.bioFontSize || 14}px`,
+                      fontFamily: fetchedUser?.bioFontFamily || 'Inter',
+                    }}
+                    className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
+                  >
+                    {fetchedUser?.bio}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
           <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">
             {userLinks
-              ?.filter((link) => link.isSocial && !link.archived)
+              ?.filter(link => link.isSocial && !link.archived)
               .map(({ id, title, url }) => {
                 return (
                   <SocialCards
@@ -306,13 +306,11 @@ const ProfilePage = () => {
               if (!photos || photos.length === 0) {
                 // Combine links and texts
                 const allItems = [
-                  ...(userLinks?.filter(
-                    (link) => !link.isSocial && !link.archived
-                  ) || []),
+                  ...(userLinks?.filter(link => !link.isSocial && !link.archived) || []),
                   ...(userTexts || []),
                 ].sort((a, b) => a.order - b.order);
 
-                return allItems.map((item) => {
+                return allItems.map(item => {
                   // If it has URL property, it's a link
                   if ('url' in item) {
                     return (
@@ -349,8 +347,7 @@ const ProfilePage = () => {
               if (
                 !userLinks &&
                 !userTexts &&
-                !userLinks?.filter((l) => !l.isSocial && !l.archived).length ===
-                  0 &&
+                !userLinks?.filter(l => !l.isSocial && !l.archived).length === 0 &&
                 !userTexts?.length === 0
               ) {
                 // Just render photo book (no links or texts)
@@ -359,25 +356,21 @@ const ProfilePage = () => {
 
               // Combine regular links and texts
               const regularLinks =
-                userLinks?.filter((link) => !link.isSocial && !link.archived) ||
-                [];
+                userLinks?.filter(link => !link.isSocial && !link.archived) || [];
               const allItems = [...regularLinks, ...(userTexts || [])].sort(
                 (a, b) => a.order - b.order
               );
 
               // Determine photo book position based on photoBookOrder
               const photoBookOrder = fetchedUser?.photoBookOrder || 9999;
-              const photoBookPosition = Math.min(
-                photoBookOrder,
-                allItems.length
-              );
+              const photoBookPosition = Math.min(photoBookOrder, allItems.length);
 
               // Split items into before and after photo book
               const itemsBeforePhotoBook = allItems.slice(0, photoBookPosition);
               const itemsAfterPhotoBook = allItems.slice(photoBookPosition);
 
               // Render items before photo book
-              const beforeContent = itemsBeforePhotoBook.map((item) => {
+              const beforeContent = itemsBeforePhotoBook.map(item => {
                 // If it has URL property, it's a link
                 if ('url' in item) {
                   return (
@@ -411,12 +404,10 @@ const ProfilePage = () => {
               });
 
               // Render photo book
-              const photoBookContent = (
-                <div className="w-full">{renderPhotoBook()}</div>
-              );
+              const photoBookContent = <div className="w-full">{renderPhotoBook()}</div>;
 
               // Render items after photo book
-              const afterContent = itemsAfterPhotoBook.map((item) => {
+              const afterContent = itemsAfterPhotoBook.map(item => {
                 // If it has URL property, it's a link
                 if ('url' in item) {
                   return (
@@ -454,18 +445,16 @@ const ProfilePage = () => {
             })()}
           </div>
 
-          {userLinks?.length === 0 &&
-            !photos?.length &&
-            (!userTexts || userTexts.length === 0) && (
-              <div className="flex justify-center">
-                <h3
-                  style={{ color: theme.neutral }}
-                  className="pt-8 text-md text-white font-semibold lg:text-2xl"
-                >
-                  Hello World 🚀
-                </h3>
-              </div>
-            )}
+          {userLinks?.length === 0 && !photos?.length && (!userTexts || userTexts.length === 0) && (
+            <div className="flex justify-center">
+              <h3
+                style={{ color: theme.neutral }}
+                className="pt-8 text-md text-white font-semibold lg:text-2xl"
+              >
+                Hello World 🚀
+              </h3>
+            </div>
+          )}
         </div>
         <div className="my-10 lg:my-24" />
         {userLinks?.length > 0 ? (
@@ -475,11 +464,7 @@ const ProfilePage = () => {
               className="text-sm text-semibold text-center w lg:text-lg"
             >
               Made with{' '}
-              <Link
-                className="font-semibold"
-                target="_blank"
-                href="https://librelinks.vercel.app/"
-              >
+              <Link className="font-semibold" target="_blank" href="https://librelinks.vercel.app/">
                 Librelinks
               </Link>
             </p>

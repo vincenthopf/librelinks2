@@ -2,7 +2,7 @@ import ccTLDs from './constants/ccltds';
 import { SECOND_LEVEL_DOMAINS, SPECIAL_APEX_DOMAINS } from './constants';
 import ms from 'ms';
 
-export const getApexDomain = (url) => {
+export const getApexDomain = url => {
   let domain;
   try {
     domain = new URL(url).hostname;
@@ -15,10 +15,7 @@ export const getApexDomain = (url) => {
   const parts = domain.split('.');
   if (parts.length > 2) {
     // if this is a second-level TLD (e.g. co.uk, .com.ua, .org.tt), we need to return the last 3 parts
-    if (
-      SECOND_LEVEL_DOMAINS.has(parts[parts.length - 2]) &&
-      ccTLDs.has(parts[parts.length - 1])
-    ) {
+    if (SECOND_LEVEL_DOMAINS.has(parts[parts.length - 2]) && ccTLDs.has(parts[parts.length - 1])) {
       return parts.slice(-3).join('.');
     }
     // otherwise, it's a subdomain (e.g. dub.vercel.app), so we return the last 2 parts
@@ -34,7 +31,7 @@ export const validDomainRegex = new RegExp(
 );
 
 // Get time link was added
-export const timeAgo = (timestamp) => {
+export const timeAgo = timestamp => {
   if (!timestamp) return 'Just now';
   const diff = Date.now() - new Date(timestamp).getTime();
   if (diff < 60000) {
@@ -45,10 +42,7 @@ export const timeAgo = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year:
-        new Date(timestamp).getFullYear() !== new Date().getFullYear()
-          ? 'numeric'
-          : undefined,
+      year: new Date(timestamp).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
     });
   }
   return ms(diff);
@@ -59,7 +53,7 @@ export const timeAgo = (timestamp) => {
  * @param {string} url - The URL to process
  * @returns {string} The processed URL with https:// if needed
  */
-export const ensureHttps = (url) => {
+export const ensureHttps = url => {
   if (!url) return url;
 
   // If URL already has a protocol, return as is
@@ -76,7 +70,7 @@ export const ensureHttps = (url) => {
  * @param {string} url - The URL to validate
  * @returns {boolean} Whether the URL is valid
  */
-export const isValidUrl = (url) => {
+export const isValidUrl = url => {
   try {
     new URL(ensureHttps(url));
     return true;
@@ -86,30 +80,47 @@ export const isValidUrl = (url) => {
 };
 
 // courtesy of chatgpt
-export const getInitials = (name) => {
+export const getInitials = name => {
   const words = name.split(' ');
-  const initials = words.map((word) => word.charAt(0).toUpperCase());
+  const initials = words.map(word => word.charAt(0).toUpperCase());
   return initials.join('');
 };
 
-export const signalIframe = () => {
-  // Use setTimeout to ensure this runs after all state updates are complete
-  setTimeout(() => {
-    // Refresh desktop preview
-    const iframe = document.getElementById('preview');
-    if (iframe) {
-      iframe.contentWindow.postMessage('refresh', '*');
-    }
+/**
+ * Signals iframes to update content based on the specified type
+ * @param {string} type - The type of update to signal:
+ *   - 'refresh': Full refresh (use sparingly, may cause performance issues)
+ *   - 'update_links': Only update link-related content
+ *   - 'update_user': Only update user-related content
+ */
+export const signalIframe = (type = 'refresh') => {
+  // Use requestAnimationFrame to ensure this doesn't block the UI
+  requestAnimationFrame(() => {
+    try {
+      // Validate type to prevent crashes
+      if (typeof type !== 'string') {
+        type = 'refresh';
+      }
 
-    // Refresh mobile preview
-    const mobileIframe = document.getElementById('preview-mobile');
-    if (mobileIframe) {
-      mobileIframe.contentWindow.postMessage('refresh', '*');
+      // Refresh desktop preview
+      const iframe = document.getElementById('preview');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(type, '*');
+      }
+
+      // Refresh mobile preview
+      const mobileIframe = document.getElementById('preview-mobile');
+      if (mobileIframe && mobileIframe.contentWindow) {
+        mobileIframe.contentWindow.postMessage(type, '*');
+      }
+    } catch (error) {
+      // Silent failure - don't let any iframe issues crash the app
+      console.error('Error in signalIframe:', error);
     }
-  }, 100); // Increased delay to ensure all style updates are processed
+  });
 };
 
-export const removeHashFromHexColor = (hexColor) => {
+export const removeHashFromHexColor = hexColor => {
   // Use a regular expression to match the # symbol at the beginning
   return hexColor.replace(/^#/, '');
 };

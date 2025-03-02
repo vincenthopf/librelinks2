@@ -80,7 +80,7 @@ const PaddingSelector = () => {
       onMutate: () => {
         // Optimistically update the UI to avoid waiting for API response
         if (isMountedRef.current) {
-          signalIframe('update_user');
+          signalIframe('refresh');
         }
       },
       onSuccess: () => {
@@ -88,6 +88,9 @@ const PaddingSelector = () => {
 
         // Invalidate immediately instead of delaying
         queryClient.invalidateQueries('users');
+
+        // Signal iframe to refresh after invalidation
+        signalIframe('refresh');
       },
       onError: error => {
         console.error('API error:', error);
@@ -130,6 +133,9 @@ const PaddingSelector = () => {
             if (isMountedRef.current && toastIdRef.current) {
               toast.success('Padding updated', { id: toastIdRef.current });
               toastIdRef.current = null;
+
+              // Signal iframe to refresh after success
+              signalIframe('refresh');
             }
           },
           onError: () => {
@@ -156,6 +162,9 @@ const PaddingSelector = () => {
 
       // Update local state immediately
       setPaddingValues(prev => ({ ...prev, [type]: clampedValue }));
+
+      // Signal iframe to provide immediate visual feedback
+      signalIframe('refresh');
 
       // Queue the API update
       debouncedApiUpdate({ [type]: clampedValue });

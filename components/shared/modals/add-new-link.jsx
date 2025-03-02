@@ -48,7 +48,7 @@ const AddLinkModal = () => {
         setTitle('');
         setUrl('');
         setIsSocial(false);
-        signalIframe();
+        signalIframe('update_links');
       },
     }
   );
@@ -65,7 +65,7 @@ const AddLinkModal = () => {
     });
   };
 
-  const handleUrlChange = (event) => {
+  const handleUrlChange = event => {
     const urlValue = event.target.value;
     const processedUrl = ensureHttps(urlValue);
     const isValid = isValidUrl(urlValue);
@@ -93,7 +93,7 @@ const AddLinkModal = () => {
             <div className="relative mb-4">
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={e => setTitle(e.target.value)}
                 className="block w-full h-10 px-4 py-6 mb-2 leading-tight text-gray-700 border rounded-2xl appearance-none focus:outline-none focus:shadow-outline"
                 id="name"
                 type="text"
@@ -114,20 +114,14 @@ const AddLinkModal = () => {
                 disabled={isLoading}
               />
               {urlError && (
-                <small className="text-red-500 text-sm">
-                  Enter a valid URL (ex: hello.com)
-                </small>
+                <small className="text-red-500 text-sm">Enter a valid URL (ex: hello.com)</small>
               )}
             </div>
 
             <div className="p-2 relative flex justify-between gap-2 text-gray-800 my-4">
               <TooltipWrapper
                 title="Twitter, Instagram, LinkedIn, etc"
-                component={
-                  <h3 className="text-md lg:text-lg">
-                    Add as a social media icon?
-                  </h3>
-                }
+                component={<h3 className="text-md lg:text-lg">Add as a social media icon?</h3>}
               />
               <Switch.Root
                 checked={isSocial}

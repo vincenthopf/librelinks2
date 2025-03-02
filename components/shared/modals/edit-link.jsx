@@ -35,7 +35,7 @@ const EditLinkModal = ({ id, title, url, close }) => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['links', userId] });
-        signalIframe();
+        signalIframe('update_links', 'update_links');
       },
     }
   );
@@ -54,7 +54,7 @@ const EditLinkModal = ({ id, title, url, close }) => {
     });
   };
 
-  const handleUrlChange = (event) => {
+  const handleUrlChange = event => {
     const urlValue = event.target.value;
     const processedUrl = ensureHttps(urlValue);
     const isValid = isValidUrl(urlValue);
@@ -82,7 +82,7 @@ const EditLinkModal = ({ id, title, url, close }) => {
             <div className="relative mb-4">
               <input
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={e => setNewTitle(e.target.value)}
                 className="block w-full h-10 px-4 py-6 mb-2 leading-tight text-gray-700 border rounded-2xl appearance-none focus:outline-none focus:shadow-outline"
                 id="name"
                 type="text"
@@ -103,9 +103,7 @@ const EditLinkModal = ({ id, title, url, close }) => {
                 disabled={isLoading}
               />
               {urlError && (
-                <small className="text-red-500 text-sm">
-                  Enter a valid URL (ex: hello.com)
-                </small>
+                <small className="text-red-500 text-sm">Enter a valid URL (ex: hello.com)</small>
               )}
             </div>
 

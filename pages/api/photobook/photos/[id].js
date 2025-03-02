@@ -8,13 +8,15 @@ export default async function handler(req, res) {
 
   // Check if ID is provided
   if (!id) {
-    return res.status(400).json({ message: 'Image ID is required' });
+    res.status(400).json({ message: 'Image ID is required' });
+    return;
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
     }
 
     const user = await db.user.findUnique({
@@ -22,7 +24,8 @@ export default async function handler(req, res) {
     });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     // Find the image and verify ownership
@@ -34,7 +37,8 @@ export default async function handler(req, res) {
     });
 
     if (!image) {
-      return res.status(404).json({ message: 'Image not found' });
+      res.status(404).json({ message: 'Image not found' });
+      return;
     }
 
     // Handle PATCH request (update image metadata)
@@ -50,7 +54,8 @@ export default async function handler(req, res) {
         },
       });
 
-      return res.status(200).json(updatedImage);
+      res.status(200).json(updatedImage);
+      return;
     }
 
     // Handle DELETE request
@@ -68,13 +73,16 @@ export default async function handler(req, res) {
         where: { id },
       });
 
-      return res.status(200).json({ message: 'Image deleted successfully' });
+      res.status(200).json({ message: 'Image deleted successfully' });
+      return;
     }
 
     // If not PATCH or DELETE
-    return res.status(405).json({ message: 'Method not allowed' });
+    res.status(405).json({ message: 'Method not allowed' });
+    return;
   } catch (error) {
     console.error('Server error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error' });
+    return;
   }
 }

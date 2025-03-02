@@ -5,7 +5,8 @@ import { db } from '@/lib/db';
 export default async function handler(req, res) {
   // Only allow GET requests
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    res.status(405).json({ message: 'Method not allowed' });
+    return;
   }
 
   try {
@@ -19,13 +20,15 @@ export default async function handler(req, res) {
         orderBy: { order: 'asc' },
       });
 
-      return res.status(200).json(photos);
+      res.status(200).json(photos);
+      return;
     }
 
     // If no userId provided, require authentication (for admin panel)
     const session = await getServerSession(req, res, authOptions);
     if (!session) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
     }
 
     const user = await db.user.findUnique({
@@ -33,7 +36,8 @@ export default async function handler(req, res) {
     });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     // Get all photo book images for the user
@@ -42,9 +46,11 @@ export default async function handler(req, res) {
       orderBy: { order: 'asc' },
     });
 
-    return res.status(200).json(photos);
+    res.status(200).json(photos);
+    return;
   } catch (error) {
     console.error('Server error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error' });
+    return;
   }
 }

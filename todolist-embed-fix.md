@@ -22,7 +22,7 @@
 - [x] Update all calls to signalIframe() in add-new-link.jsx to use 'update_links' type
 - [x] Update all calls to signalIframe() in popover-desktop.jsx to use 'update_links' type (for link operations)
 - [x] Update all calls to signalIframe() in links-editor.jsx to use 'update_links' type
-- [x] Update all calls to signalIframe() in user settings related components to use 'update_user' type
+- [ ] Update all calls to signalIframe() in user settings related components to use 'update_user' type
 
 ## Optimize RichMediaPreview Component
 
@@ -40,12 +40,12 @@
 
 ## Testing and Verification
 
-- [x] Verify embedded links load properly on initial page load
-- [x] Verify links update properly when a new link is added
-- [x] Verify links update properly when a link is edited
-- [x] Verify no unnecessary refreshes occur when interacting with other components
+- [ ] Verify embedded links load properly on initial page load
+- [ ] Verify links update properly when a new link is added
+- [ ] Verify links update properly when a link is edited
+- [ ] Verify no unnecessary refreshes occur when interacting with other components
 
 ## Documentation
 
-- [x] Update CURSOR_MEMORY.md with learnings from this implementation
-- [x] Document the changes in the codebase for future reference
+- [ ] Update CURSOR_MEMORY.md with learnings from this implementation
+- [ ] Document the changes in the codebase for future reference

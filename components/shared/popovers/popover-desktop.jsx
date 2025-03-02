@@ -33,7 +33,7 @@ const PopoverDesktop = ({ id, title, url, archived }) => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['links', userId] });
-        signalIframe();
+        signalIframe('update_links');
       },
     }
   );
@@ -56,7 +56,7 @@ const PopoverDesktop = ({ id, title, url, archived }) => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['links', userId] });
-        signalIframe();
+        signalIframe('update_links');
       },
     }
   );
@@ -111,11 +111,7 @@ const PopoverDesktop = ({ id, title, url, archived }) => {
   return (
     <PopoverPrimitive.Root open={openPopover} onOpenChange={setOpenPopover}>
       {isMobile ? (
-        <Drawer.Root
-          open={openDrawer}
-          onOpenChange={setOpenDrawer}
-          shouldScaleBackground
-        >
+        <Drawer.Root open={openDrawer} onOpenChange={setOpenDrawer} shouldScaleBackground>
           <Drawer.Trigger>
             <ThreeDots />
           </Drawer.Trigger>
@@ -138,12 +134,7 @@ const PopoverDesktop = ({ id, title, url, archived }) => {
                 <Edit size={17} color="gray" />
               </button>
             </Dialog.Trigger>
-            <EditLinkModal
-              close={closePopOver}
-              id={id}
-              title={title}
-              url={url}
-            />
+            <EditLinkModal close={closePopOver} id={id} title={title} url={url} />
           </Dialog.Root>
           <AlertDialog.Root>
             <AlertDialog.Trigger asChild>

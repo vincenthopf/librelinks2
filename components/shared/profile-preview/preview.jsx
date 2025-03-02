@@ -26,10 +26,15 @@ const Preview = () => {
   }, []);
 
   useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data === 'refresh' && iframeRef.current) {
+    const handleMessage = event => {
+      if (
+        event.data &&
+        typeof event.data === 'string' &&
+        ['refresh', 'update_user', 'update_links'].includes(event.data) &&
+        iframeRef.current
+      ) {
         // Force a complete iframe refresh by updating the key
-        setRefreshKey((prev) => prev + 1);
+        setRefreshKey(prev => prev + 1);
       }
     };
 
@@ -40,7 +45,7 @@ const Preview = () => {
   // Re-render iframe when photoBookLayout changes
   useEffect(() => {
     if (currentUser?.photoBookLayout) {
-      setRefreshKey((prev) => prev + 1);
+      setRefreshKey(prev => prev + 1);
     }
   }, [currentUser?.photoBookLayout]);
 
