@@ -2,7 +2,8 @@ import { db } from '@/lib/db';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
-    return res.status(405).end();
+    res.status(405).end();
+    return;
   }
 
   try {
@@ -55,8 +56,10 @@ export default async function handler(req, res) {
       },
     });
 
-    return res.status(200).json({ ...existingUser });
+    res.status(200).json({ ...existingUser });
+    return;
   } catch (error) {
-    return res.status(400).end();
+    res.status(400).end();
+    return;
   }
 }

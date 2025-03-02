@@ -51,7 +51,7 @@ const getFrameSpecificStyles = (template, thickness) => {
   }
 };
 
-const getRotationStyles = (rotation) => ({
+const getRotationStyles = rotation => ({
   transform: `rotate(${rotation}deg)`,
   transition: 'transform 0.3s ease',
 });
@@ -86,10 +86,7 @@ export const UserAvatar = () => {
   const pictureRotation = fetchedUser.syncRotation
     ? frameRotation
     : fetchedUser.pictureRotation || 0;
-  const frameStyles = getFrameSpecificStyles(
-    fetchedUser.frameTemplate,
-    thickness
-  );
+  const frameStyles = getFrameSpecificStyles(fetchedUser.frameTemplate, thickness);
 
   // Show framed image for other frame types
   return (
@@ -101,10 +98,7 @@ export const UserAvatar = () => {
       }}
     >
       {/* Frame layer */}
-      <div
-        className="absolute inset-0 z-10"
-        style={getRotationStyles(frameRotation)}
-      >
+      <div className="absolute inset-0 z-10" style={getRotationStyles(frameRotation)}>
         {renderFrame(fetchedUser.frameTemplate, {
           size,
           color: fetchedUser.frameColor || '#000000',
@@ -120,10 +114,7 @@ export const UserAvatar = () => {
       </div>
 
       {/* Image layer */}
-      <div
-        className="absolute inset-0 z-0"
-        style={getRotationStyles(pictureRotation)}
-      >
+      <div className="absolute inset-0 z-0" style={getRotationStyles(pictureRotation)}>
         <div className="w-full h-full flex items-center justify-center">
           <div
             className="image-container relative"
@@ -163,14 +154,16 @@ export const UserAvatarSetting = ({ isPreview = false, handle }) => {
   // For no frame, just show the raw image
   if (!fetchedUser?.frameTemplate || fetchedUser.frameTemplate === 'none') {
     return (
-      <CloudinaryImage
-        src={fetchedUser?.image}
-        alt="avatar"
-        width={size}
-        height={size}
-        className="object-cover"
-        priority={!isPreview}
-      />
+      <div className="relative" style={{ zIndex: 5 }}>
+        <CloudinaryImage
+          src={fetchedUser?.image}
+          alt="avatar"
+          width={size}
+          height={size}
+          className="object-cover"
+          priority={!isPreview}
+        />
+      </div>
     );
   }
 
@@ -181,10 +174,7 @@ export const UserAvatarSetting = ({ isPreview = false, handle }) => {
   const pictureRotation = fetchedUser.syncRotation
     ? frameRotation
     : fetchedUser.pictureRotation || 0;
-  const frameStyles = getFrameSpecificStyles(
-    fetchedUser.frameTemplate,
-    thickness
-  );
+  const frameStyles = getFrameSpecificStyles(fetchedUser.frameTemplate, thickness);
 
   // Show framed image for other frame types
   return (
@@ -193,13 +183,11 @@ export const UserAvatarSetting = ({ isPreview = false, handle }) => {
       style={{
         width: `${size}px`,
         height: `${size}px`,
+        zIndex: 5,
       }}
     >
       {/* Frame layer */}
-      <div
-        className="absolute inset-0 z-10"
-        style={getRotationStyles(frameRotation)}
-      >
+      <div className="absolute inset-0 z-1" style={getRotationStyles(frameRotation)}>
         {renderFrame(fetchedUser.frameTemplate, {
           size,
           color: fetchedUser.frameColor || '#000000',
@@ -215,10 +203,7 @@ export const UserAvatarSetting = ({ isPreview = false, handle }) => {
       </div>
 
       {/* Image layer */}
-      <div
-        className="absolute inset-0 z-0"
-        style={getRotationStyles(pictureRotation)}
-      >
+      <div className="absolute inset-0 z-0" style={getRotationStyles(pictureRotation)}>
         <div className="w-full h-full flex items-center justify-center">
           <div
             className="image-container relative"
