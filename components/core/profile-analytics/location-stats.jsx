@@ -2,11 +2,16 @@
 import COUNTRIES from '@/utils/constants/countries';
 import { useState } from 'react';
 import Avatar from 'boring-avatars';
+import Loader from '@/components/utils/loading-spinner';
 
-export const LocationStats = ({ analytics }) => {
+export const LocationStats = ({ analytics, isLoading }) => {
   const [showAll, setShowAll] = useState(false);
 
-  const displayedCountries = showAll ? analytics : analytics?.slice(0, 4);
+  // Sort locations by visits (most to least)
+  const sortedLocations = analytics?.sort((a, b) => b.visits - a.visits) || [];
+
+  // Limit displayed locations based on showAll state
+  const displayedCountries = showAll ? sortedLocations : sortedLocations?.slice(0, 4);
 
   const handleShowMore = () => {
     setShowAll(true);
@@ -28,61 +33,54 @@ export const LocationStats = ({ analytics }) => {
             </p>
           </div>
           <div className="w-full h-auto">
-            {displayedCountries?.length > 0 ? (
-              displayedCountries
-                .slice()
-                .sort((a, b) => b.visits - a.visits)
-                .map(({ location, visits }) => (
-                  <div
-                    key={location}
-                    className="flex items-center p-2 rounded-lg"
-                  >
-                    {location ? (
-                      <div className="h-8 w-8 border rounded-full">
-                        <img
-                          src={`https://flag.vercel.app/m/${location}.svg`}
-                          alt={location}
-                          className="h-8 w-8 blur-0 rounded-full lg:h-8 lg:w-8"
-                          loading="lazy"
-                        />
-                      </div>
-                    ) : (
-                      <Avatar
-                        size={32}
-                        name="Unknown Location"
-                        variant="marble"
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader bgColor={'black'} message={'Loading location data'} />
+              </div>
+            ) : displayedCountries?.length > 0 ? (
+              displayedCountries.map(({ location, visits }) => (
+                <div key={location || 'unknown'} className="flex items-center p-2 rounded-lg">
+                  {location ? (
+                    <div className="h-8 w-8 border rounded-full">
+                      <img
+                        src={`https://flag.vercel.app/m/${location}.svg`}
+                        alt={location}
+                        className="h-8 w-8 blur-0 rounded-full lg:h-8 lg:w-8"
+                        loading="lazy"
+                        onError={e => {
+                          // Fallback if flag image fails to load
+                          e.target.style.display = 'none';
+                          e.target.parentNode.innerHTML = `<div class="h-8 w-8 flex items-center justify-center bg-gray-200 rounded-full text-xs font-bold">${location}</div>`;
+                        }}
                       />
-                    )}
-                    <div className="ml-2">
-                      <p className="truncate w-[150px] capitalize text-md text-slate-900 font-medium leading-none lg:w-auto">
-                        {location ? COUNTRIES[location] : 'Unknown'}
-                      </p>
                     </div>
-                    <div className="flex items-center ml-auto gap-2 font-medium">
-                      <h4 className="text-md text-gray-500">{visits}</h4>
-                    </div>
+                  ) : (
+                    <Avatar size={32} name="Unknown Location" variant="marble" />
+                  )}
+                  <div className="ml-2">
+                    <p className="truncate w-[150px] capitalize text-md text-slate-900 font-medium leading-none lg:w-auto">
+                      {location ? COUNTRIES[location] || location : 'Unknown'}
+                    </p>
                   </div>
-                ))
+                  <div className="flex items-center ml-auto gap-2 font-medium">
+                    <h4 className="text-md text-gray-500">{visits}</h4>
+                  </div>
+                </div>
+              ))
             ) : (
               <div className="my-6 flex justify-center">
-                <h3 className="text-center">No data available</h3>
+                <h3 className="text-center">No location data available</h3>
               </div>
             )}
 
-            {analytics?.length > 4 && (
+            {sortedLocations?.length > 4 && (
               <div className="flex justify-center mt-2">
                 {showAll ? (
-                  <button
-                    className="text-blue-500 font-medium"
-                    onClick={handleShowLess}
-                  >
+                  <button className="text-blue-500 font-medium" onClick={handleShowLess}>
                     Show Less
                   </button>
                 ) : (
-                  <button
-                    className="text-blue-500 font-medium"
-                    onClick={handleShowMore}
-                  >
+                  <button className="text-blue-500 font-medium" onClick={handleShowMore}>
                     Show More
                   </button>
                 )}

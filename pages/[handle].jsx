@@ -124,6 +124,22 @@ const ProfilePage = () => {
 
   const handleRegisterClick = async id => {
     await mutation.mutateAsync(id);
+
+    // Track the click in Tinybird using the web analytics template
+    if (window.flock && userLinks) {
+      const clickedLink = userLinks.find(link => link.id === id);
+      if (clickedLink) {
+        window.flock.push({
+          event_name: 'click',
+          data: {
+            link_id: id,
+            link_title: clickedLink.title,
+            link_url: clickedLink.url,
+            handle: `/${handle}`,
+          },
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -200,7 +216,7 @@ const ProfilePage = () => {
           defer
           src="https://unpkg.com/@tinybirdco/flock.js"
           data-host="https://api.us-east.tinybird.co"
-          data-token={process.env.NEXT_PUBLIC_DATA_TOKEN}
+          data-token={process.env.NEXT_PUBLIC_TINYBIRD_WEB_ANALYTICS_TOKEN}
         />
       ) : (
         ''
