@@ -71,6 +71,7 @@ The `/api/customize` endpoint handles padding updates through a PATCH request:
 - `PaddingSelector`: Main component for adjusting padding values
 - Preview updates in real-time through React Query and iframe signaling
 - Values range from 0px to 200px in 5px increments
+- Supports both traditional dropdown/slider selection and interactive drag-and-position mode
 
 ### Usage Example
 
@@ -78,12 +79,31 @@ The `/api/customize` endpoint handles padding updates through a PATCH request:
 <PaddingSelector />
 ```
 
+### Interactive Padding Feature
+
+The PaddingSelector component now includes an interactive mode that allows users to directly drag and adjust padding elements in a visual interface:
+
+1. **Mode Toggle**: Users can switch between traditional controls and interactive mode using a toggle switch
+2. **Drag Interface**: Interactive elements have `cursor-move` styling and visual feedback
+3. **Real-Time Updates**: Visual preview updates as the user drags elements
+4. **Synchronization**: Updates are synchronized with the iframe preview through the signalIframe mechanism
+5. **Precision**: Values are rounded to nearest 5px to maintain consistency with the dropdown options
+
+### Implementation Details
+
+- Uses React refs to track dragging state and initial positions
+- Mouse event listeners are attached/detached dynamically during drag operations
+- Updates are debounced and only committed when values actually change
+- Visual elements provide clear affordances for which areas are draggable
+- Value labels show current measurements during interaction
+
 ### Best Practices
 
 1. Always use the default values as fallbacks
 2. Ensure padding changes are reflected immediately in previews
 3. Use consistent units (px) throughout the application
 4. Maintain mobile responsiveness with padding changes
+5. Provide clear visual feedback for interactive elements
 
 ### Notes
 
@@ -91,6 +111,7 @@ The `/api/customize` endpoint handles padding updates through a PATCH request:
 - Changes are immediately reflected in both mobile and desktop previews
 - The feature maintains compatibility with all themes
 - All padding values use pixels for consistency
+- The interactive interface is more intuitive for visual designers
 
 # Project Learnings and Documentation
 
@@ -131,9 +152,7 @@ The `/api/customize` endpoint handles padding updates through a PATCH request:
 
    ```jsx
    <div className="w-full max-w-3xl px-8">
-     <p className="text-center mt-1 mb-4 break-words whitespace-normal line-clamp-3">
-       {bio}
-     </p>
+     <p className="text-center mt-1 mb-4 break-words whitespace-normal line-clamp-3">{bio}</p>
      {/* Show more button when needed */}
    </div>
    ```
@@ -309,6 +328,173 @@ const FrameComponent = (props) => {
    - Use proper z-index management
    - Maintain clear separation of concerns
 
+# Z-Index Management for Overlapping Profile Elements
+
+## Implementation Details
+
+When implementing negative padding values in the profile layout, proper z-index management is essential to control element stacking order. This is particularly important when profile text needs to overlap with profile images.
+
+### Key Principles
+
+1. **Hierarchical Z-Index System**
+   - Profile text elements (name, bio): z-index 15 (highest)
+   - Profile avatar container: z-index 5 (middle)
+   - Background elements: z-index 0-1 (lowest)
+2. **Container Structure**
+   - Wrap elements in relative-positioned containers
+   - Apply z-index to container elements, not just the content
+   - Use consistent z-index values across components
+3. **Negative Padding Handling**
+   - When pictureToNamePadding is negative, ensure text appears above image
+   - Text containers need higher z-index than image containers
+   - Ensure frame elements don't block text visibility
+
+### Implementation Example
+
+```jsx
+{
+  /* Profile container with proper stacking */
+}
+<div className="relative flex flex-col items-center">
+  {/* Avatar wrapper with middle z-index */}
+  <div className="relative" style={{ zIndex: 5 }}>
+    <UserAvatarSetting isPreview={true} handle={handle} />
+  </div>
+
+  {/* Text content with highest z-index */}
+  <div className="relative" style={{ zIndex: 15 }}>
+    <p>{userName}</p>
+    <div>{userBio}</div>
+  </div>
+</div>;
+```
+
+### Best Practices
+
+1. **Consistent Z-Index Scale**
+   - Use a clear scale with gaps between values (0, 5, 10, 15)
+   - Document z-index hierarchy in component comments
+   - Keep related elements within the same stacking context
+2. **Containment for Stacking Contexts**
+   - Create new stacking contexts for related elements
+   - Use relative positioning to establish stacking contexts
+   - Avoid unnecessary z-index values to prevent conflicts
+3. **Testing Edge Cases**
+   - Test with extreme negative padding values
+   - Verify proper stacking across different themes and customizations
+   - Ensure proper behavior across all supported devices and browsers
+
+# Iframe Preview Refresh System
+
+## Overview
+
+The iframe preview system uses PostMessage communication to update previews when changes are made to the profile. Understanding this system is crucial for implementing features that need real-time preview updates.
+
+### Message Types
+
+The system uses three main message types:
+
+1. **`refresh`**: Triggers a complete iframe refresh - use for significant changes that affect multiple aspects of the profile
+2. **`update_user`**: Updates user-related data - use for changes to user properties like theme, fonts, and padding
+3. **`update_links`**: Updates link-related data - use for changes to links, their order, or visibility
+
+### Key Components
+
+1. **`signalIframe` Function**
+
+   - Located in `utils/helpers.js`
+   - Sends messages to both desktop and mobile preview iframes
+   - Takes a message type parameter with a default of 'refresh'
+   - Uses requestAnimationFrame for better performance
+
+2. **Preview Components**
+
+   - Both `preview.jsx` and `preview-mobile.jsx` listen for messages
+   - Use state keys to force re-renders when messages are received
+   - Should handle all message types for consistent behavior
+
+3. **Profile Page**
+   - In `pages/[handle].jsx`, processes messages differently based on type
+   - Uses refetchQueries for efficient data updates
+   - Implements batch processing for 'refresh' messages
+
+### Implementation Best Practices
+
+1. **Message Sending**
+   - Call `signalIframe()` after state updates to ensure preview reflects changes
+   - Use the most specific message type for the change (improves performance)
+   - For critical updates, call in both onMutate and onSuccess callbacks
+
+```jsx
+// Example in a mutation
+const mutation = useMutation(
+  async data => {
+    await axios.patch('/api/endpoint', data);
+  },
+  {
+    onMutate: () => {
+      // Optimistic update
+      signalIframe('update_user');
+    },
+    onSuccess: () => {
+      // Confirm update
+      queryClient.invalidateQueries(['users']);
+      signalIframe('refresh');
+    },
+  }
+);
+```
+
+2. **Message Reception**
+   - Preview components should handle all message types
+   - Use a consistent approach to refreshing content
+   - Include type checks to prevent errors with invalid messages
+
+```jsx
+// Example in preview component
+useEffect(() => {
+  const handleMessage = event => {
+    if (
+      event.data &&
+      typeof event.data === 'string' &&
+      ['refresh', 'update_user', 'update_links'].includes(event.data)
+    ) {
+      setRefreshKey(prev => prev + 1);
+    }
+  };
+
+  window.addEventListener('message', handleMessage);
+  return () => window.removeEventListener('message', handleMessage);
+}, []);
+```
+
+3. **Performance Considerations**
+   - Use 'update_links' or 'update_user' instead of 'refresh' when possible
+   - Avoid excessive signaling during drag operations
+   - Consider debouncing signals for operations that trigger rapid updates
+   - Use optimistic updates with immediate signals for better UX
+
+### Common Pitfalls
+
+1. **Mismatch Between Sending and Receiving**
+
+   - Sending 'update_user' but only listening for 'refresh'
+   - This causes updates to appear delayed or missing
+
+2. **Missing Signal Calls**
+
+   - Not calling signalIframe after state updates
+   - Not including signals in both onMutate and onSuccess
+
+3. **Race Conditions**
+
+   - Signaling before state updates are committed
+   - Solution: Use callbacks or useEffect dependencies properly
+
+4. **Excessive Refreshing**
+   - Using 'refresh' for minor updates
+   - Not debouncing frequent update signals
+
 # Project Dependencies
 
 ## Essential Packages
@@ -459,7 +645,7 @@ When changing themes in the Customize tab, background images would temporarily d
 
    ```jsx
    const mutateTheme = useMutation(
-     async (theme) => {
+     async theme => {
        const backgroundImage = currentUser?.backgroundImage;
 
        await axios.patch('/api/customize', {
@@ -1203,7 +1389,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -1600,7 +1786,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -1997,7 +2183,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -2394,7 +2580,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -2791,7 +2977,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -3188,7 +3374,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -3585,7 +3771,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -3982,7 +4168,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -4379,7 +4565,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -4776,7 +4962,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -5173,7 +5359,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -5570,7 +5756,7 @@ The Photo Book section in the admin panel has been enhanced with a collapsible i
 const [isExpanded, setIsExpanded] = useState(false);
 
 // Toggle function
-const toggleExpand = (e) => {
+const toggleExpand = e => {
   e.preventDefault();
   setIsExpanded(!isExpanded);
 };
@@ -5831,332 +6017,3 @@ Updated the photo containers to have square corners and minimal spacing:
 1. Removed rounded corners:
 
    - Removed all `rounded-md` classes from image containers in all layouts
-   - Created clean, 90-degree corner containers for a more modern look
-   - Ensured consistency across all three layout options (Grid, Masonry, Portfolio)
-
-2. Reduced spacing between images:
-   - Changed Grid layout from `gap-3` to `gap-1`
-   - Reduced Masonry layout padding from `p-2` to `p-1` and column spacing accordingly
-   - Reduced Portfolio layout padding from `p-1` to `p-0.5` for even tighter spacing
-   - Reduced margin between groups from `mb-4` to `mb-1` in Portfolio layout
-
-### Benefits
-
-- More content-focused display with less wasted space
-- Cleaner, more professional appearance with square corners
-- More photos visible in the same viewport area
-- Better use of available screen real estate
-- More cohesive, grid-like appearance across all layouts
-
-### Implementation
-
-- All image containers now have 90-degree corners instead of rounded ones
-- Spacing between images is minimal but still present to prevent images from bleeding together
-- Consistency maintained across all three layout options
-
-# Reorderable Photo Book Feature
-
-## Overview
-
-The reorderable Photo Book feature allows users to drag and reposition their Photo Book section relative to their links on their profile page. This enhancement provides greater flexibility in content organization, allowing the Photo Book to appear before, between, or after link cards.
-
-## Implementation Details
-
-### Database Schema
-
-Added a new field to the User model to track the position of the Photo Book:
-
-```prisma
-model User {
-  // ... other fields ...
-  photoBookLayout      String      @default("grid") // Layout style for photo book
-  photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links
-}
-```
-
-- The `photoBookOrder` field determines where the Photo Book appears relative to links.
-- By default, it's set to 9999 to position it at the end of all links.
-
-### Components
-
-#### PhotoBookItem
-
-- Created a new draggable component that represents the Photo Book in the admin UI.
-- Visually resembles the Link component for a consistent user experience.
-- Uses `@dnd-kit/sortable` for drag-and-drop functionality.
-
-#### LinksEditor
-
-- Updated to include the Photo Book as a draggable item alongside links.
-- Maintains a combined array of both link items and the Photo Book item.
-- Handles repositioning of the Photo Book with respect to links.
-- Updates both link order and Photo Book order when items are repositioned.
-
-### Profile Page Rendering
-
-- Modified the profile page component to render the Photo Book in the correct position based on `photoBookOrder`.
-- Splits regular links into two groups: before and after the Photo Book.
-- Renders content in the correct order: links before Photo Book, Photo Book, links after Photo Book.
-- Gracefully handles edge cases when there are no links or no photos.
-
-### API Endpoints
-
-- Uses the existing `users/update` endpoint to update the `photoBookOrder` value.
-- The links API endpoint continues to handle link order updates.
-
-## Usage
-
-1. In the admin panel, users can drag the Photo Book item up or down to reposition it relative to their links.
-2. The Photo Book position persists and appears in the correct position on the public profile.
-3. The Photo Book and links can be freely reordered without limitations.
-
-## Technical Considerations
-
-1. **Special ID handling**: The Photo Book uses a special ID (`photo-book-item`) to distinguish it from regular links.
-2. **Order calculation**: When a drag operation ends, the system recalculates the appropriate orders for both links and the Photo Book.
-3. **Error handling**: If any API operations fail, the UI reverts to its previous state to maintain consistency.
-4. **Preview updates**: Changes are immediately reflected in the preview using the iframe signal mechanism.
-
-## Future Enhancements
-
-1. Consider adding visual cues (like a divider) to make it clearer where the Photo Book will be positioned.
-2. Allow toggling Photo Book visibility without removing all photos.
-3. Consider extending this pattern to other content sections that may be added in the future.
-
-# Collapsible Photo Book Implementation
-
-## Overview
-
-The Photo Book section in the admin panel has been enhanced with a collapsible interface that allows users to manage their photos without navigating to a separate page. This implementation provides a more seamless user experience by keeping all content management within a single interface.
-
-## Implementation Details
-
-### Component Structure
-
-1. **PhotoBookItem Component**
-
-   - Added collapsible functionality using `useState` hook
-   - Implemented toggle button with chevron indicators
-   - Used Framer Motion for smooth animation effects
-   - Maintained drag-and-drop functionality for reordering
-
-2. **PhotoBookTab Adaptation**
-   - Added `embedded` prop to modify styling when used in the collapsible panel
-   - Conditionally renders heading based on context
-   - Adjusted spacing for better integration in the collapsible panel
-   - Maintained all functionality (layout selection, photo upload, etc.)
-
-### Animation
-
-- Used Framer Motion's `AnimatePresence` for smooth enter/exit animations
-- Implemented height and opacity transitions
-- Added border separation between header and content
-- Ensured smooth performance even with many photos
-
-### User Experience Improvements
-
-- Users can now manage photos without leaving the main admin interface
-- Consistent drag-and-drop behavior between links and the photo book
-- Clear visual indication of expandable content
-- Seamless transitions between collapsed and expanded states
-
-## Code Implementation
-
-```jsx
-// Collapsible toggle in PhotoBookItem
-const [isExpanded, setIsExpanded] = useState(false);
-
-// Toggle function
-const toggleExpand = (e) => {
-  e.preventDefault();
-  setIsExpanded(!isExpanded);
-};
-
-// Animation container
-<AnimatePresence>
-  {isExpanded && (
-    <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="overflow-hidden border-t"
-    >
-      <div className="p-4">
-        <PhotoBookTab embedded={true} />
-      </div>
-    </motion.div>
-  )}
-</AnimatePresence>;
-```
-
-## Future Considerations
-
-1. Consider adding a photo count indicator in the collapsed state
-2. Explore adding a mini preview of the photos in the collapsed state
-3. Monitor performance with large photo collections
-4. Consider adding a "quick edit" mode for faster photo management
-
-## Lessons Learned
-
-1. **Component Adaptability**: Components should be designed to work in multiple contexts
-2. **Progressive Enhancement**: Adding collapsible functionality improves UX without disrupting existing workflows
-3. **Animation Performance**: Using proper animation techniques ensures smooth transitions even with complex content
-4. **Consistent Experience**: Maintaining visual consistency between different interfaces improves usability
-
-## API Select Clause Completeness
-
-### Field Selection in API Endpoints
-
-- When adding new fields to the database schema, they must be explicitly selected in relevant API endpoints:
-  - New fields in the User model need to be added to the select clauses in `lib/serverAuth.js` and `pages/api/users/[handle].js`
-  - The select clause determines which fields are returned in the API response
-  - Missing fields in select clauses can lead to functionality issues even if the database schema is correct
-
-### Debugging Drag-and-Drop Issues
-
-- When drag-and-drop functionality doesn't work as expected:
-  1. Check if the field being updated (e.g., `photoBookOrder`) is included in all relevant API select clauses
-  2. Ensure the field is returned by the user data fetch operations
-  3. Verify the field is being correctly updated in the database
-  4. Check that the client-side state is updated with the new value
-- The `photoBookOrder` field issue:
-  - The field was correctly defined in the schema and updated in the database
-  - It was missing from the select clauses in `serverAuth.js` and `pages/api/users/[handle].js`
-  - This prevented the field from being returned to the client, causing the drag-and-drop position updates to not persist
-
-# Project Knowledge Base
-
-## Project Structure
-
-- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/lib/prismadb` (which the API routes use), we created a `lib/prismadb.js` file that re-exports the client.
-
-- **Component Types**: The project supports multiple component types:
-
-  - Links (original functionality)
-  - Text components (recently implemented)
-  - Photo Books (partially implemented)
-
-- **Preview System**: The profile preview panels use iframes to load the actual profile page (`pages/[handle].jsx`), passing the user's handle as a parameter.
-
-## Component Architecture
-
-- **Admin Panel Components**: Used in the editor interface (e.g., `TextItem` in `components/core/admin-panel/text-item.jsx`)
-- **User Profile Components**: Used in the public-facing profile (e.g., `LinkCard` and `TextCard` in `components/core/user-profile/`)
-- **Shared Components**: Modals and utilities used throughout the application (in `components/shared/`)
-
-## Database Models
-
-- **User**: Central model with relations to all content types
-- **Link**: For URL links with optional rich media previews
-- **Text**: For text-only content
-- **PhotoBookImage**: For images in photo albums
-
-## Implementation Lessons
-
-1. **API Routes Structure**: API routes are organized by resource in the `pages/api/` directory, following REST conventions.
-
-2. **Data Flow**:
-
-   - Admin panel components fetch and modify data using hooks (`useLinks`, `useTexts`, etc.)
-   - Preview components load the actual user profile through an iframe
-   - The user profile page (`[handle].jsx`) needs to be updated when new component types are added
-
-3. **Rendering Logic in [handle].jsx**:
-
-   - The profile page renders different content types based on their properties
-   - For combined rendering (links, texts, photos), identify components by their unique properties (e.g., links have 'url', texts have 'content')
-   - Content should be sorted by the 'order' field to maintain the user's preferred arrangement
-
-4. **Theme System**:
-   - Components should respect the user's theme preferences
-   - Theme colors are passed to components via props
-   - Consistent styling should be maintained across component types
-
-# Photo Book Implementation
-
-## Current State and Implementation
-
-The Photo Book feature allows users to add and display photos in their profile. The current implementation supports a single photo book per user, with plans to extend to multiple photo books in the future.
-
-### Key Components:
-
-1. **PhotoBookItem Component**:
-
-   - Displays a draggable photo book item in the links editor
-   - Shows photo count and provides options to expand/collapse and delete
-   - When expanded, shows the PhotoBookTab component
-
-2. **PhotoBookTab Component**:
-
-   - Manages photo layouts (Grid, Masonry, Portfolio, Carousel)
-   - Contains the photo upload interface
-   - Handles layout switching and display options
-
-3. **PhotoUpload Component**:
-
-   - Provides drag-and-drop file upload functionality
-   - Handles validation and Cloudinary uploading
-   - Allows adding title and description to photos
-
-4. **AddPhotoBookModal Component**:
-   - Allows creating a new photo book
-   - For existing photos: Shows direct upload interface
-   - For new users: Collects title/description and then shows upload interface
-
-### Data Flow:
-
-1. **usePhotoBook Hook**:
-
-   - Provides data and mutations for photo management
-   - Handles CRUD operations for photos
-   - Manages layout preferences
-
-2. **API Endpoints**:
-
-   - `/api/photobook/photos`: Fetches all photos for the current user
-   - `/api/photobook/upload`: Uploads photos to Cloudinary and stores metadata
-   - `/api/photobook/photos/[id]`: Updates/deletes individual photos
-
-3. **Database Structure**:
-   - `PhotoBookImage` model in Prisma for storing photo metadata
-   - Currently linked directly to `User` model (will be updated for multiple books)
-   - User has `photoBookOrder` and `photoBookLayout` fields for display preferences
-
-## Add Photo Button Fix
-
-The "Add Photo" button was previously not working because it was missing its modal implementation. The fix involved:
-
-1. Creating a new `AddPhotoBookModal` component that:
-
-   - Handles both new photo book creation and adding to existing photo books
-   - Uses a two-step process for new users (collect info, then upload)
-   - Integrates with the existing photo upload component
-
-2. Updating the `LinksEditor` component to:
-
-   - Connect the "Add Photo" button to the new modal
-   - Show the photo book item in the sortable list even when no photos exist yet
-   - Properly handle the photo book order in the list
-
-3. Enhancing the `PhotoBookItem` component to:
-   - Show the count of photos in the book
-   - Provide better visual feedback about the photo book contents
-
-### Implementation Details:
-
-For the initial implementation (before multiple photo books are supported):
-
-- We use the `photoBookOrder` field to indicate that a photo book should be displayed
-- When creating a new photo book, we set `photoBookOrder` to 0 to make it appear at the top
-- The actual PhotoBookImage records are created when photos are uploaded
-- The LinksEditor shows the photo book item even if there are no photos yet, as long as photoBookOrder is set
-
-## Future Enhancements:
-
-The multiple photo books implementation plan outlines a more robust approach that will:
-
-1. Create a dedicated PhotoBook model in the database
-2. Allow multiple photo books per user with different metadata
-
-- **Prisma DB Setup**: The database client is set up in `lib/db-init.js` and exported as `db` from `lib/db.js`. To make it accessible as `@/
