@@ -12,6 +12,7 @@ const PaddingSelector = () => {
     pictureToName: 16,
     betweenCards: 16,
     cardHeight: 16,
+    nameToBio: 10,
   });
   const debounceTimerRef = useRef(null);
   const pendingUpdatesRef = useRef({});
@@ -48,6 +49,7 @@ const PaddingSelector = () => {
         pictureToName: currentUser.pictureToNamePadding ?? 16,
         betweenCards: currentUser.betweenCardsPadding ?? 16,
         cardHeight: currentUser.linkCardHeight ?? 16,
+        nameToBio: currentUser.nameToBioPadding ?? 10,
       };
 
       // Compare values individually to prevent unnecessary updates
@@ -73,6 +75,7 @@ const PaddingSelector = () => {
         pictureToNamePadding: newPaddingValues.pictureToName,
         betweenCardsPadding: newPaddingValues.betweenCards,
         linkCardHeight: newPaddingValues.cardHeight,
+        nameToBioPadding: newPaddingValues.nameToBio,
       });
     },
     {
@@ -157,8 +160,8 @@ const PaddingSelector = () => {
 
       // Round to nearest 5
       const roundedValue = Math.round(value / 5) * 5;
-      // Clamp between -100 and 200
-      const clampedValue = Math.max(-100, Math.min(200, roundedValue));
+      // Clamp between -200 and 200
+      const clampedValue = Math.max(-500, Math.min(500, roundedValue));
 
       // Update local state immediately
       setPaddingValues(prev => ({ ...prev, [type]: clampedValue }));
@@ -172,8 +175,8 @@ const PaddingSelector = () => {
     [debouncedApiUpdate]
   );
 
-  // Generate padding options from -100 to 200 in steps of 5
-  const paddingOptions = Array.from({ length: 61 }, (_, i) => -100 + i * 5);
+  // Generate padding options from -200 to 200 in steps of 5
+  const paddingOptions = Array.from({ length: 61 }, (_, i) => -500 + i * 5);
 
   // Reset to defaults handler
   const handleResetToDefaults = useCallback(() => {
@@ -182,6 +185,7 @@ const PaddingSelector = () => {
       pictureToName: 16,
       betweenCards: 16,
       cardHeight: 16,
+      nameToBio: 10,
     };
 
     // Update local state immediately
@@ -225,7 +229,7 @@ const PaddingSelector = () => {
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
         <p className="font-semibold">Negative Padding Enabled</p>
         <p>
-          Use negative values (down to -100px) to create overlapping elements. Negative spacers are
+          Use negative values (down to -500px) to create overlapping elements. Negative spacers are
           highlighted in red.
         </p>
       </div>
@@ -252,7 +256,7 @@ const PaddingSelector = () => {
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
-                  <span className="text-xs text-gray-500 mr-2">-100px</span>
+                  <span className="text-xs text-gray-500 mr-2">-500px</span>
                   <div className="w-full px-1">
                     <input
                       type="range"
@@ -301,11 +305,11 @@ const PaddingSelector = () => {
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
-                  <span className="text-xs text-gray-500 mr-2">-100px</span>
+                  <span className="text-xs text-gray-500 mr-2">-500px</span>
                   <div className="w-full px-1">
                     <input
                       type="range"
-                      min="-100"
+                      min="-500"
                       max="200"
                       step="5"
                       value={paddingValues.pictureToName}
@@ -317,7 +321,7 @@ const PaddingSelector = () => {
                 </div>
               </div>
             </div>
-            <div className="mt-2 bg-gray-100 rounded relative">
+            <div className="mt-2 bg-gray-200 rounded relative">
               <div style={{ height: `${Math.max(0, paddingValues.pictureToName)}px` }}></div>
               {paddingValues.pictureToName < 0 && (
                 <div
@@ -325,6 +329,55 @@ const PaddingSelector = () => {
                   style={{ height: `${Math.abs(paddingValues.pictureToName)}px` }}
                 >
                   Overlap: {paddingValues.pictureToName}px
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Profile Name to Bio - New padding control */}
+          <div>
+            <p className="text-inherit pb-2">
+              Profile Name to Bio{' '}
+              <span className="text-xs text-blue-500">(negative values = overlap)</span>
+            </p>
+            <div className="flex space-x-4">
+              <select
+                value={paddingValues.nameToBio}
+                onChange={e => handlePaddingChange('nameToBio', parseInt(e.target.value))}
+                className="w-1/3 p-2 border rounded-md"
+              >
+                {paddingOptions.map(size => (
+                  <option key={size} value={size}>
+                    {size}px
+                  </option>
+                ))}
+              </select>
+              <div className="w-2/3">
+                <div className="flex items-center">
+                  <span className="text-xs text-gray-500 mr-2">-500px</span>
+                  <div className="w-full px-1">
+                    <input
+                      type="range"
+                      min="-200"
+                      max="200"
+                      step="5"
+                      value={paddingValues.nameToBio}
+                      onChange={e => handlePaddingChange('nameToBio', parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <span className="text-xs text-gray-500 ml-2">200px</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-2 bg-gray-200 rounded relative">
+              <div style={{ height: `${Math.max(0, paddingValues.nameToBio)}px` }}></div>
+              {paddingValues.nameToBio < 0 && (
+                <div
+                  className="bg-red-200 opacity-40 w-full flex items-center justify-center text-red-600 text-xs font-bold"
+                  style={{ height: `${Math.abs(paddingValues.nameToBio)}px` }}
+                >
+                  Overlap: {paddingValues.nameToBio}px
                 </div>
               )}
             </div>
@@ -350,7 +403,7 @@ const PaddingSelector = () => {
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
-                  <span className="text-xs text-gray-500 mr-2">-100px</span>
+                  <span className="text-xs text-gray-500 mr-2">-500px</span>
                   <div className="w-full px-1">
                     <input
                       type="range"
@@ -413,7 +466,7 @@ const PaddingSelector = () => {
               </div>
             </div>
             <div
-              className="mt-2 bg-gray-100 rounded"
+              className="mt-2 bg-gray-200 rounded"
               style={{ height: `${paddingValues.cardHeight}px` }}
             />
           </div>

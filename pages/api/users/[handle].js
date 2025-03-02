@@ -50,6 +50,7 @@ export default async function handler(req, res) {
         pictureToNamePadding: true,
         betweenCardsPadding: true,
         linkCardHeight: true,
+        nameToBioPadding: true,
         photoBookLayout: true,
         photoBookOrder: true,
         links: true,

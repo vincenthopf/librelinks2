@@ -263,14 +263,19 @@ const ProfilePage = () => {
               </p>
 
               {fetchedUser?.bio && (
-                <div className="w-full">
+                <div
+                  className="w-full"
+                  style={{
+                    marginTop: `${fetchedUser?.nameToBioPadding || 10}px`,
+                  }}
+                >
                   <p
                     style={{
                       color: theme.accent,
                       fontSize: `${fetchedUser?.bioFontSize || 14}px`,
                       fontFamily: fetchedUser?.bioFontFamily || 'Inter',
                     }}
-                    className="text-center mt-1 mb-4 break-words whitespace-pre-wrap"
+                    className="text-center mb-4 break-words whitespace-pre-wrap"
                   >
                     {fetchedUser?.bio}
                   </p>

@@ -39,6 +39,7 @@ model User {
   pictureToNamePadding Int         @default(16)
   betweenCardsPadding  Int         @default(16)
   linkCardHeight       Int         @default(16)
+  nameToBioPadding     Int         @default(10)
   // Frame customization fields
   frameTemplate        String      @default("none")
   frameColor           String      @default("#000000")
@@ -164,6 +165,7 @@ model Template {
   pictureToNamePadding Int     @default(16)
   betweenCardsPadding  Int     @default(16)
   linkCardHeight       Int     @default(16)
+  nameToBioPadding     Int     @default(10)
 
   @@index([userId])
 }
