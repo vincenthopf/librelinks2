@@ -92,8 +92,11 @@ export const getInitials = name => {
  *   - 'refresh': Full refresh (use sparingly, may cause performance issues)
  *   - 'update_links': Only update link-related content
  *   - 'update_user': Only update user-related content
+ *   - 'update_dimensions': Update frame dimensions without full refresh
+ *   - 'update_image': Update image content without full refresh
+ * @param {Object} data - Optional data to send with the message
  */
-export const signalIframe = (type = 'refresh') => {
+export const signalIframe = (type = 'refresh', data = {}) => {
   // Use requestAnimationFrame to ensure this doesn't block the UI
   requestAnimationFrame(() => {
     try {
@@ -102,16 +105,21 @@ export const signalIframe = (type = 'refresh') => {
         type = 'refresh';
       }
 
+      // For backward compatibility, use string message for standard types
+      // and object message for new types with data
+      const isStandardType = ['refresh', 'update_links', 'update_user'].includes(type);
+      const message = isStandardType ? type : { type, ...data };
+
       // Refresh desktop preview
       const iframe = document.getElementById('preview');
       if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(type, '*');
+        iframe.contentWindow.postMessage(message, '*');
       }
 
       // Refresh mobile preview
       const mobileIframe = document.getElementById('preview-mobile');
       if (mobileIframe && mobileIframe.contentWindow) {
-        mobileIframe.contentWindow.postMessage(type, '*');
+        mobileIframe.contentWindow.postMessage(message, '*');
       }
     } catch (error) {
       // Silent failure - don't let any iframe issues crash the app

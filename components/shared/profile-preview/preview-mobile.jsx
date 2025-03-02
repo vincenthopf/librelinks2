@@ -16,6 +16,7 @@ const PreviewMobile = ({ close }) => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const iframeRef = useRef(null);
+  const dimensionUpdateTimeoutRef = useRef(null);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
   const baseURL = getCurrentBaseURL();
   const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}`;
@@ -47,6 +48,7 @@ const PreviewMobile = ({ close }) => {
 
   useEffect(() => {
     const handleMessage = event => {
+      // Handle string messages (standard format)
       if (
         event.data &&
         typeof event.data === 'string' &&
@@ -55,11 +57,57 @@ const PreviewMobile = ({ close }) => {
       ) {
         // Force a complete iframe refresh by updating the key
         setRefreshKey(prev => prev + 1);
+        return;
+      }
+
+      // Handle structured messages (new format)
+      if (event.data && typeof event.data === 'object' && event.data.type && iframeRef.current) {
+        const { type } = event.data;
+
+        // Special handling for dimension updates to avoid screen flashing
+        if (type === 'update_dimensions') {
+          // For dimension updates, we don't need to refresh the entire iframe
+          // Instead, we can forward the message to the iframe content
+          if (iframeRef.current && iframeRef.current.contentWindow) {
+            try {
+              // Forward the dimension update to the iframe content
+              iframeRef.current.contentWindow.postMessage(event.data, '*');
+              console.log('Forwarded dimension update to mobile iframe:', event.data);
+
+              // Clear any existing timeout
+              if (dimensionUpdateTimeoutRef.current) {
+                clearTimeout(dimensionUpdateTimeoutRef.current);
+              }
+
+              // Set a fallback refresh after a delay to ensure synchronization
+              // This will only happen if the forwarded message doesn't work properly
+              dimensionUpdateTimeoutRef.current = setTimeout(() => {
+                console.log('Fallback refresh for dimension update in mobile preview');
+                setRefreshKey(prev => prev + 1);
+                dimensionUpdateTimeoutRef.current = null;
+              }, 500);
+
+              return;
+            } catch (error) {
+              console.error('Error forwarding dimension update to mobile iframe:', error);
+              // Fall through to full refresh on error
+            }
+          }
+        }
+
+        // For other message types, fall back to a full refresh
+        setRefreshKey(prev => prev + 1);
       }
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      // Clean up timeout on unmount
+      if (dimensionUpdateTimeoutRef.current) {
+        clearTimeout(dimensionUpdateTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Re-render iframe when photoBookLayout changes

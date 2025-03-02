@@ -39,5 +39,6 @@
     "javascript.suggest.names": false,
     "css.format.enable": false,
     "less.format.enable": false,
-    "files.trimTrailingWhitespaceInRegexAndStrings": false
+    "files.trimTrailingWhitespaceInRegexAndStrings": false,
+    "editor.fontSize": 12
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { getFrameCacheKey, useOptimizedFrame, getOptimizedStyles } from '../frame-optimizations';
 
@@ -9,8 +9,7 @@ export type CornerStyle =
   | 'diamond'
   | 'straight'
   | 'round'
-  | 'squircle'
-  | 'apple';
+  | 'squircle';
 
 interface RoundedCornersFrameProps {
   size: number;
@@ -24,6 +23,8 @@ interface RoundedCornersFrameProps {
   topRightRadius: number;
   bottomLeftRadius: number;
   bottomRightRadius: number;
+  width?: number;
+  height?: number;
   animation?: {
     type: string | null;
     enabled: boolean;
@@ -126,19 +127,6 @@ const generateCornerPath = (
         return `C ${x + ctrl} ${y + height}, ${x} ${y + height - ctrl}, ${x} ${y + height - r}`;
       return '';
 
-    case 'apple':
-      // Apple's iOS-style rounded corners (continuous curvature)
-      const appleCtrl = r * 0.45; // Adjusted control point for Apple's style
-      if (position === 'topLeft')
-        return `C ${x} ${y + appleCtrl}, ${x + appleCtrl} ${y}, ${x + r} ${y}`;
-      if (position === 'topRight')
-        return `C ${x + width - appleCtrl} ${y}, ${x + width} ${y + appleCtrl}, ${x + width} ${y + r}`;
-      if (position === 'bottomRight')
-        return `C ${x + width} ${y + height - appleCtrl}, ${x + width - appleCtrl} ${y + height}, ${x + width - r} ${y + height}`;
-      if (position === 'bottomLeft')
-        return `C ${x + appleCtrl} ${y + height}, ${x} ${y + height - appleCtrl}, ${x} ${y + height - r}`;
-      return '';
-
     default:
       // Default to rounded corner
       return `A ${r} ${r} 0 0 1 ${endX} ${endY}`;
@@ -210,9 +198,77 @@ export const RoundedCornersFrame: React.FC<RoundedCornersFrameProps> = ({
   topRightRadius,
   bottomLeftRadius,
   bottomRightRadius,
+  width = 512,
+  height = 512,
   animation,
   className,
 }) => {
+  const [frameKey, setFrameKey] = useState(`${width}-${height}-${Date.now()}`);
+  const prevDimensionsRef = useRef({ width, height });
+  const dimensionChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Force re-render when dimensions change
+  useEffect(() => {
+    // Check if dimensions have actually changed significantly (more than 1px)
+    if (
+      Math.abs(width - prevDimensionsRef.current.width) > 1 ||
+      Math.abs(height - prevDimensionsRef.current.height) > 1
+    ) {
+      console.log('Frame dimensions changed, updating key:', {
+        oldWidth: prevDimensionsRef.current.width,
+        newWidth: width,
+        oldHeight: prevDimensionsRef.current.height,
+        newHeight: height,
+      });
+
+      // Update the ref
+      prevDimensionsRef.current = { width, height };
+
+      // Update the key with a timestamp to ensure uniqueness
+      // This will cause a local re-render of just this component
+      setFrameKey(`${width}-${height}-${Date.now()}`);
+
+      // Clear any existing timeout to prevent multiple updates
+      if (dimensionChangeTimeoutRef.current) {
+        clearTimeout(dimensionChangeTimeoutRef.current);
+      }
+
+      // For significant dimension changes, we need to ensure proper synchronization
+      // First try a targeted update, then follow with a full refresh if needed
+      dimensionChangeTimeoutRef.current = setTimeout(() => {
+        try {
+          // Try to find and notify any parent windows
+          if (window.parent && window.parent !== window) {
+            // First send a targeted update_dimensions message
+            window.parent.postMessage(
+              {
+                type: 'update_dimensions',
+                frameWidth: width,
+                frameHeight: height,
+              },
+              '*'
+            );
+
+            // Then follow with a standard update_user message after a short delay
+            // This ensures proper synchronization while minimizing visible flashing
+            setTimeout(() => {
+              window.parent.postMessage('update_user', '*');
+            }, 100);
+          }
+        } catch (error) {
+          console.error('Error notifying parent about dimension change:', error);
+        }
+      }, 50);
+    }
+
+    return () => {
+      // Clean up timeout on unmount or when dependencies change
+      if (dimensionChangeTimeoutRef.current) {
+        clearTimeout(dimensionChangeTimeoutRef.current);
+      }
+    };
+  }, [width, height]);
+
   // Log the props for debugging
   console.log('RoundedCornersFrame props:', {
     size,
@@ -226,6 +282,8 @@ export const RoundedCornersFrame: React.FC<RoundedCornersFrameProps> = ({
     topRightRadius,
     bottomLeftRadius,
     bottomRightRadius,
+    width,
+    height,
   });
 
   const cacheKey = getFrameCacheKey(
@@ -234,7 +292,7 @@ export const RoundedCornersFrame: React.FC<RoundedCornersFrameProps> = ({
     color,
     rotation,
     thickness,
-    '', // name parameter should be empty string, not cornerStyle
+    cornerStyle,
     animation,
     cornerStyle,
     borderRadius,
@@ -242,24 +300,62 @@ export const RoundedCornersFrame: React.FC<RoundedCornersFrameProps> = ({
     topLeftRadius,
     topRightRadius,
     bottomLeftRadius,
-    bottomRightRadius
+    bottomRightRadius,
+    width,
+    height
   );
 
   const isAnimated = animation?.enabled && animation.type !== null;
-  const optimizedStyles = getOptimizedStyles(isAnimated);
+  const optimizedStyles = getOptimizedStyles(!!isAnimated);
 
   // Calculate dimensions for the SVG viewBox
-  const viewBoxSize = 100;
-  const frameWidth = viewBoxSize - thickness;
-  const frameHeight = viewBoxSize - thickness;
+  // Use the width and height to determine the aspect ratio
+  const aspectRatio = width / height;
+
+  // Determine if we need to adjust for non-square aspect ratio
+  let svgWidth = size;
+  let svgHeight = size;
+
+  // Adjust SVG dimensions to maintain aspect ratio within the size constraint
+  if (aspectRatio > 1) {
+    // Wider than tall
+    svgHeight = size / aspectRatio;
+  } else if (aspectRatio < 1) {
+    // Taller than wide
+    svgWidth = size * aspectRatio;
+  }
+
+  // Use a fixed viewBox width and calculate height based on aspect ratio
+  const viewBoxWidth = 100;
+  const viewBoxHeight = viewBoxWidth / aspectRatio;
+
+  // Calculate frame dimensions within the viewBox
+  const frameWidth = viewBoxWidth - thickness;
+  const frameHeight = viewBoxHeight - thickness;
   const frameX = thickness / 2;
   const frameY = thickness / 2;
 
+  // Generate the frame path for both stroke and clip path
+  const framePath = generateFramePath(
+    cornerStyle,
+    frameWidth,
+    frameHeight,
+    allCorners,
+    borderRadius,
+    topLeftRadius,
+    topRightRadius,
+    bottomRightRadius,
+    bottomLeftRadius
+  );
+
+  // Generate a unique clip path ID that includes all relevant properties
+  const clipPathId = `rounded-corners-clip-${cacheKey}-${frameKey}`;
+
   const renderFrame = () => (
     <motion.svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+      width={svgWidth}
+      height={svgHeight}
+      viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{
@@ -267,19 +363,19 @@ export const RoundedCornersFrame: React.FC<RoundedCornersFrameProps> = ({
         ...optimizedStyles,
       }}
       className={className}
+      preserveAspectRatio="xMidYMid meet"
+      key={frameKey}
     >
+      {/* Define clip path for the image */}
+      <defs>
+        <clipPath id={clipPathId}>
+          <path d={framePath} transform={`translate(${frameX}, ${frameY})`} />
+        </clipPath>
+      </defs>
+
+      {/* Frame stroke */}
       <path
-        d={generateFramePath(
-          cornerStyle,
-          frameWidth,
-          frameHeight,
-          allCorners,
-          borderRadius,
-          topLeftRadius,
-          topRightRadius,
-          bottomRightRadius,
-          bottomLeftRadius
-        )}
+        d={framePath}
         stroke={color}
         strokeWidth={thickness}
         fill="transparent"
@@ -295,6 +391,75 @@ export const RoundedCornersFrame: React.FC<RoundedCornersFrameProps> = ({
   }
 
   return optimizedFrame;
+};
+
+// Export the function to generate frame path for use in other components
+export const getFramePathForClipping = (
+  cornerStyle: CornerStyle,
+  size: number,
+  thickness: number,
+  allCorners: boolean,
+  borderRadius: number,
+  topLeftRadius: number,
+  topRightRadius: number,
+  bottomLeftRadius: number,
+  bottomRightRadius: number,
+  width: number = 512,
+  height: number = 512
+): string => {
+  // For clipping, we want to use the inner dimensions of the frame
+  const aspectRatio = width / height;
+  const viewBoxWidth = 100;
+  const viewBoxHeight = viewBoxWidth / aspectRatio;
+
+  const frameWidth = viewBoxWidth - thickness;
+  const frameHeight = viewBoxHeight - thickness;
+  const frameX = thickness / 2;
+  const frameY = thickness / 2;
+
+  // Calculate the actual radii to use based on the frame dimensions
+  const maxRadius = Math.min(frameWidth, frameHeight) / 2;
+  const tl = Math.min(allCorners ? borderRadius : topLeftRadius, maxRadius);
+  const tr = Math.min(allCorners ? borderRadius : topRightRadius, maxRadius);
+  const br = Math.min(allCorners ? borderRadius : bottomRightRadius, maxRadius);
+  const bl = Math.min(allCorners ? borderRadius : bottomLeftRadius, maxRadius);
+
+  // Log parameters for debugging
+  console.log('getFramePathForClipping:', {
+    cornerStyle,
+    size,
+    thickness,
+    allCorners,
+    borderRadius,
+    topLeftRadius,
+    topRightRadius,
+    bottomLeftRadius,
+    bottomRightRadius,
+    frameWidth,
+    frameHeight,
+    frameX,
+    frameY,
+    width,
+    height,
+    aspectRatio,
+    maxRadius,
+    actualRadii: { tl, tr, br, bl },
+  });
+
+  // Generate the path with the same parameters as the frame
+  const path = generateFramePath(
+    cornerStyle,
+    frameWidth,
+    frameHeight,
+    allCorners,
+    borderRadius,
+    topLeftRadius,
+    topRightRadius,
+    bottomLeftRadius,
+    bottomRightRadius
+  );
+
+  return path;
 };
 
 export default RoundedCornersFrame;

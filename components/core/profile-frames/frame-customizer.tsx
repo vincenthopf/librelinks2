@@ -23,6 +23,8 @@ interface FrameCustomizerProps {
   topRightRadius?: number;
   bottomLeftRadius?: number;
   bottomRightRadius?: number;
+  width?: number;
+  height?: number;
   onTemplateChange: (template: FrameTemplate) => void;
   onColorChange: (color: string) => void;
   onThicknessChange: (thickness: number) => void;
@@ -37,6 +39,8 @@ interface FrameCustomizerProps {
   onTopRightRadiusChange?: (radius: number) => void;
   onBottomLeftRadiusChange?: (radius: number) => void;
   onBottomRightRadiusChange?: (radius: number) => void;
+  onWidthChange?: (width: number) => void;
+  onHeightChange?: (height: number) => void;
   className?: string;
 }
 
@@ -58,6 +62,8 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
   topRightRadius = 20,
   bottomLeftRadius = 20,
   bottomRightRadius = 20,
+  width = 512,
+  height = 512,
   onTemplateChange,
   onColorChange,
   onThicknessChange,
@@ -72,6 +78,8 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
   onTopRightRadiusChange,
   onBottomLeftRadiusChange,
   onBottomRightRadiusChange,
+  onWidthChange,
+  onHeightChange,
   className,
 }) => {
   const [isUpdatingSync, setIsUpdatingSync] = useState(false);
@@ -168,7 +176,9 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
       onTopLeftRadiusChange &&
       onTopRightRadiusChange &&
       onBottomLeftRadiusChange &&
-      onBottomRightRadiusChange
+      onBottomRightRadiusChange &&
+      onWidthChange &&
+      onHeightChange
     ) {
       return (
         <RoundedCornersCustomizer
@@ -179,6 +189,8 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
           topRightRadius={topRightRadius}
           bottomLeftRadius={bottomLeftRadius}
           bottomRightRadius={bottomRightRadius}
+          width={width}
+          height={height}
           onCornerStyleChange={onCornerStyleChange}
           onBorderRadiusChange={onBorderRadiusChange}
           onAllCornersChange={onAllCornersChange}
@@ -186,6 +198,8 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
           onTopRightRadiusChange={onTopRightRadiusChange}
           onBottomLeftRadiusChange={onBottomLeftRadiusChange}
           onBottomRightRadiusChange={onBottomRightRadiusChange}
+          onWidthChange={onWidthChange}
+          onHeightChange={onHeightChange}
           className="mt-6"
         />
       );

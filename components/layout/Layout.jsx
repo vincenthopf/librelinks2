@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import Preview from '../shared/profile-preview/preview';
 import PreviewBtn from '../shared/profile-preview/preview-btn';
 import Navbar from './navbar/navbar';
+import FrameRefreshHandler from '../utils/frame-refresh-handler';
 
 const Layout = ({ children }) => {
   const router = useRouter();
@@ -19,6 +20,8 @@ const Layout = ({ children }) => {
           )}
 
           <PreviewBtn />
+
+          <FrameRefreshHandler />
         </main>
       </section>
     </>

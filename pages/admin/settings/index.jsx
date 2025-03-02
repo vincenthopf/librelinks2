@@ -242,6 +242,8 @@ const Settings = () => {
                       topRightRadius={fetchedUser?.frameTopRightRadius || 20}
                       bottomLeftRadius={fetchedUser?.frameBottomLeftRadius || 20}
                       bottomRightRadius={fetchedUser?.frameBottomRightRadius || 20}
+                      width={fetchedUser?.frameWidth || 512}
+                      height={fetchedUser?.frameHeight || 512}
                       onTemplateChange={async template => {
                         try {
                           await axios.patch('/api/frame', {
@@ -409,6 +411,30 @@ const Settings = () => {
                           toast.success('Bottom right radius updated');
                         } catch (error) {
                           toast.error('Failed to update bottom right radius');
+                        }
+                      }}
+                      onWidthChange={async width => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameWidth: width,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Frame width updated');
+                        } catch (error) {
+                          toast.error('Failed to update frame width');
+                        }
+                      }}
+                      onHeightChange={async height => {
+                        try {
+                          await axios.patch('/api/frame', {
+                            frameHeight: height,
+                          });
+                          queryClient.invalidateQueries('users');
+                          signalIframe();
+                          toast.success('Frame height updated');
+                        } catch (error) {
+                          toast.error('Failed to update frame height');
                         }
                       }}
                     />

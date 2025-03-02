@@ -28,6 +28,8 @@ export default async function handler(req, res) {
       frameTopRightRadius,
       frameBottomLeftRadius,
       frameBottomRightRadius,
+      frameWidth,
+      frameHeight,
     } = req.body;
 
     const validFrameTemplates = [
@@ -145,6 +147,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: bottomRightError });
     }
 
+    // Validate frame width if provided
+    if (frameWidth !== undefined) {
+      const width = parseInt(frameWidth);
+      if (isNaN(width) || width < 100 || width > 1024) {
+        return res.status(400).json({ error: 'Frame width must be between 100 and 1024' });
+      }
+    }
+
+    // Validate frame height if provided
+    if (frameHeight !== undefined) {
+      const height = parseInt(frameHeight);
+      if (isNaN(height) || height < 100 || height > 1024) {
+        return res.status(400).json({ error: 'Frame height must be between 100 and 1024' });
+      }
+    }
+
     // Build update data object
     const updateData = {
       ...(frameTemplate && { frameTemplate }),
@@ -177,6 +195,12 @@ export default async function handler(req, res) {
       ...(frameBottomRightRadius !== undefined && {
         frameBottomRightRadius: parseInt(frameBottomRightRadius, 10),
       }),
+      ...(frameWidth !== undefined && {
+        frameWidth: parseInt(frameWidth, 10),
+      }),
+      ...(frameHeight !== undefined && {
+        frameHeight: parseInt(frameHeight, 10),
+      }),
     };
 
     // Update user
@@ -197,6 +221,8 @@ export default async function handler(req, res) {
       frameTopRightRadius: user.frameTopRightRadius,
       frameBottomLeftRadius: user.frameBottomLeftRadius,
       frameBottomRightRadius: user.frameBottomRightRadius,
+      frameWidth: user.frameWidth,
+      frameHeight: user.frameHeight,
     });
 
     return res.status(200).json(user);

@@ -27,7 +27,9 @@ export const getFrameCacheKey = (
   topLeftRadius?: number,
   topRightRadius?: number,
   bottomLeftRadius?: number,
-  bottomRightRadius?: number
+  bottomRightRadius?: number,
+  width?: number,
+  height?: number
 ) => {
   // Create a base key with common properties
   let key = `${template}-${size}-${color}-${rotation}-${thickness}-${name}-${JSON.stringify(animation)}`;
@@ -35,6 +37,11 @@ export const getFrameCacheKey = (
   // Add rounded corners properties if applicable
   if (template === 'rounded-corners') {
     key += `-${cornerStyle}-${borderRadius}-${allCorners}-${topLeftRadius}-${topRightRadius}-${bottomLeftRadius}-${bottomRightRadius}`;
+
+    // Add width and height if provided
+    if (width && height) {
+      key += `-${width}-${height}`;
+    }
   }
 
   return key;

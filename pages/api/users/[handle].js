@@ -52,6 +52,8 @@ export default async function handler(req, res) {
         frameTopRightRadius: true,
         frameBottomLeftRadius: true,
         frameBottomRightRadius: true,
+        frameWidth: true,
+        frameHeight: true,
         backgroundImage: true,
         headToPicturePadding: true,
         pictureToNamePadding: true,

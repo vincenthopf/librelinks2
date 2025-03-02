@@ -12,6 +12,8 @@ interface RoundedCornersCustomizerProps {
   topRightRadius: number;
   bottomLeftRadius: number;
   bottomRightRadius: number;
+  width: number;
+  height: number;
   onCornerStyleChange: (style: CornerStyle) => void;
   onBorderRadiusChange: (radius: number) => void;
   onAllCornersChange: (allCorners: boolean) => void;
@@ -19,6 +21,8 @@ interface RoundedCornersCustomizerProps {
   onTopRightRadiusChange: (radius: number) => void;
   onBottomLeftRadiusChange: (radius: number) => void;
   onBottomRightRadiusChange: (radius: number) => void;
+  onWidthChange: (width: number) => void;
+  onHeightChange: (height: number) => void;
   className?: string;
 }
 
@@ -30,7 +34,6 @@ const cornerStyles: { id: CornerStyle; label: string }[] = [
   { id: 'straight', label: 'Straight' },
   { id: 'round', label: 'Round' },
   { id: 'squircle', label: 'Squircle' },
-  { id: 'apple', label: 'Apple' },
 ];
 
 export const RoundedCornersCustomizer: React.FC<RoundedCornersCustomizerProps> = ({
@@ -41,6 +44,8 @@ export const RoundedCornersCustomizer: React.FC<RoundedCornersCustomizerProps> =
   topRightRadius,
   bottomLeftRadius,
   bottomRightRadius,
+  width,
+  height,
   onCornerStyleChange,
   onBorderRadiusChange,
   onAllCornersChange,
@@ -48,6 +53,8 @@ export const RoundedCornersCustomizer: React.FC<RoundedCornersCustomizerProps> =
   onTopRightRadiusChange,
   onBottomLeftRadiusChange,
   onBottomRightRadiusChange,
+  onWidthChange,
+  onHeightChange,
   className,
 }) => {
   // Generate CSS code preview
@@ -214,14 +221,14 @@ export const RoundedCornersCustomizer: React.FC<RoundedCornersCustomizerProps> =
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Width</span>
-              <span className="text-sm font-medium">512</span>
+              <span className="text-sm font-medium">{width}</span>
             </div>
             <Slider
-              value={[512]}
+              value={[width]}
               min={100}
               max={1024}
               step={1}
-              disabled
+              onValueChange={values => onWidthChange(values[0])}
               className="w-full"
               ariaLabel="Width"
             />
@@ -231,14 +238,14 @@ export const RoundedCornersCustomizer: React.FC<RoundedCornersCustomizerProps> =
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Height</span>
-              <span className="text-sm font-medium">512</span>
+              <span className="text-sm font-medium">{height}</span>
             </div>
             <Slider
-              value={[512]}
+              value={[height]}
               min={100}
               max={1024}
               step={1}
-              disabled
+              onValueChange={values => onHeightChange(values[0])}
               className="w-full"
               ariaLabel="Height"
             />
