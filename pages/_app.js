@@ -1,74 +1,59 @@
-import '../styles/globals.css';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Toaster } from 'react-hot-toast';
-import React, { useEffect, useState } from 'react';
 import { SessionProvider } from 'next-auth/react';
-import NProgress from '@/components/utils/nprogress';
-import { Provider } from 'react-wrap-balancer';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Analytics } from '@vercel/analytics/react';
-import Script from 'next/script';
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
+import '@/styles/globals.css';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { Toaster } from 'react-hot-toast';
+import { ProxyFlock } from '@/components/analytics/ProxyFlock';
 
-export default function App({ Component, pageProps }) {
+// Create a client for React Query
+const queryClient = new QueryClient();
+
+export default function App({ Component, pageProps: { session, ...pageProps } }) {
   const router = useRouter();
 
-  const [state, setState] = useState({
-    isRouteChanging: false,
-    loadingKey: 0,
-  });
-
-  // query client
-  const [queryClient] = useState(() => new QueryClient());
-
-  // NProgress configuration
+  // Setup NProgress loading indicator
   useEffect(() => {
-    const handleRouteChangeStart = () => {
-      setState(prevState => ({
-        ...prevState,
-        isRouteChanging: true,
-        loadingKey: prevState.loadingKey ^ 1,
-      }));
+    const handleStart = () => {
+      NProgress.start();
     };
 
-    const handleRouteChangeEnd = () => {
-      setState(prevState => ({
-        ...prevState,
-        isRouteChanging: false,
-      }));
+    const handleStop = () => {
+      NProgress.done();
     };
 
-    router.events.on('routeChangeStart', handleRouteChangeStart);
-    router.events.on('routeChangeComplete', handleRouteChangeEnd);
-    router.events.on('routeChangeError', handleRouteChangeEnd);
+    router.events.on('routeChangeStart', handleStart);
+    router.events.on('routeChangeComplete', handleStop);
+    router.events.on('routeChangeError', handleStop);
 
     return () => {
-      router.events.off('routeChangeStart', handleRouteChangeStart);
-      router.events.off('routeChangeComplete', handleRouteChangeEnd);
-      router.events.off('routeChangeError', handleRouteChangeEnd);
+      router.events.off('routeChangeStart', handleStart);
+      router.events.off('routeChangeComplete', handleStop);
+      router.events.off('routeChangeError', handleStop);
     };
-  }, [router.events]);
+  }, [router]);
+
+  // Get the handle from the URL if available
+  const handle = router.query.handle || null;
+
+  // Initialize QueryClient
+  const [queryClient] = useState(() => new QueryClient());
+
+  // Always enable debug mode for troubleshooting
+  const debugMode = true;
 
   return (
-    <>
-      <NProgress isRouteChanging={state.isRouteChanging} key={state.loadingKey} /> <Analytics />
-      {/* Tinybird Web Analytics Script */}
-      <Script
-        defer
-        src="https://unpkg.com/@tinybirdco/flock.js"
-        data-host="https://api.us-east.tinybird.co"
-        data-token={process.env.NEXT_PUBLIC_TINYBIRD_WEB_ANALYTICS_TOKEN}
-        strategy="afterInteractive"
-      />
-      <QueryClientProvider client={queryClient}>
-        <Toaster toastOptions={{ duration: 2500 }} position="bottom-center" />
-        <SessionProvider session={pageProps.session}>
-          <Provider>
-            <Component {...pageProps} />{' '}
-          </Provider>{' '}
-        </SessionProvider>{' '}
-        <ReactQueryDevtools initialIsOpen={false} />{' '}
-      </QueryClientProvider>{' '}
-    </>
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider session={session}>
+        <Toaster />
+        <ProxyFlock handle={handle} debug={debugMode}>
+          <Component {...pageProps} />
+        </ProxyFlock>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </SessionProvider>
+    </QueryClientProvider>
   );
 }

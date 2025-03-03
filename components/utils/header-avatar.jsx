@@ -163,7 +163,8 @@ export const HeaderAvatar = ({ onClick }) => {
           alt="avatar"
           width={size}
           height={size}
-          className="object-cover"
+          className={`h-[80px] w-[80px] object-cover rounded-full ${!fetchedUser?.image && 'hidden'}`}
+          loading="eager"
           priority={true}
         />
       </div>
@@ -211,7 +212,8 @@ export const HeaderAvatar = ({ onClick }) => {
           alt="avatar"
           width={imageSize}
           height={imageSize}
-          className="h-full w-full object-cover"
+          className={`h-[40px] w-[40px] object-cover rounded-full ${!fetchedUser?.image && 'hidden'}`}
+          loading="eager"
           priority={true}
         />
       );
@@ -290,7 +292,7 @@ export const HeaderAvatar = ({ onClick }) => {
           height={viewBoxHeight}
           preserveAspectRatio="xMidYMid slice"
           clipPath={`url(#${clipId})`}
-          priority="true"
+          priority={true}
         />
       </svg>
     );

@@ -6,6 +6,9 @@ export const DeviceStats = ({ analytics, isLoading }) => {
   const COLORS = ['#0088FE', '#00C49F', ' #c84e89', '#FFBB28', '#FF8042'];
   const { isMobile } = useMediaQuery();
 
+  // Extract the data array from the analytics object
+  const devicesData = analytics?.data || [];
+
   // Format device names to be more user-friendly
   const formatDeviceName = device => {
     if (!device) return 'Unknown';
@@ -34,27 +37,35 @@ export const DeviceStats = ({ analytics, isLoading }) => {
                 isMobile ? 'items-center' : 'lg:flex-row justify-center lg:gap-x-10'
               }`}
             >
-              {analytics?.map(({ device, visits }, index) => (
-                <div key={device || index} className="flex flex-col gap-2">
-                  <div className="flex items-center gap-1">
-                    <div
-                      style={{
-                        background: `${COLORS[index % COLORS.length]}`,
-                      }}
-                      className="w-[8px] h-[8px] rounded-full"
-                    />
-                    <h3 className={`capitalize text-sm ${isMobile ? 'text-center' : 'lg:text-md'}`}>
-                      {formatDeviceName(device)}
+              {Array.isArray(devicesData) && devicesData.length > 0 ? (
+                devicesData.map(({ device, visits }, index) => (
+                  <div key={device || index} className="flex flex-col gap-2">
+                    <div className="flex items-center gap-1">
+                      <div
+                        style={{
+                          background: `${COLORS[index % COLORS.length]}`,
+                        }}
+                        className="w-[8px] h-[8px] rounded-full"
+                      />
+                      <h3
+                        className={`capitalize text-sm ${isMobile ? 'text-center' : 'lg:text-md'}`}
+                      >
+                        {formatDeviceName(device)}
+                      </h3>
+                    </div>
+                    <h3 className={`font-semibold text-center ${isMobile ? 'text-lg' : ''}`}>
+                      {visits}
                     </h3>
                   </div>
-                  <h3 className={`font-semibold text-center ${isMobile ? 'text-lg' : ''}`}>
-                    {visits}
-                  </h3>
+                ))
+              ) : (
+                <div className="py-4">
+                  <p className="text-center text-gray-500">No device data available</p>
                 </div>
-              ))}
+              )}
             </div>
             <div className="mx-auto mt-6 w-full md:w-[300px] lg:w-[400px]">
-              {analytics?.length > 0 ? (
+              {Array.isArray(devicesData) && devicesData.length > 0 ? (
                 <PieChart width={isMobile ? 300 : 400} height={250}>
                   <Tooltip
                     formatter={(value, name, props) => [`${value} visits`, 'Visits']}
@@ -63,13 +74,13 @@ export const DeviceStats = ({ analytics, isLoading }) => {
                   <Pie
                     dataKey="visits"
                     nameKey="device"
-                    data={analytics}
+                    data={devicesData}
                     cx="50%"
                     cy="50%"
                     innerRadius={40}
                     label={({ device }) => formatDeviceName(device)}
                   >
-                    {analytics?.map((entry, index) => (
+                    {devicesData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>

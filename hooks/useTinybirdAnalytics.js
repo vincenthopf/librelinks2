@@ -33,11 +33,15 @@ const useTinybirdAnalytics = (handle, timeRange = 'last_24_hours', type = 'pagev
       }
 
       const response = await axios.get(endpoint);
+
+      // Log the response data for debugging
+      console.log(`Analytics data for ${type}:`, response.data);
+
       return response.data;
     },
     enabled: !!handle,
     onError: error => {
-      console.error('Error fetching Tinybird analytics:', error);
+      console.error(`Error fetching Tinybird ${type} analytics:`, error);
       toast.error('Failed to load analytics data');
     },
     refetchInterval: 300000, // Refetch every 5 minutes

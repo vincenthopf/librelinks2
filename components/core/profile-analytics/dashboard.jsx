@@ -58,7 +58,7 @@ export function AnalyticsDashboard() {
         />
       </div>
       <Chart
-        analytics={formattedPageviewData}
+        analytics={pageviewData}
         totalVisits={pageviewData?.totalVisits || 0}
         isLoading={isPageviewLoading}
       />

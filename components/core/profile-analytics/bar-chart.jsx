@@ -4,6 +4,8 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGri
 
 // Format timestamp for display
 const formatTimestamp = timestamp => {
+  if (!timestamp) return '';
+
   const date = new Date(timestamp);
 
   // For hourly data, show hour
@@ -17,12 +19,17 @@ const formatTimestamp = timestamp => {
 
 const Chart = ({ analytics, totalVisits, isLoading }) => {
   // Format data for the chart
-  const chartData =
-    analytics?.map(item => ({
-      timestamp: item.timestamp,
-      t: formatTimestamp(item.timestamp),
-      visits: item.visits,
-    })) || [];
+  const chartData = Array.isArray(analytics)
+    ? analytics.map(item => ({
+        timestamp: item.timestamp,
+        t: formatTimestamp(item.timestamp),
+        visits: item.visits,
+      }))
+    : [];
+
+  // Check if we have an access warning
+  const hasPermissionIssue =
+    analytics?.warning?.includes('access') || analytics?.warning?.includes('token');
 
   return (
     <>
@@ -40,31 +47,46 @@ const Chart = ({ analytics, totalVisits, isLoading }) => {
         </div>
         <div className="">
           <ResponsiveContainer width="95%" height={300}>
-            {!isLoading && chartData.length > 0 ? (
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="t"
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  minTickGap={15}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={value => `${value}`}
-                />
-                <Tooltip
-                  labelFormatter={label => `Time: ${label}`}
-                  formatter={value => [`${value} visits`, 'Visits']}
-                />
-                <Bar dataKey="visits" fill="#adfa1d" />
-              </BarChart>
+            {!isLoading ? (
+              chartData.length > 0 ? (
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="t"
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    minTickGap={15}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={value => `${value}`}
+                  />
+                  <Tooltip
+                    labelFormatter={label => `Time: ${label}`}
+                    formatter={value => [`${value} visits`, 'Visits']}
+                  />
+                  <Bar dataKey="visits" fill="#adfa1d" />
+                </BarChart>
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  {hasPermissionIssue ? (
+                    <div className="text-center text-gray-500">
+                      <p>Access to pageviews data is restricted.</p>
+                      <p className="text-sm mt-2">Please check your Tinybird token permissions.</p>
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-500">
+                      <p>No pageview data available yet.</p>
+                    </div>
+                  )}
+                </div>
+              )
             ) : (
               <div>
                 <Loader bgColor={'black'} message={'Fetching data'} />

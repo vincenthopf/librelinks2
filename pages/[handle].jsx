@@ -5,9 +5,9 @@ import * as Avatar from '@radix-ui/react-avatar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import useUser from '@/hooks/useUser';
 import Loader from '@/components/utils/loading-spinner';
 import NotFound from '@/components/utils/not-found';
@@ -17,11 +17,14 @@ import Script from 'next/script';
 import { SocialCards } from '@/components/core/user-profile/social-cards';
 import Head from 'next/head';
 import { UserAvatarSetting } from '@/components/utils/avatar';
-import { useQuery } from '@tanstack/react-query';
 import PortfolioLayout from '@/components/core/photo-book/layouts/portfolio-layout';
 import MasonryLayout from '@/components/core/photo-book/layouts/masonry-layout';
 import GridLayout from '@/components/core/photo-book/layouts/grid-layout';
 import CarouselLayout from '@/components/core/photo-book/layouts/carousel-layout';
+import { ProxyFlock, trackEvent } from '@/components/analytics/ProxyFlock';
+import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { motion } from 'framer-motion';
 
 const ProfilePage = () => {
   const { query } = useRouter();
@@ -106,6 +109,20 @@ const ProfilePage = () => {
   );
 
   const [, setIsDataLoaded] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
+
+  // Effect to listen for the fallback activation event
+  useEffect(() => {
+    const handleFallbackActivation = () => {
+      console.log('Activating fallback tracking');
+      setUseFallback(true);
+    };
+
+    window.addEventListener('activateFallbackTracking', handleFallbackActivation);
+    return () => {
+      window.removeEventListener('activateFallbackTracking', handleFallbackActivation);
+    };
+  }, []);
 
   const mutation = useMutation(
     async id => {
@@ -122,23 +139,140 @@ const ProfilePage = () => {
     }
   );
 
-  const handleRegisterClick = async id => {
-    await mutation.mutateAsync(id);
+  const handleRegisterClick = async (linkId, linkUrl, linkTitle) => {
+    try {
+      console.log(`Handling click for link: ${linkTitle} (${linkUrl})`);
 
-    // Track the click in Tinybird using the web analytics template
-    if (window.flock && userLinks) {
-      const clickedLink = userLinks.find(link => link.id === id);
-      if (clickedLink) {
-        window.flock.push({
-          event_name: 'click',
-          data: {
-            link_id: id,
-            link_title: clickedLink.title,
-            link_url: clickedLink.url,
-            handle: `/${handle}`,
-          },
+      // First, increment the click count in the database
+      console.log(`Incrementing click count for link ID: ${linkId}`);
+      try {
+        await fetch(`/api/links/${linkId}/click`, {
+          method: 'POST',
         });
+        console.log('Database click count incremented successfully');
+      } catch (dbError) {
+        console.error('Error incrementing database click count:', dbError);
       }
+
+      // Track the click event in Tinybird
+      if (typeof window !== 'undefined') {
+        // Prepare the event data - format specifically for Tinybird events tracking
+        const clickData = {
+          timestamp: new Date().toISOString(),
+          handle: handle,
+          url: linkUrl,
+          title: linkTitle,
+          link_id: linkId,
+          event_name: 'click',
+        };
+
+        console.log('Click event data:', clickData);
+
+        let trackingSuccess = false;
+
+        // Try to use window.flock if available (direct Tinybird script)
+        if (window.flock) {
+          console.log('Using window.flock to track event');
+          try {
+            // Use the push method for compatibility with Tinybird's API
+            window.flock.push(clickData);
+            trackingSuccess = true;
+            console.log('Successfully tracked event with window.flock');
+          } catch (flockError) {
+            console.error('Error tracking with window.flock:', flockError);
+            trackingSuccess = false;
+          }
+        }
+
+        // If direct tracking failed or flock isn't available, use our proxy
+        if (!trackingSuccess) {
+          console.log('Using ProxyFlock trackEvent as fallback');
+          try {
+            trackingSuccess = await trackEvent('click', clickData);
+            console.log('ProxyFlock tracking result:', trackingSuccess);
+          } catch (proxyError) {
+            console.error('Error tracking with ProxyFlock:', proxyError);
+            trackingSuccess = false;
+          }
+        }
+
+        // If both methods failed, try direct Tinybird API call
+        if (!trackingSuccess) {
+          console.log('All tracking methods failed, attempting direct Tinybird API call');
+
+          try {
+            // Get the token from a meta tag or environment variable
+            const token =
+              document.querySelector('meta[name="tinybird-token"]')?.getAttribute('content') ||
+              process.env.NEXT_PUBLIC_ANALYTICS_TOKEN;
+
+            if (token) {
+              // Try the events endpoint directly
+              try {
+                const apiBaseUrl = 'https://api.us-east.tinybird.co';
+                const clicksResponse = await fetch(
+                  `${apiBaseUrl}/v0/events?name=click&token=${token}`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(clickData),
+                  }
+                );
+
+                console.log('Direct Tinybird events response:', clicksResponse.status);
+                if (clicksResponse.ok) {
+                  console.log('Successfully tracked event directly with Tinybird events endpoint');
+                  trackingSuccess = true;
+                } else {
+                  console.error('Failed to track event with events endpoint');
+                  const responseText = await clicksResponse.text();
+                  console.error('Error details:', responseText);
+
+                  // Try the datasource endpoint as fallback
+                  const datasourceResponse = await fetch(
+                    `${apiBaseUrl}/v0/datasources/events?token=${token}`,
+                    {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify(clickData),
+                    }
+                  );
+
+                  console.log('Direct Tinybird datasource response:', datasourceResponse.status);
+                  if (datasourceResponse.ok) {
+                    console.log('Successfully tracked event directly with Tinybird datasource');
+                    trackingSuccess = true;
+                  } else {
+                    console.error('Failed to track event with datasource endpoint');
+                    const dsResponseText = await datasourceResponse.text();
+                    console.error('Error details:', dsResponseText);
+                  }
+                }
+              } catch (directError) {
+                console.error('Error making direct Tinybird API call:', directError);
+              }
+            } else {
+              console.error('No Tinybird token available for direct API call');
+            }
+          } catch (directError) {
+            console.error('Error making direct Tinybird API call:', directError);
+          }
+        }
+
+        // Log final tracking status
+        console.log('Final tracking status:', trackingSuccess ? 'Success' : 'Failed');
+      }
+
+      // Open the link in a new tab
+      window.open(linkUrl, '_blank');
+    } catch (error) {
+      console.error('Error handling link click:', error);
+      // Still open the link even if tracking fails
+      window.open(linkUrl, '_blank');
     }
   };
 
@@ -211,15 +345,29 @@ const ProfilePage = () => {
       <Head>
         <title> @{handle} | Librelinks</title>
       </Head>
-      {!query.isIframe ? (
+
+      {/* Use our ProxyFlock component as a fallback */}
+      {useFallback && <ProxyFlock handle={handle} debug={process.env.NODE_ENV === 'development'} />}
+
+      {!query.isIframe && (
         <Script
-          defer
-          src="https://unpkg.com/@tinybirdco/flock.js"
-          data-host="https://api.us-east.tinybird.co"
-          data-token={process.env.NEXT_PUBLIC_TINYBIRD_WEB_ANALYTICS_TOKEN}
+          id="tinybird-analytics-check"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                window.setTimeout(function() {
+                  if (!window.flock) {
+                    console.warn('Tinybird Flock.js not loaded, activating fallback tracking');
+                    window.dispatchEvent(new CustomEvent('activateFallbackTracking'));
+                  } else {
+                    console.log('Tinybird Flock.js loaded for handle: ${handle}');
+                  }
+                }, 1000);
+              })();
+            `,
+          }}
         />
-      ) : (
-        ''
       )}
       <section
         style={{
@@ -310,7 +458,7 @@ const ProfilePage = () => {
                     title={title}
                     url={url}
                     color={theme.accent}
-                    registerClicks={() => handleRegisterClick(id)}
+                    registerClicks={() => handleRegisterClick(id, url, title)}
                   />
                 );
               })}
@@ -347,7 +495,7 @@ const ProfilePage = () => {
                         fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
                         cardHeight={fetchedUser?.linkCardHeight || 16}
                         {...item}
-                        registerClicks={() => handleRegisterClick(item.id)}
+                        registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
                       />
                     );
                   } else {
@@ -407,7 +555,7 @@ const ProfilePage = () => {
                       fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
                       cardHeight={fetchedUser?.linkCardHeight || 16}
                       {...item}
-                      registerClicks={() => handleRegisterClick(item.id)}
+                      registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
                     />
                   );
                 } else {
@@ -428,7 +576,12 @@ const ProfilePage = () => {
               });
 
               // Render photo book
-              const photoBookContent = <div className="w-full">{renderPhotoBook()}</div>;
+              const photoBookContent =
+                photos && photos.length > 0 ? (
+                  <div key="photo-book" className="w-full">
+                    {renderPhotoBook()}
+                  </div>
+                ) : null;
 
               // Render items after photo book
               const afterContent = itemsAfterPhotoBook.map(item => {
@@ -444,7 +597,7 @@ const ProfilePage = () => {
                       fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
                       cardHeight={fetchedUser?.linkCardHeight || 16}
                       {...item}
-                      registerClicks={() => handleRegisterClick(item.id)}
+                      registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
                     />
                   );
                 } else {

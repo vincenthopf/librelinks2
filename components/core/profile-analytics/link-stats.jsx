@@ -10,8 +10,13 @@ import Link from 'next/link';
 const LinkStats = ({ linkData, isLoading }) => {
   const [showAll, setShowAll] = useState(false);
 
-  // Sort links by clicks (most to least)
-  const sortedLinks = linkData?.sort((a, b) => b.clicks - a.clicks) || [];
+  // Access data array from linkData object if available, otherwise use empty array
+  const linksArray = linkData?.data || [];
+
+  // If linksArray is empty or not an array, we'll get an empty array to work with
+  const sortedLinks = Array.isArray(linksArray)
+    ? linksArray.sort((a, b) => (b.clicks || 0) - (a.clicks || 0))
+    : [];
 
   // Limit displayed links based on showAll state
   const displayedLinks = showAll ? sortedLinks : sortedLinks.slice(0, 3);
@@ -54,7 +59,7 @@ const LinkStats = ({ linkData, isLoading }) => {
                       </div>
                       <div className="flex items-center ml-auto gap-2 font-medium">
                         <BarChart className="text-gray-500" size={17} />
-                        <h4 className="text-md text-gray-500">{link.clicks} clicks</h4>
+                        <h4 className="text-md text-gray-500">{link.clicks || 0} clicks</h4>
                       </div>
                     </div>
                   ))
@@ -62,7 +67,7 @@ const LinkStats = ({ linkData, isLoading }) => {
                   <div className="flex flex-col gap-2 w-[180px] mx-auto py-6">
                     <StarSVG />
                     <h2 className="text-center">
-                      No link click data available{' '}
+                      No links available{' '}
                       <span role="img" aria-label="face holding back tears">
                         🥹
                       </span>

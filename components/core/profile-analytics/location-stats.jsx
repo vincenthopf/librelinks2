@@ -7,11 +7,16 @@ import Loader from '@/components/utils/loading-spinner';
 export const LocationStats = ({ analytics, isLoading }) => {
   const [showAll, setShowAll] = useState(false);
 
+  // Extract the data array from the analytics object
+  const locationsData = analytics?.data || [];
+
   // Sort locations by visits (most to least)
-  const sortedLocations = analytics?.sort((a, b) => b.visits - a.visits) || [];
+  const sortedLocations = Array.isArray(locationsData)
+    ? locationsData.sort((a, b) => b.visits - a.visits)
+    : [];
 
   // Limit displayed locations based on showAll state
-  const displayedCountries = showAll ? sortedLocations : sortedLocations?.slice(0, 4);
+  const displayedCountries = showAll ? sortedLocations : sortedLocations.slice(0, 4);
 
   const handleShowMore = () => {
     setShowAll(true);

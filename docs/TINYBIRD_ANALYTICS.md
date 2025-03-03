@@ -72,16 +72,16 @@ Tinybird's Web Analytics template comes with pre-built pipes that we use to fetc
 1. **Page Views**: Uses the `analytics_pages` pipe to get page views over time
 2. **Device Analytics**: Uses the `top_devices` pipe to get device usage statistics
 3. **Location Analytics**: Uses the `top_locations` pipe to get visitor locations
-4. **Link Clicks**: Uses our database since Tinybird doesn't track this by default
+4. **Link Clicks**: Uses the `analytics_hits` pipe filtered by click events
 
 ### API Endpoints
 
 We've created custom API endpoints that filter Tinybird data by user handle:
 
-1. `/api/tinybird/pageviews`: Fetches page view data for a specific handle
-2. `/api/tinybird/devices`: Fetches device data for a specific handle
-3. `/api/tinybird/locations`: Fetches location data for a specific handle
-4. `/api/tinybird/links`: Fetches link click data from our database
+1. `/api/tinybird/pageviews`: Fetches page view data for a specific handle using the `analytics_pages` pipe
+2. `/api/tinybird/devices`: Fetches device data for a specific handle using the `top_devices` pipe
+3. `/api/tinybird/locations`: Fetches location data for a specific handle using the `top_locations` pipe
+4. `/api/tinybird/links`: Fetches link click data for a specific handle using the `analytics_hits` pipe
 
 ### Filtering by User Handle
 
@@ -145,6 +145,28 @@ If analytics data is not showing up:
 3. Make sure your Tinybird project is properly set up
 4. Check for any errors in the browser console related to Tinybird or flock.js
 5. Verify that the path filtering is working correctly in the API endpoints
+
+### Missing Pipes
+
+The application expects the following pipes to exist in your Tinybird account:
+
+- `analytics_pages` - For tracking page views
+- `top_devices` - For tracking device information
+- `top_locations` - For tracking visitor locations
+- `analytics_hits` - For tracking events (including link clicks)
+
+If these pipes don't exist, the application will gracefully handle the 404 errors and return empty data with a warning message. To fix this issue:
+
+1. Log into your Tinybird account
+2. Create the missing pipes with the appropriate schema
+3. Make sure your token has permission to access these pipes
+
+Alternatively, you can customize the pipe names in the API endpoints to match your existing Tinybird setup:
+
+- `/api/tinybird/pageviews.js`
+- `/api/tinybird/devices.js`
+- `/api/tinybird/locations.js`
+- `/api/tinybird/links.js`
 
 ## Resources
 
