@@ -1,84 +1,135 @@
-# Rounded Corners Frame Template Implementation
+# Super Analytics 2.0 - Plausible v2 API Migration Todolist
 
-## Core Components
+## Setup and Utilities
 
-- [x] Create RoundedCornersFrame Component
+- [x] Create Plausible v2 API utility functions
 
-  - Create basic component structure
-  - Implement SVG rendering for frame
-  - Add props interface with all required parameters
-  - Implement corner style rendering functions
-  - Add support for individual corner radii
+  - Create `lib/plausibleV2Api.js` with core API functions
+  - Implement `queryPlausibleV2` function for making API requests
+  - Implement `formatTimeRangeV2` function for date range formatting
 
-- [x] Implement Corner Style SVG Generators
+- [x] Update test script to use v2 API
+  - Modify `test-plausible.js` to test v2 API endpoints
+  - Add tests for basic metrics query
+  - Add tests for dimensions query
 
-  - Implement Notch corner style
-  - Implement Scoop corner style
-  - Implement Bevel corner style
-  - Implement Diamond corner style
-  - Implement Straight corner style
-  - Implement Round corner style
-  - Implement Squircle corner style
-  - Implement Apple corner style
+## API Endpoint Updates
 
-- [x] Create Frame Customization UI
-  - Create corner style selector buttons
-  - Implement "All Corners" toggle and slider
-  - Add Border Radius slider
-  - Create individual corner radius controls
-  - Add CSS code preview box
-  - Implement dimensions controls
+- [x] Update Dashboard API endpoint
 
-## Integration
+  - Update `/api/super-analytics/dashboard.js` to use v2 API
+  - Implement metrics query
+  - Implement timeseries query
+  - Maintain fallback logic for no data scenarios
 
-- [x] Update Frame Type Definitions
+- [x] Update Sources API endpoint
 
-  - Add 'rounded-corners' to FrameTemplate type
-  - Update FRAME_TEMPLATES array
-  - Add preview rendering for rounded corners frame
+  - Update `/api/super-analytics/sources.js` to use v2 API
+  - Implement source dimensions query
+  - Update response formatting for frontend compatibility
 
-- [x] Integrate with Avatar Components
+- [x] Update Pages API endpoint
 
-  - Update renderFrame function in avatar.jsx
-  - Add frame-specific styles for rounded corners
-  - Update header-avatar.jsx with new frame type
+  - Update `/api/super-analytics/pages.js` to use v2 API
+  - Implement page dimensions query
+  - Update response formatting for frontend compatibility
 
-- [x] Update Frame Customizer
-  - Add state for new frame properties
-  - Update props interface
-  - Add conditional rendering for rounded corners customizer
+- [x] Update Locations API endpoint
 
-## Database & API
+  - Update `/api/super-analytics/locations.js` to use v2 API
+  - Implement location dimensions query
+  - Update response formatting for frontend compatibility
 
-- [x] Update User Schema
+- [x] Update Devices API endpoint
 
-  - Add frameCornerStyle field
-  - Add frameBorderRadius field
-  - Add frameAllCorners field
-  - Add individual corner radius fields
+  - Update `/api/super-analytics/devices.js` to use v2 API
+  - Implement device dimensions query
+  - Update response formatting for frontend compatibility
 
-- [x] Update API Endpoints
-  - Update user settings API
-  - Add validation for new fields
-  - Ensure backward compatibility
+- [x] Update Outbound Links API endpoint
 
-## Testing & Refinement
+  - Update `/api/super-analytics/outbound-links.js` to use v2 API
+  - Implement outbound links query
+  - Update response formatting for frontend compatibility
 
-- [x] Test Corner Styles
+- [x] Update all API endpoints to filter by URL path instead of userID
+  - Change from filtering by `event:props:userId` to `event:page`
+  - Look up user's username from database to construct path filter
+  - Update fallback data to use actual user's URL path
+  - Improve visitor count estimates from click data
 
-  - Test all corner styles visually
-  - Verify SVG rendering
-  - Test with different radius values
+## Bug Fixes and Improvements
 
-- [x] Test UI Controls
+- [x] Fix dashboard metrics display issue (zero values showing)
 
-  - Test corner style selection
-  - Test "All Corners" toggle
-  - Test radius sliders
-  - Test dimensions controls
+  - Updated dashboard.js to handle API limitation with views_per_visit metric
+  - Calculate views_per_visit manually from pageviews and visits
+  - Improved error handling for 400 status responses
+  - Ensure fallback data is provided when API constraints are encountered
 
-- [x] Test Integration
-  - Test with existing avatar components
-  - Test in profile view
-  - Test in header
-  - Test saving and loading preferences
+- [x] Fix Plausible v2 API filter syntax
+
+  - Updated all API endpoints to use the correct filter syntax: ["contains", "event:page", [pathToFilter]]
+  - Fixed site_id parameter to ensure it's properly set in all API requests
+  - Ensured consistent filter syntax across all endpoints (dashboard, sources, pages, locations, devices, outbound-links)
+  - Improved error handling and logging for API responses
+
+- [x] Fix TopStats component to properly display metrics
+
+  - Updated the component to expect flat metrics structure instead of nested objects
+  - Fixed the way metrics are accessed in the component (removing .value properties)
+  - Ensured views_per_visit is properly displayed from the API response
+  - Aligned frontend expectations with the actual API response format
+
+- [x] Update dashboard chart to display total visits and remove "Pages per visit" metric
+
+  - Changed VisitorsGraph to display total visits instead of unique visitors
+  - Removed "Pages per visit" metric from TopStats component
+  - Updated grid layout to show 3 metrics instead of 4
+  - Modified dashboard.js API endpoint to include visits in timeseries data
+  - Updated header from "Visitors Over Time" to "Visits Over Time"
+
+- [x] Fix chart rendering issues with timeseries data
+
+  - Added fallback data generation when no timeseries data is available
+  - Improved visibility of data points by setting non-zero pointRadius
+  - Added y-axis scale suggestions to make small values visible
+  - Implemented comprehensive logging for debugging chart data
+  - Added mock data generation when real data is unavailable
+
+- [x] Fix line chart visualization issues
+  - Increased line borderWidth to 3px to ensure lines are clearly visible
+  - Improved handling of single data point scenarios by expanding to multiple points
+  - Updated chart.js configuration to be compatible with Chart.js v3 (using tension property correctly)
+  - Added helper functions for better testing and visualization (expandSingleDataPoint, generateMockData)
+  - Optimized line rendering by adjusting tension based on data point density
+  - Improved point styling with white backgrounds and colored borders for better visibility
+
+## Testing and Validation
+
+- [ ] Test each API endpoint individually
+
+  - Verify dashboard endpoint
+  - Verify sources endpoint
+  - Verify pages endpoint
+  - Verify locations endpoint
+  - Verify devices endpoint
+  - Verify outbound links endpoint
+
+- [ ] Test full dashboard integration
+  - Verify all components display data correctly
+  - Test different time ranges
+  - Test with different user IDs
+
+## Documentation
+
+- [ ] Update code comments
+
+  - Add explanations for v2 API structure
+  - Document response format changes
+  - Document API limitations and workarounds
+
+- [ ] Create migration notes
+  - Document key differences between v1 and v2 APIs
+  - Note any breaking changes or limitations
+  - Include information about API constraints like views_per_visit

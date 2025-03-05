@@ -5,6 +5,13 @@ import { db } from '@/lib/db';
 import NextAuth from 'next-auth/next';
 import { nanoid } from 'nanoid';
 
+// Determine the correct URL to use for callbacks
+const useSecureProtocol = process.env.NODE_ENV === 'production';
+const defaultHost = process.env.NEXTAUTH_URL || 'https://ultimate-aware-worm.ngrok-free.app';
+const ngrokHost = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN
+  ? `https://${process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}`
+  : null;
+
 export const authOptions = {
   adapter: PrismaAdapter(db),
   session: {
@@ -95,8 +102,29 @@ export const authOptions = {
       };
     },
 
-    redirect() {
-      return '/admin';
+    redirect({ url, baseUrl }) {
+      // Handle ngrok URLs properly
+      const ngrokDomain = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
+
+      // Check if the URL is relative
+      if (url.startsWith('/')) {
+        // For relative URLs, use ngrok URL if available, otherwise baseUrl
+        return `${ngrokHost || baseUrl}${url}`;
+      }
+
+      // For absolute URLs, pass through ones that match our domains
+      if (url.startsWith('http')) {
+        if (ngrokDomain && url.includes(ngrokDomain)) {
+          return url;
+        }
+
+        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+          return url;
+        }
+      }
+
+      // Default admin page using ngrok if available
+      return ngrokHost ? `${ngrokHost}/admin` : `${baseUrl}/admin`;
     },
   },
 };

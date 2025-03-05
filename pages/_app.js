@@ -47,7 +47,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider session={session}>
+      <SessionProvider session={session} basePath="/api/auth" refetchInterval={0}>
         <Toaster />
         <ProxyFlock handle={handle} debug={debugMode}>
           <Component {...pageProps} />

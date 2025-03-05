@@ -8,6 +8,7 @@ import {
   Settings2,
   Layout,
   Settings,
+  BarChart2,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import UserAccountNavDesktop from '@/components/utils/usernavbutton-desktop';
@@ -53,6 +54,13 @@ const items = [
   },
 
   {
+    title: 'Super Analytics 2.0',
+    href: '/admin/super-analytics',
+    icon: <BarChart2 color="black" size={18} />,
+    showForAll: true,
+  },
+
+  {
     title: 'Templates Admin',
     href: '/admin/templates-admin',
     icon: <Settings color="black" size={18} />,
@@ -65,9 +73,7 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
   const isAdmin = session?.data?.user?.isAdmin;
   const { isNavigationOverflow } = useMediaQuery();
 
-  const filteredItems = items.filter((item) =>
-    isAdmin ? true : !item.showForAdmin
-  );
+  const filteredItems = items.filter(item => (isAdmin ? true : !item.showForAdmin));
 
   const NavItem = ({ item, compact = false }) => (
     <nav key={item.title} className="rounded-xl">
@@ -78,9 +84,7 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
           }`}
         >
           {React.cloneElement(item.icon, { size: compact ? 16 : 18 })}
-          <span className={`${compact ? 'text-sm' : 'text-sm'}`}>
-            {item.title}
-          </span>
+          <span className={`${compact ? 'text-sm' : 'text-sm'}`}>{item.title}</span>
         </div>
       </Link>
     </nav>
@@ -95,9 +99,7 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
             <Wand color="black" size={30} />
             <div className="hidden sm:flex sm:items-center sm:space-x-6">
               {!showName ? (
-                filteredItems.map((item) => (
-                  <NavItem key={item.title} item={item} />
-                ))
+                filteredItems.map(item => <NavItem key={item.title} item={item} />)
               ) : (
                 <SiteHeader />
               )}
@@ -128,11 +130,10 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
         </div>
 
         {/* Mobile Navigation with Flexbox Wrapping */}
-        {(!session.status === 'authenticated' || !isHomePage) &&
-        isNavigationOverflow ? (
+        {(!session.status === 'authenticated' || !isHomePage) && isNavigationOverflow ? (
           <div className="flex flex-wrap items-center justify-center border-t border-gray-200 lg:hidden md:hidden">
             <div className="flex flex-wrap items-center justify-center w-full px-4 py-1 gap-2">
-              {filteredItems.map((item) => (
+              {filteredItems.map(item => (
                 <NavItem key={item.title} item={item} compact />
               ))}
             </div>
