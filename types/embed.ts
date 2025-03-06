@@ -26,12 +26,16 @@ export interface EmbedConfig {
 }
 
 // Using Record type for provider configuration mapping
-export type EmbedProviderConfig = Record<ProviderName, EmbedConfig>;
+export type EmbedProviderConfig = Record<ProviderName, EmbedConfig> & {
+  [key: string]: EmbedConfig; // Allow string indexing
+};
 
 export interface RichMediaContent {
   type: EmbedType;
-  provider: ProviderName;
+  provider?: ProviderName;
+  providerName: ProviderName;
   html?: string;
+  embedHtml?: string;
   url?: string;
   thumbnail?: string;
   thumbnails?: Array<{ href?: string; url?: string }>;
@@ -39,6 +43,10 @@ export interface RichMediaContent {
   description?: string;
   author?: string;
   authorUrl?: string;
+  iframelyMeta?: {
+    description?: string;
+    [key: string]: any;
+  };
   metadata?: Record<string, any>;
 }
 
@@ -59,7 +67,7 @@ export type ProcessHtmlFunction = (html: string) => string;
 export const DEFAULT_ASPECT_RATIO: AspectRatioConfig = {
   mobile: 'aspect-video',
   tablet: 'aspect-video',
-  desktop: 'aspect-video'
+  desktop: 'aspect-video',
 };
 
-export const DEFAULT_CONTAINER_CLASS = 'w-full h-full overflow-hidden rounded-lg bg-gray-50'; 
+export const DEFAULT_CONTAINER_CLASS = 'w-full h-full overflow-hidden rounded-lg bg-gray-50';

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { EMBED_CONFIGS } from '@/config/embed';
 import { RichMediaContent, EmbedConfig } from '@/types/embed';
 import {
@@ -35,8 +35,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
   const initializeCount = useRef(0);
 
   // Get provider config
-  const providerConfig =
-    EMBED_CONFIGS[link.providerName] || EMBED_CONFIGS.Generic;
+  const providerConfig = EMBED_CONFIGS[link.providerName] || EMBED_CONFIGS.Generic;
   const mergedConfig = { ...providerConfig, ...config };
 
   // Debug the incoming link data
@@ -176,15 +175,13 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
   // Early return if no embed data
   if (
     !link.embedHtml &&
-    (!link.thumbnails ||
-      !Array.isArray(link.thumbnails) ||
-      link.thumbnails.length === 0)
+    (!link.thumbnails || !Array.isArray(link.thumbnails) || link.thumbnails.length === 0)
   ) {
     console.log('RichMediaPreview - No preview content available');
     return null;
   }
 
-  const handleIframeError = (error: Event) => {
+  const handleIframeError = (error: React.SyntheticEvent<HTMLDivElement, Event>) => {
     console.error('RichMediaPreview - Iframe error:', error);
     setIsLoading(false);
     setHasError(true);
@@ -196,7 +193,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
     setIsLoading(false);
   };
 
-  const handleImageError = (error: Event) => {
+  const handleImageError = (error: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.error('No image:', error);
     setIsLoading(false);
     setHasError(true);
@@ -205,9 +202,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
 
   // Get the first valid thumbnail URL
   const thumbnailUrl =
-    link.thumbnails &&
-    Array.isArray(link.thumbnails) &&
-    link.thumbnails.length > 0
+    link.thumbnails && Array.isArray(link.thumbnails) && link.thumbnails.length > 0
       ? link.thumbnails[0].href || link.thumbnails[0].url
       : null;
 
@@ -238,43 +233,25 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
     switch (link.providerName) {
       case 'Instagram':
         return (
-          <InstagramContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-          >
-            <div className="instagram-embed-scaling w-full h-full">
-              {content}
-            </div>
+          <InstagramContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
+            <div className="instagram-embed-scaling w-full h-full">{content}</div>
           </InstagramContainer>
         );
       case 'YouTube':
         return (
-          <YouTubeContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-          >
+          <YouTubeContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
             {content}
           </YouTubeContainer>
         );
       case 'Twitter':
         return (
-          <TwitterContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-          >
+          <TwitterContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
             {content}
           </TwitterContainer>
         );
       default:
         return (
-          <GenericContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-          >
+          <GenericContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
             {content}
           </GenericContainer>
         );
@@ -286,9 +263,7 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
       {renderContent()}
       {link.iframelyMeta?.description && !hasError && !isLoading && (
         <div className="p-4 border-t border-gray-100">
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {link.iframelyMeta.description}
-          </p>
+          <p className="text-sm text-gray-600 line-clamp-2">{link.iframelyMeta.description}</p>
         </div>
       )}
     </>

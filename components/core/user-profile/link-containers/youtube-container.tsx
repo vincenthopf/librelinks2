@@ -28,7 +28,7 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
   title,
   maxWidth = '560px',
   config,
-  className = ''
+  className = '',
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -96,15 +96,15 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
           playerVars: {
             autoplay: 0,
             modestbranding: 1,
-            rel: 0
+            rel: 0,
           },
           events: {
             onReady: () => setIsLoading(false),
             onError: () => {
               setHasError(true);
               setIsLoading(false);
-            }
-          }
+            },
+          },
         });
       } catch (error) {
         setHasError(true);
@@ -118,18 +118,15 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
   return (
     <ErrorBoundary>
       <ContentContainer
-        type="video"
+        type="embed"
         maxWidth={{
           mobile: '100%',
           tablet: maxWidth,
-          desktop: maxWidth
+          desktop: maxWidth,
         }}
         className={className}
       >
-        <div 
-          ref={containerRef}
-          className="relative w-full aspect-video overflow-hidden"
-        >
+        <div ref={containerRef} className="relative w-full aspect-video overflow-hidden">
           {/* Loading State */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
@@ -178,4 +175,4 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
   );
 };
 
-export default YouTubeContainer; 
+export default YouTubeContainer;

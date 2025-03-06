@@ -25,7 +25,7 @@ export const CircleFrame: React.FC<CircleFrameProps> = ({
 }) => {
   const cacheKey = getFrameCacheKey('circle', size, color, rotation, thickness, '', animation);
   const isAnimated = animation?.enabled && animation.type !== null;
-  const optimizedStyles = getOptimizedStyles(isAnimated);
+  const optimizedStyles = getOptimizedStyles(!!isAnimated);
   const animationProps = getAnimationProps(animation);
 
   // Calculate the radius based on thickness to ensure proper scaling

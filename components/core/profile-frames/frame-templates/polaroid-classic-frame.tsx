@@ -33,7 +33,7 @@ export const PolaroidClassicFrame: React.FC<PolaroidClassicFrameProps> = ({
     animation
   );
   const isAnimated = animation?.enabled && animation.type !== null;
-  const optimizedStyles = getOptimizedStyles(isAnimated);
+  const optimizedStyles = getOptimizedStyles(!!isAnimated);
   const animationProps = getAnimationProps(animation);
 
   // Calculate dimensions based on thickness
