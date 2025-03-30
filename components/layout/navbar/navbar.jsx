@@ -47,14 +47,7 @@ const items = [
   },
 
   {
-    title: 'Analytics',
-    href: '/admin/analytics',
-    icon: <BarChart color="black" size={18} />,
-    showForAll: true,
-  },
-
-  {
-    title: 'Super Analytics 2.0',
+    title: 'Super Analytics',
     href: '/admin/super-analytics',
     icon: <BarChart2 color="black" size={18} />,
     showForAll: true,

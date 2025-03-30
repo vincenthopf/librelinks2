@@ -36,8 +36,12 @@ const sanitizeData = data => {
   return sanitized;
 };
 
-// Function to track events through our proxy
+// Function to track events through our proxy (now disabled)
 export const trackEvent = async (name, data = {}) => {
+  console.log(`ProxyFlock: Tracking disabled for event "${name}"`);
+  // Do nothing, return success immediately
+  return Promise.resolve(true);
+  /*
   try {
     console.log(`ProxyFlock: Tracking event "${name}" with data:`, data);
 
@@ -111,10 +115,15 @@ export const trackEvent = async (name, data = {}) => {
 
     return false;
   }
+  */
 };
 
-// Function to track pageviews
+// Function to track pageviews (now disabled)
 export const trackPageview = async (url, handle = null, referrer = null) => {
+  console.log(`ProxyFlock: Tracking disabled for pageview: ${url}`);
+  // Do nothing, return success immediately
+  return Promise.resolve(true);
+  /*
   try {
     console.log(`ProxyFlock: Tracking pageview for URL: ${url}`);
 
@@ -138,6 +147,7 @@ export const trackPageview = async (url, handle = null, referrer = null) => {
     console.error('ProxyFlock: Error tracking pageview:', error);
     return false;
   }
+  */
 };
 
 // Main ProxyFlock component
@@ -148,17 +158,25 @@ export const ProxyFlock = ({ children, handle = null, debug = false }) => {
 
   // Initialize the flock object
   useEffect(() => {
-    // Create a proxy object that mimics the Flock.js API
+    // Create a proxy object that mimics the Flock.js API but does nothing
     if (typeof window !== 'undefined' && !window.flock) {
-      console.log('ProxyFlock: Initializing proxy flock object');
+      console.log('ProxyFlock: Initializing disabled flock object');
 
-      // Create the flock object
+      // Create the flock object with no-op functions
       window.flock = {
-        trackPageview: (url = window.location.href, pageHandle = handle, pageReferrer = null) =>
-          trackPageview(url, pageHandle, pageReferrer),
-        trackEvent: (name, data) => trackEvent(name, data),
+        trackPageview: (url = window.location.href, pageHandle = handle, pageReferrer = null) => {
+          console.log(`ProxyFlock: trackPageview called (disabled) for URL: ${url}`);
+          return Promise.resolve(true);
+        },
+        trackEvent: (name, data) => {
+          console.log(`ProxyFlock: trackEvent called (disabled) for event: ${name}`);
+          return Promise.resolve(true);
+        },
         // Add compatibility with Tinybird's push method
         push: event => {
+          console.log('ProxyFlock: push called (disabled)');
+          return Promise.resolve(true);
+          /*
           if (!event || typeof event !== 'object') return;
 
           const eventName = event.event_name || 'pageview';
@@ -174,24 +192,25 @@ export const ProxyFlock = ({ children, handle = null, debug = false }) => {
           } else {
             return trackEvent(eventName, eventData);
           }
+          */
         },
       };
 
       // For backward compatibility
       window.proxyFlock = window.flock;
 
-      // Track initial pageview if handle is provided
-      if (handle) {
-        trackPageview(window.location.href, handle);
-      }
+      // // Track initial pageview if handle is provided (commented out)
+      // if (handle) {
+      //   trackPageview(window.location.href, handle);
+      // }
 
       if (debug) {
-        console.log('ProxyFlock: Debug mode enabled');
+        console.log('ProxyFlock: Debug mode enabled (Tracking Disabled)');
         console.log('ProxyFlock: Handle:', handle);
 
-        // Listen for tracking failures
+        // Listen for tracking failures (though none should occur)
         const handleTrackingFailure = event => {
-          console.error('ProxyFlock: Tracking failure detected:', event.detail);
+          console.error('ProxyFlock: Tracking failure detected (should not happen):', event.detail);
           setTrackingErrors(prev => [...prev, event.detail]);
         };
 
@@ -202,82 +221,55 @@ export const ProxyFlock = ({ children, handle = null, debug = false }) => {
           window.removeEventListener('trackingFailed', handleTrackingFailure);
         };
       }
-
-      setIsLoaded(true);
-      console.log('ProxyFlock: Proxy flock object initialized');
     }
   }, [handle, debug]);
 
-  // Track route changes
+  // Track route changes (now disabled)
   useEffect(() => {
-    if (!router) return;
-
     const handleRouteChange = url => {
-      // Use setTimeout to ensure the page has loaded
-      setTimeout(() => {
-        // Get the handle from the current route if not provided
-        let currentHandle = handle;
-
-        // If no handle was provided, try to extract it from the URL
-        if (!currentHandle) {
-          const match = url.match(/\/([^\/]+)$/);
-          if (match && match[1]) {
-            currentHandle = match[1];
-          }
-        }
-
-        if (debug) {
-          console.log(`ProxyFlock: Route changed to ${url}, handle:`, currentHandle);
-        }
-
-        trackPageview(url, currentHandle);
-      }, 100);
+      console.log(`ProxyFlock: Route change detected (tracking disabled): ${url}`);
+      // trackPageview(url, handle);
     };
 
-    // Subscribe to route change events
     router.events.on('routeChangeComplete', handleRouteChange);
 
     // Cleanup
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange);
     };
-  }, [router, handle, debug]);
+  }, [router.events, handle]);
 
-  // Render debug information if in debug mode
-  if (debug && trackingErrors.length > 0) {
-    return (
-      <>
+  // Provide the (disabled) flock object via context or props if needed
+  // For now, it just initializes window.flock
+
+  return (
+    <>
+      {children}
+      {debug && trackingErrors.length > 0 && (
         <div
           style={{
             position: 'fixed',
             bottom: '10px',
-            right: '10px',
-            zIndex: 9999,
-            background: 'rgba(255, 0, 0, 0.1)',
-            border: '1px solid red',
+            left: '10px',
+            background: 'rgba(255, 0, 0, 0.8)',
+            color: 'white',
             padding: '10px',
             borderRadius: '5px',
-            maxWidth: '300px',
-            maxHeight: '200px',
-            overflow: 'auto',
-            fontSize: '12px',
+            zIndex: 10000,
+            maxHeight: '150px',
+            overflowY: 'auto',
           }}
         >
-          <h4 style={{ margin: '0 0 5px 0' }}>ProxyFlock Debug ({trackingErrors.length} errors)</h4>
-          <ul style={{ margin: 0, padding: '0 0 0 20px' }}>
-            {trackingErrors.slice(-5).map((error, i) => (
-              <li key={i}>
-                {error.name}: {error.error?.toString() || 'Unknown error'}
-              </li>
+          <strong>ProxyFlock Debug (Tracking Failures):</strong>
+          <ul>
+            {trackingErrors.map((error, index) => (
+              <li key={index}>{JSON.stringify(error)}</li>
             ))}
           </ul>
         </div>
-        {children || null}
-      </>
-    );
-  }
-
-  return children || null;
+      )}
+    </>
+  );
 };
 
 // Default export for backward compatibility

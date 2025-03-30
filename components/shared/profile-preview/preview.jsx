@@ -99,7 +99,9 @@ const Preview = () => {
 
   return (
     <>
-      <div className="relative border-[2px] lg:border-[6px] border-black rounded-[2rem] max-w-80 lg:max-w-96 xl:max-w-[28rem] aspect-[9/19] overflow-hidden max-w-sm mx-auto z-0">
+      <div className="relative border-[2px] lg:border-[5px] border-black rounded-[2rem] max-w-80 lg:max-w-96 xl:max-w-[28rem] aspect-[9/19] overflow-hidden max-w-sm mx-auto z-0">
+        {/* Dynamic Island */}
+        <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-7 bg-black rounded-full z-20"></div>
         <div className="absolute inset-0 z-10">
           {currentUser && (
             <iframe

@@ -1,16 +1,21 @@
 import axios from 'axios';
 
 export default async function handler(req, res) {
-  console.log('Tinybird proxy request received:', {
-    method: req.method,
-    endpoint: req.query.endpoint,
-    body: req.body,
-  });
+  // console.log('Tinybird proxy request received:', {
+  //   method: req.method,
+  //   endpoint: req.query.endpoint,
+  //   body: req.body,
+  // });
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Return a success response immediately to disable tracking
+  console.log('Tinybird proxy disabled. Returning success.');
+  return res.status(200).json({ success: true, message: 'Tinybird tracking is disabled.' });
+
+  /*
   // Use a default endpoint if none provided
   const { endpoint = 'events' } = req.query;
 
@@ -130,22 +135,22 @@ export default async function handler(req, res) {
         if (proxyError.response) {
           if (proxyError.response.status === 404) {
             console.warn(
-              `The endpoint "${endpoint}" does not exist in Tinybird. The event was not tracked.`
+              `The endpoint \"${endpoint}\" does not exist in Tinybird. The event was not tracked.`
             );
             // Return a 200 response so the app doesn't crash, but include a warning
             return res.status(200).json({
               success: false,
-              warning: `The endpoint "${endpoint}" does not exist in your Tinybird account`,
+              warning: `The endpoint \"${endpoint}\" does not exist in your Tinybird account`,
               message: 'Event was not tracked, but the application will continue to function',
             });
           } else if (proxyError.response.status === 403) {
             console.warn(
-              `Permission denied for endpoint "${endpoint}". The token may not have the required permissions.`
+              `Permission denied for endpoint \"${endpoint}\". The token may not have the required permissions.`
             );
             // Return a 200 response with a warning about permissions
             return res.status(200).json({
               success: false,
-              warning: `Permission denied for endpoint "${endpoint}". Check token permissions in Tinybird.`,
+              warning: `Permission denied for endpoint \"${endpoint}\". Check token permissions in Tinybird.`,
               message:
                 'Event was not tracked due to permission issues, but the application will continue to function',
             });
@@ -185,4 +190,5 @@ export default async function handler(req, res) {
       });
     }
   }
+  */
 }
