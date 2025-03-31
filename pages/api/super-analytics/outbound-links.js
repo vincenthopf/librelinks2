@@ -11,7 +11,7 @@ import { queryPlausibleV2, formatTimeRangeV2, processDimensionResults } from '@/
  * Updated to use Plausible v2 API which uses a single POST endpoint instead of multiple GET endpoints.
  */
 export default async function handler(req, res) {
-  console.log('Outbound Links API called with query:', req.query);
+  // console.log('Outbound Links API called with query:', req.query); // Commented out
 
   // Only allow GET requests
   if (req.method !== 'GET') {
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     const { timeRange = 'day' } = req.query;
     const userId = session.user.id;
 
-    console.log(`Fetching outbound links data for user ID: ${userId}, time range: ${timeRange}`);
+    // console.log(`Fetching outbound links data for user ID: ${userId}, time range: ${timeRange}`);
 
     // Get the user's unique path/slug from the database
     const user = await prisma.user.findUnique({
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
     // Construct the path to filter by (e.g., "/q6nr393H91")
     const pathToFilter = `/${user.handle}`;
-    console.log(`Filtering Plausible data by path: ${pathToFilter}`);
+    // console.log(`Filtering Plausible data by path: ${pathToFilter}`);
 
     // Format date range for v2 API
     const date_range = formatTimeRangeV2(timeRange);
@@ -84,11 +84,15 @@ export default async function handler(req, res) {
       dimensions: ['event:props:url'],
       filters: [
         ['contains', 'event:page', [pathToFilter]],
-        ['is', 'event:name', ['outbound link click']],
+        ['is', 'event:goal', ['Outbound Link: Click']],
       ],
     });
 
-    console.log(`Found ${response.results.length} outbound link clicks for page: ${pathToFilter}`);
+    // Added Logging:
+    // console.log('Plausible API Response:', JSON.stringify(response, null, 2)); // Commented out
+    // console.log('User Links from DB:', JSON.stringify(userLinks, null, 2)); // Commented out
+
+    // console.log(`Found ${response.results.length} outbound link clicks for page: ${pathToFilter}`); // Commented out
 
     // Process the outbound links data
     const outboundLinks = [];
@@ -102,12 +106,15 @@ export default async function handler(req, res) {
         ['event:props:url']
       );
 
-      console.log('Processed results:', processedResults);
+      // console.log('Processed results:', processedResults); // Commented out
 
       // Process each outbound link
       for (const item of processedResults) {
         const url = item['event:props:url'];
         const normalizedUrl = normalizeUrl(url);
+
+        // Added Logging:
+        // console.log(`Processing Plausible URL: ${url}, Normalized: ${normalizedUrl}`); // Commented out
 
         // Check if this URL belongs to the user - using both exact and normalized matching
         let userLink = null;
@@ -126,6 +133,9 @@ export default async function handler(req, res) {
           }
         }
 
+        // Added Logging:
+        // console.log(`Match found? ${userLink ? `Yes (DB URL: ${userLink.url})` : 'No'}`); // Commented out
+
         if (userLink) {
           outboundLinks.push({
             id: userLink.id,
@@ -133,7 +143,6 @@ export default async function handler(req, res) {
             url: userLink.url,
             visitors: parseInt(item.visitors) || 0,
             events: parseInt(item.events) || 0,
-            cr: item.visitors > 0 ? Math.round((item.events / item.visitors) * 100) : 100,
           });
         }
       }
@@ -142,142 +151,25 @@ export default async function handler(req, res) {
     // Sort outbound links by visitors (descending)
     outboundLinks.sort((a, b) => b.visitors - a.visitors);
 
-    // If no matches found, return top links with real database click counts
+    // If no matches found between Plausible and user links, return empty array instead of DB fallback
     if (outboundLinks.length === 0 && userLinks.length > 0) {
       console.log(
-        'No matches found with Plausible data, returning user links with database click counts'
+        'No matches found between Plausible data and user links. Returning empty array instead of database fallback.'
       );
-
-      // Return top 5 links by database click count
-      const topLinks = userLinks
-        .sort((a, b) => b.clicks - a.clicks)
-        .slice(0, 5)
-        .map(link => ({
-          id: link.id,
-          title: link.title,
-          url: link.url,
-          visitors: Math.max(1, Math.ceil(link.clicks * 0.7)), // Estimate unique visitors as 70% of clicks
-          events: link.clicks,
-          cr: 100, // 100% conversion rate for simplicity
-        }));
-
       return res.status(200).json({
-        outboundLinks: topLinks,
+        outboundLinks: [],
+        source: 'no_plausible_match', // Indicate why data is empty
       });
     }
 
-    // If we still have no data, add a fallback entry with the visitor count
-    if (outboundLinks.length === 0) {
-      try {
-        const aggregateResponse = await queryPlausibleV2({
-          site_id: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
-          metrics: ['visitors', 'events'],
-          date_range,
-          filters: [
-            ['contains', 'event:page', [pathToFilter]],
-            ['is', 'event:name', ['outbound link click']],
-          ],
-        });
+    // If we still have no data after potential Plausible matching (e.g., Plausible returned empty results initially),
+    // check if we should try fetching aggregate data or just return empty.
+    // For now, just ensuring the final return happens correctly.
 
-        // If we have aggregate data, create entries based on the provided link data from the user
-        if (
-          aggregateResponse.results.length > 0 &&
-          aggregateResponse.results[0].metrics.length > 0
-        ) {
-          const totalVisitors = aggregateResponse.results[0].metrics[0] || 0;
-          const totalEvents = aggregateResponse.results[0].metrics[1] || 0;
-
-          // Create manual entries based on the data provided by the user
-          const manualEntries = [
-            {
-              url: 'https://www.tiktok.com/@crowdshopkgtravels/video/7470688814047055134',
-              title: 'TikTok',
-              visitors: 2,
-              events: 3,
-            },
-            {
-              url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
-              title: 'Spotify',
-              visitors: 1,
-              events: 1,
-            },
-            {
-              url: 'https://www.linkedin.com/posts/private-equity-insights_peinsi...2MB6UnrvqieiXhhaEVdX2UF3BFmOSw',
-              title: 'LinkedIn',
-              visitors: 1,
-              events: 2,
-            },
-          ];
-
-          // Find matching user links and create entries
-          for (const entry of manualEntries) {
-            let userLink = null;
-
-            // Try to find a matching user link
-            for (const link of userLinks) {
-              if (link.url.includes(new URL(entry.url).hostname)) {
-                userLink = link;
-                break;
-              }
-            }
-
-            outboundLinks.push({
-              id: userLink?.id || null,
-              title: userLink?.title || entry.title,
-              url: userLink?.url || entry.url,
-              visitors: entry.visitors,
-              events: entry.events,
-              cr: entry.visitors > 0 ? Math.round((entry.events / entry.visitors) * 100) : 100,
-            });
-          }
-        } else {
-          // If no aggregate data, create a basic entry
-          outboundLinks.push({
-            id: null,
-            title: 'Total outbound link clicks',
-            url: pathToFilter,
-            visitors: 1,
-            events: 1,
-            cr: 100,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching aggregate data:', error.response?.data || error.message);
-
-        // Use directly specified data for key links
-        const manualEntries = [
-          {
-            url: 'https://www.tiktok.com/@crowdshopkgtravels/video/7470688814047055134',
-            title: 'TikTok',
-            visitors: 2,
-            events: 3,
-          },
-          {
-            url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
-            title: 'Spotify',
-            visitors: 1,
-            events: 1,
-          },
-          {
-            url: 'https://www.linkedin.com/posts/private-equity-insights_peinsi...2MB6UnrvqieiXhhaEVdX2UF3BFmOSw',
-            title: 'LinkedIn',
-            visitors: 1,
-            events: 2,
-          },
-        ];
-
-        for (const entry of manualEntries) {
-          outboundLinks.push({
-            id: null,
-            title: entry.title,
-            url: entry.url,
-            visitors: entry.visitors,
-            events: entry.events,
-            cr: entry.visitors > 0 ? Math.round((entry.events / entry.visitors) * 100) : 100,
-          });
-        }
-      }
-    }
+    // console.log(
+    //   'Returning outbound links:',
+    //   JSON.stringify(outboundLinks, null, 2)
+    // ); // Commented out
 
     return res.status(200).json({
       outboundLinks,
@@ -300,36 +192,11 @@ export default async function handler(req, res) {
       console.error('Error details:', error.message);
     }
 
-    // If all else fails, return the hardcoded data the user provided
-    const outboundLinks = [
-      {
-        id: null,
-        title: 'TikTok',
-        url: 'https://www.tiktok.com/@crowdshopkgtravels/video/7470688814047055134',
-        visitors: 2,
-        events: 3,
-        cr: 100,
-      },
-      {
-        id: null,
-        title: 'LinkedIn',
-        url: 'https://www.linkedin.com/posts/private-equity-insights_peinsi...2MB6UnrvqieiXhhaEVdX2UF3BFmOSw',
-        visitors: 1,
-        events: 2,
-        cr: 100,
-      },
-      {
-        id: null,
-        title: 'Spotify',
-        url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
-        visitors: 1,
-        events: 1,
-        cr: 100,
-      },
-    ];
-
-    return res.status(200).json({
-      outboundLinks,
+    // If all else fails, return an empty array instead of hardcoded data
+    return res.status(500).json({
+      outboundLinks: [],
+      error: 'Failed to fetch outbound links data from Plausible.',
+      details: error.response?.data?.error || error.message,
     });
   }
 }

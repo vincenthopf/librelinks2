@@ -16,7 +16,7 @@ import {
  * Updated to use Plausible v2 API which uses a single POST endpoint instead of multiple GET endpoints.
  */
 export default async function handler(req, res) {
-  console.log('Dashboard API called with query:', req.query);
+  // console.log('Dashboard API called with query:', req.query); // Commented out
 
   // Only allow GET requests
   if (req.method !== 'GET') {
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     const { timeRange = 'day' } = req.query;
     const userId = session.user.id;
 
-    console.log(`Fetching metrics for user ID: ${userId}, time range: ${timeRange}`);
+    // console.log(`Fetching metrics for user ID: ${userId}, time range: ${timeRange}`); // Commented out
 
     // Initialize Prisma client
     const prisma = new PrismaClient();
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
     // Construct the path to filter by (e.g., "/q6nr393H91")
     const pathToFilter = `/${user.handle}`;
-    console.log(`Filtering Plausible data by path: ${pathToFilter}`);
+    // console.log(`Filtering Plausible data by path: ${pathToFilter}`); // Commented out
 
     // Format date range for v2 API
     const date_range = formatTimeRangeV2(timeRange);
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       filters: [['contains', 'event:page', [pathToFilter]]],
     });
 
-    console.log('Received aggregate metrics from Plausible v2 API');
+    // console.log('Received aggregate metrics from Plausible v2 API'); // Commented out
 
     // Process the response data
     let metrics = {};
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
     // Check if we have results and process them
     if (response.results && response.results.length > 0) {
       metrics = processMetricsResults(response.results, metricNames);
-      console.log('Processed metrics:', JSON.stringify(metrics, null, 2));
+      // console.log('Processed metrics:', JSON.stringify(metrics, null, 2)); // Commented out
     } else {
       // Initialize with zeros if no results
       metrics = {
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
         visits: 0,
         pageviews: 0,
       };
-      console.log('No metrics results found, initialized with zeros');
+      // console.log('No metrics results found, initialized with zeros'); // Commented out
     }
 
     // For single day view, try to get hourly breakdown to show proper trend
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
 
     if (timeRange === 'day') {
       // Try to get hourly data for day view
-      console.log('Fetching hourly timeseries data for day view');
+      // console.log('Fetching hourly timeseries data for day view'); // Commented out
       timeSeriesResponse = await queryPlausibleV2({
         site_id: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
         metrics: ['visitors', 'visits', 'pageviews'],
@@ -101,12 +101,13 @@ export default async function handler(req, res) {
         dimensions: ['time:hour'],
         filters: [['contains', 'event:page', [pathToFilter]]],
       });
-      console.log(
-        `Received ${timeSeriesResponse.results?.length || 0} hourly timeseries data points`
-      );
+      // console.log(
+      //   `Received ${timeSeriesResponse.results?.length || 0} hourly timeseries data points`
+      // ); // Commented out
+      // console.log('Raw Plausible Hourly Timeseries Response:', JSON.stringify(timeSeriesResponse, null, 2)); // Commented out
     } else {
       // For other time ranges, get daily data
-      console.log('Fetching daily timeseries data');
+      // console.log('Fetching daily timeseries data'); // Commented out
       timeSeriesResponse = await queryPlausibleV2({
         site_id: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
         metrics: ['visitors', 'visits', 'pageviews'],
@@ -114,9 +115,10 @@ export default async function handler(req, res) {
         dimensions: ['time:day'],
         filters: [['contains', 'event:page', [pathToFilter]]],
       });
-      console.log(
-        `Received ${timeSeriesResponse.results?.length || 0} daily timeseries data points`
-      );
+      // console.log(
+      //   `Received ${timeSeriesResponse.results?.length || 0} daily timeseries data points`
+      // ); // Commented out
+      // console.log('Raw Plausible Daily Timeseries Response:', JSON.stringify(timeSeriesResponse, null, 2)); // Commented out
     }
 
     // Process the timeseries data
@@ -137,11 +139,10 @@ export default async function handler(req, res) {
         let dateString = item[timeDimension];
 
         // For hourly data, ensure the full datetime is used
-        if (timeDimension === 'time:hour' && !dateString.includes('T')) {
-          // If only hour number is returned, construct a proper datetime
-          // Format: 2023-01-01T15:00:00 for 3 PM
-          const today = new Date().toISOString().split('T')[0];
-          dateString = `${today}T${dateString.padStart(2, '0')}:00:00`;
+        if (timeDimension === 'time:hour' && dateString && !dateString.includes('T')) {
+          // Plausible returns format "YYYY-MM-DD HH:MM:SS"
+          // Replace space with 'T' to make it ISO-like for charting libraries
+          dateString = dateString.replace(' ', 'T');
         }
 
         return {
@@ -152,48 +153,45 @@ export default async function handler(req, res) {
         };
       });
 
-      console.log('Processed timeseries data:', JSON.stringify(timeseriesData, null, 2));
+      // console.log('Processed timeseries data:', JSON.stringify(timeseriesData, null, 2)); // Commented out
     } else {
-      // If no timeseries data, create explicit data points
-      console.log('No timeseries data found, generating points');
+      // If no timeseries data from Plausible, create zero-value data points for the chart
+      // console.log('No timeseries data found from Plausible, generating zero-value points'); // Commented out
 
       if (timeRange === 'day') {
-        // For day view, create hourly data points over the day
-        // This ensures we have a nice line chart even with no data
+        // For day view, create hourly data points for the entire day
         const today = new Date();
-        const baseHour = today.getHours();
+        timeseriesData = []; // Reset timeseries data
 
-        // Generate data for the current day with points every 3 hours
-        for (let i = 0; i < 24; i += 3) {
-          const hour = (baseHour + i) % 24;
+        // Generate data for all 24 hours
+        for (let i = 0; i < 24; i++) {
           const pointDate = new Date(today);
-          pointDate.setHours(hour, 0, 0, 0);
-
-          // Determine if this is a "current" hour to show some visits
-          const isCurrent = Math.abs(hour - baseHour) <= 3;
+          pointDate.setHours(i, 0, 0, 0);
 
           timeseriesData.push({
             date: pointDate.toISOString(),
-            // Only show visits near the current hour to create a spike
-            visitors: isCurrent ? metrics.visitors || 3 : 0,
-            visits: isCurrent ? metrics.visits || 5 : 0,
-            pageviews: isCurrent ? metrics.pageviews || 8 : 0,
+            visitors: 0, // Set to 0 as Plausible provided no hourly data
+            visits: 0, // Set to 0
+            pageviews: 0, // Set to 0
           });
         }
       } else {
-        // For other views, create a single point
+        // For other views, generate points based on the range (e.g., daily for 7d)
+        // Keeping the original logic for non-day views for now, but ensuring values are based on aggregate metrics if available
+        // If metrics are also 0, these will be 0 anyway.
         const today = new Date().toISOString().split('T')[0];
         timeseriesData = [
           {
-            date: today,
+            date: today, // Or adjust based on range granularity if needed
             visitors: metrics.visitors || 0,
             visits: metrics.visits || 0,
             pageviews: metrics.pageviews || 0,
           },
         ];
+        // Consider refining this for multi-day views to also show zero if Plausible returns no daily data
       }
 
-      console.log('Generated timeseries data:', JSON.stringify(timeseriesData, null, 2));
+      // console.log('Generated zero-value timeseries data:', JSON.stringify(timeseriesData, null, 2)); // Commented out
     }
 
     // Ensure visits is at least 1 if we have any data at all to show something in the chart
@@ -216,14 +214,59 @@ export default async function handler(req, res) {
 
     // If no data from Plausible, try to get fallback data from the database
     if (!hasData) {
-      console.log('No data from Plausible API, fetching fallback data from database');
+      // console.log('No data from Plausible API, fetching fallback data from database'); // Commented out
 
       try {
-        // Get link click counts from the database
+        // Calculate the date range based on the timeRange
+        let startDate;
+        const now = new Date();
+
+        switch (timeRange) {
+          case 'day':
+            // Today (since midnight)
+            startDate = new Date(now.setHours(0, 0, 0, 0));
+            break;
+          case '7d':
+            // Last 7 days
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 7);
+            break;
+          case '30d':
+            // Last 30 days
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 30);
+            break;
+          case 'month':
+            // This month (since 1st of month)
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case '6mo':
+            // Last 6 months
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 6);
+            break;
+          case '12mo':
+            // Last 12 months
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 12);
+            break;
+          default:
+            // Default to today
+            startDate = new Date(now.setHours(0, 0, 0, 0));
+        }
+
+        console.log(
+          `Using database fallback for dashboard: filtering clicks since ${startDate.toISOString()}`
+        );
+
+        // Get link click counts from the database with time filtering
         const linkClicks = await prisma.linkClick.count({
           where: {
             link: {
               userId: userId,
+            },
+            createdAt: {
+              gte: startDate,
             },
           },
         });
@@ -235,7 +278,9 @@ export default async function handler(req, res) {
           },
         });
 
-        console.log(`Found ${linkClicks} link clicks and ${totalLinks} links in database`);
+        console.log(
+          `Found ${linkClicks} time-filtered link clicks and ${totalLinks} links in database`
+        );
 
         // Create fallback metrics using database data
         if (linkClicks > 0) {
@@ -300,10 +345,10 @@ export default async function handler(req, res) {
             }
           }
 
-          console.log(
-            'Using database click counts for fallback timeseries data:',
-            JSON.stringify(timeseriesData, null, 2)
-          );
+          // console.log(
+          //   'Using database click counts for fallback timeseries data:',
+          //   JSON.stringify(timeseriesData, null, 2)
+          // ); // Commented out
         }
       } catch (dbError) {
         console.error('Error fetching fallback data from database:', dbError.message);
@@ -315,7 +360,7 @@ export default async function handler(req, res) {
 
     // Final fallback - if we still don't have any data, create minimal data for display
     if (!hasData && (!timeseriesData.length || !timeseriesData.some(p => p.visits > 0))) {
-      console.log('Using minimal fallback data for dashboard');
+      // console.log('Using minimal fallback data for dashboard'); // Commented out
 
       // Set minimum metrics
       metrics = {
@@ -364,8 +409,11 @@ export default async function handler(req, res) {
         }
       }
 
-      console.log('Final fallback timeseries data:', JSON.stringify(timeseriesData, null, 2));
+      // console.log('Final fallback timeseries data:', JSON.stringify(timeseriesData, null, 2)); // Commented out
     }
+
+    // ADDED LOG:
+    // console.log('Final timeseries data being sent to frontend:', JSON.stringify(timeseriesData, null, 2)); // Commented out
 
     // Return both the aggregate metrics and the time series data
     return res.status(200).json({
@@ -392,7 +440,7 @@ export default async function handler(req, res) {
 
     // Handle 404 errors from Plausible (common when no data is available)
     if (error.response?.status === 404 || error.response?.status === 400) {
-      console.log('Error from Plausible API, attempting to get fallback data from database');
+      // console.log('Error from Plausible API, attempting to get fallback data from database'); // Commented out
 
       try {
         // Initialize Prisma client
@@ -400,11 +448,56 @@ export default async function handler(req, res) {
 
         const userId = session.user.id;
 
-        // Get link click counts from the database
+        // Calculate the date range based on the timeRange
+        let startDate;
+        const now = new Date();
+
+        switch (timeRange) {
+          case 'day':
+            // Today (since midnight)
+            startDate = new Date(now.setHours(0, 0, 0, 0));
+            break;
+          case '7d':
+            // Last 7 days
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 7);
+            break;
+          case '30d':
+            // Last 30 days
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 30);
+            break;
+          case 'month':
+            // This month (since 1st of month)
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case '6mo':
+            // Last 6 months
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 6);
+            break;
+          case '12mo':
+            // Last 12 months
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 12);
+            break;
+          default:
+            // Default to today
+            startDate = new Date(now.setHours(0, 0, 0, 0));
+        }
+
+        console.log(
+          `Using database fallback (in catch block): filtering clicks since ${startDate.toISOString()}`
+        );
+
+        // Get link click counts from the database with time filtering
         const linkClicks = await prisma.linkClick.count({
           where: {
             link: {
               userId: userId,
+            },
+            createdAt: {
+              gte: startDate,
             },
           },
         });
@@ -419,7 +512,7 @@ export default async function handler(req, res) {
         // Close Prisma connection
         await prisma.$disconnect();
 
-        console.log(`Found ${linkClicks} link clicks in database for fallback`);
+        // console.log(`Found ${linkClicks} link clicks in database for fallback`); // Commented out
 
         // Create fallback metrics using database data
         const fallbackMetrics = {
@@ -506,10 +599,10 @@ export default async function handler(req, res) {
           }
         }
 
-        console.log(
-          'Returning fallback metrics and timeseries from database:',
-          JSON.stringify({ metrics: fallbackMetrics, timeseries: fallbackTimeseries }, null, 2)
-        );
+        // console.log(
+        //   'Returning fallback metrics and timeseries from database:',
+        //   JSON.stringify({ metrics: fallbackMetrics, timeseries: fallbackTimeseries }, null, 2)
+        // ); // Commented out
 
         return res.status(200).json({
           metrics: fallbackMetrics,
@@ -567,14 +660,14 @@ export default async function handler(req, res) {
           }
         }
 
-        console.log(
-          'Database fallback failed, returning minimal fallback data:',
-          JSON.stringify(
-            { metrics: minimalFallbackMetrics, timeseries: minimalFallbackTimeseries },
-            null,
-            2
-          )
-        );
+        // console.log(
+        //   'Database fallback failed, returning minimal fallback data:',
+        //   JSON.stringify(
+        //     { metrics: minimalFallbackMetrics, timeseries: minimalFallbackTimeseries },
+        //     null,
+        //     2
+        //   )
+        // ); // Commented out
 
         return res.status(200).json({
           metrics: minimalFallbackMetrics,

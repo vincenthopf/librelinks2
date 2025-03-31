@@ -28,8 +28,7 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
               <tr className="text-left text-xs uppercase text-gray-500 border-b">
                 <th className="pb-2">Link</th>
                 <th className="pb-2 text-right">Visitors</th>
-                <th className="pb-2 text-right">Events</th>
-                <th className="pb-2 text-right">CR</th>
+                <th className="pb-2 text-right">Clicks</th>
               </tr>
             </thead>
             <tbody>
@@ -51,7 +50,6 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
                   </td>
                   <td className="py-2 text-right">{link.visitors}</td>
                   <td className="py-2 text-right">{link.events}</td>
-                  <td className="py-2 text-right">{link.cr}%</td>
                 </tr>
               ))}
             </tbody>
@@ -59,7 +57,8 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          No outbound link clicks recorded for this time period
+          No links have been clicked yet in this period. Once links are clicked, the data will be
+          displayed here.
         </div>
       )}
     </div>
@@ -96,7 +95,6 @@ const OutboundLinksSkeleton = () => (
     {[...Array(5)].map((_, i) => (
       <div key={i} className="flex justify-between items-center py-2 border-b last:border-0">
         <div className="h-4 bg-gray-200 rounded w-64"></div>
-        <div className="h-4 bg-gray-200 rounded w-12"></div>
         <div className="h-4 bg-gray-200 rounded w-12"></div>
         <div className="h-4 bg-gray-200 rounded w-12"></div>
       </div>

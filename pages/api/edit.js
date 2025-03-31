@@ -29,9 +29,7 @@ export default async function handler(req, res) {
         if (profileImageSize !== undefined) {
           const size = parseInt(profileImageSize, 10);
           if (isNaN(size) || size < 50 || size > 500) {
-            return res
-              .status(400)
-              .json({ error: 'Invalid profile image size' });
+            return res.status(400).json({ error: 'Invalid profile image size' });
           }
         }
 
@@ -50,12 +48,10 @@ export default async function handler(req, res) {
           },
         });
 
-        return res.status(200).json(updatedUser);
+        res.status(200).json(updatedUser);
       } catch (error) {
         console.error('Update error:', error);
-        return res
-          .status(500)
-          .json({ error: `Could not update user at this time. ${error}` });
+        return res.status(500).json({ error: `Could not update user at this time. ${error}` });
       }
     } else if (req.method === 'DELETE') {
       await db.user.delete({

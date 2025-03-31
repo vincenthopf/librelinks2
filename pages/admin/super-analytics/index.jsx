@@ -142,13 +142,11 @@ const SuperAnalyticsPage = () => {
               />
 
               {/* Sources and Pages section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                {/* Sources */}
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <TopSources sourcesData={sourcesData} isLoading={isSourcesLoading} />
 
-                {/* Pages */}
                 <PagesComponent pagesData={pagesData} isLoading={isPagesLoading} />
-              </div>
+              </div> */}
 
               {/* Locations and Devices section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -54,7 +54,7 @@ export default async function handler(req, res) {
 
     // Construct the path to filter by (e.g., "/q6nr393H91")
     const pathToFilter = `/${user.handle}`;
-    console.log(`Filtering Plausible data by path: ${pathToFilter}`);
+    // console.log(`Filtering Plausible data by path: ${pathToFilter}`);
 
     // Format date range for v2 API
     const date_range = formatTimeRangeV2(timeRange);
@@ -87,7 +87,7 @@ export default async function handler(req, res) {
       filters: [['contains', 'event:page', [pathToFilter]]],
     });
 
-    console.log(`Received ${response.results.length} page results for ${dimension}`);
+    // console.log(`Received ${response.results.length} page results for ${dimension}`);
 
     // Process the response data
     const pages = processDimensionResults(response.results, metrics, [dimension]).map(item => {

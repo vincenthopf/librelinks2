@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     const { timeRange = 'day' } = req.query;
     const userId = session.user.id;
 
-    console.log(`Fetching sources data for user ID: ${userId}, time range: ${timeRange}`);
+    // console.log(`Fetching sources data for user ID: ${userId}, time range: ${timeRange}`);
 
     // Initialize Prisma client
     const prisma = new PrismaClient();
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
     // Construct the path to filter by (e.g., "/q6nr393H91")
     const pathToFilter = `/${user.handle}`;
-    console.log(`Filtering Plausible data by path: ${pathToFilter}`);
+    // console.log(`Filtering Plausible data by path: ${pathToFilter}`);
 
     // Format date range for v2 API
     const date_range = formatTimeRangeV2(timeRange);

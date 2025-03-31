@@ -126,11 +126,12 @@ const VisitorsGraph = ({ timeseriesData = [], isLoading = false, timeRange = 'da
         <Line data={chartConfig} options={options} />
       </div>
 
-      {/* Debug display to verify data exists */}
+      {/* Debug display to verify data exists 
       <div className="mt-4 text-sm text-gray-500">
         <div>Data points: {visitCounts.length}</div>
         <div>Values: {visitCounts.join(', ')}</div>
       </div>
+      */}
     </div>
   );
 };

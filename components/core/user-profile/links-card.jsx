@@ -6,7 +6,7 @@ import { GOOGLE_FAVICON_URL } from '@/utils/constants';
 import { getApexDomain } from '@/utils/helpers';
 import useCurrentUser from '@/hooks/useCurrentUser';
 
-const LinkCard = (props) => {
+const LinkCard = props => {
   const [showPreview, setShowPreview] = useState(false);
   const { data: currentUser } = useCurrentUser();
   const isTransparent = props.buttonStyle.includes('bg-transparent');
@@ -32,8 +32,7 @@ const LinkCard = (props) => {
   };
 
   const hasPreview =
-    iframelyData.embedHtml ||
-    (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
+    iframelyData.embedHtml || (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
 
   return (
     <div className="w-full transition-all duration-300">
@@ -79,7 +78,7 @@ const LinkCard = (props) => {
           </div>
           {hasPreview && (
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.preventDefault();
                 e.stopPropagation();
                 setShowPreview(!showPreview);
@@ -88,15 +87,9 @@ const LinkCard = (props) => {
               aria-label={showPreview ? 'Hide preview' : 'Show preview'}
             >
               {showPreview ? (
-                <ChevronUp
-                  className="w-5 h-5"
-                  style={{ color: props.theme.accent }}
-                />
+                <ChevronUp className="w-5 h-5" style={{ color: props.theme.accent }} />
               ) : (
-                <ChevronDown
-                  className="w-5 h-5"
-                  style={{ color: props.theme.accent }}
-                />
+                <ChevronDown className="w-5 h-5" style={{ color: props.theme.accent }} />
               )}
             </button>
           )}
@@ -104,7 +97,7 @@ const LinkCard = (props) => {
       </div>
 
       <div
-        className={`transition-all duration-300 ${showPreview ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0 '}`}
+        className={`transition-all duration-300 bg-white rounded-lg ${showPreview ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0 '}`}
       >
         <RichMediaPreview link={iframelyData} />
       </div>

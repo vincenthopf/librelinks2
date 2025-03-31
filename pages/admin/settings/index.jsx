@@ -203,6 +203,24 @@ const Settings = () => {
                     </div>
                   </div>
                   <div className="px-10">
+                    <div className="mb-4">
+                      <label
+                        htmlFor="usernameInput"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Name
+                      </label>
+                      <input
+                        id="usernameInput"
+                        type="text"
+                        value={username ?? ''}
+                        onChange={e => setUsername(e.target.value)}
+                        onBlur={handleSubmit}
+                        placeholder="Your Name"
+                        className="outline-none w-full p-3 rounded-lg border-2
+                          bg-gray-100 text-black focus:border-slate-900"
+                      />
+                    </div>
                     <textarea
                       value={bio ?? ''}
                       onChange={e => setBio(e.target.value)}

@@ -225,7 +225,7 @@ export default async function handler(req, res) {
       frameHeight: user.frameHeight,
     });
 
-    return res.status(200).json(user);
+    res.status(200).json(user);
   } catch (error) {
     console.error('Error in frame API:', error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
