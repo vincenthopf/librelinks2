@@ -2,19 +2,68 @@ import { GripVertical, BarChart, Copy } from 'lucide-react';
 import PopoverDesktop from '../../shared/popovers/popover-desktop';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { getApexDomain, timeAgo } from '@/utils/helpers';
+import { getApexDomain, timeAgo, signalIframe } from '@/utils/helpers';
 import { GOOGLE_FAVICON_URL } from '@/utils/constants';
 import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { ArchiveSVG } from '@/components/utils/archive-svg';
 import TooltipWrapper from '@/components/utils/tooltip';
+import * as Switch from '@radix-ui/react-switch';
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import useCurrentUser from '@/hooks/useCurrentUser';
 
-const LinkCard = (props) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: props.id,
-    });
+const LinkCard = props => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: props.id,
+  });
+
+  const [isExpanded, setIsExpanded] = useState(props.alwaysExpandEmbed || false);
+
+  const { data: currentUser } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const userId = currentUser?.id ?? null;
+
+  const updateExpandMutation = useMutation(
+    async newExpandValue => {
+      const response = await axios.patch(`/api/links/${props.id}`, {
+        alwaysExpandEmbed: newExpandValue,
+      });
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['links', userId] });
+        signalIframe('refresh');
+      },
+      onError: error => {
+        setIsExpanded(!isExpanded);
+        toast.error(error?.response?.data?.error || 'Failed to update link setting');
+      },
+    }
+  );
+
+  const handleToggleChange = async checked => {
+    // Optimistic update
+    setIsExpanded(checked);
+
+    try {
+      // Immediately invalidate queries and signal iframe
+      queryClient.invalidateQueries({ queryKey: ['links', userId] });
+      signalIframe('refresh');
+
+      await toast.promise(updateExpandMutation.mutateAsync(checked), {
+        loading: 'Updating setting...',
+        success: 'Setting updated!',
+        error: 'Failed to update setting', // Generic error for promise
+      });
+    } catch (error) {
+      // Error is handled by mutation's onError, toast already shown.
+      console.error('Error updating link expand setting:', error);
+    }
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -53,10 +102,7 @@ const LinkCard = (props) => {
             priority
           />
         ) : (
-          <TooltipWrapper
-            title="This link has been archived by you"
-            component={<ArchiveSVG />}
-          />
+          <TooltipWrapper title="This link has been archived by you" component={<ArchiveSVG />} />
         )}
         <div className="flex-1 p-2 h-full relative">
           <div className="flex">
@@ -88,9 +134,7 @@ const LinkCard = (props) => {
                           <BarChart color="grey" size={15} />
                           <p className="whitespace-nowrap text-sm text-gray-500">
                             {props.clicks}
-                            <span className="ml-1 hidden sm:inline-block">
-                              clicks
-                            </span>
+                            <span className="ml-1 hidden sm:inline-block">clicks</span>
                           </p>
                         </Link>
                       </div>
@@ -114,10 +158,27 @@ const LinkCard = (props) => {
               </div>
             </div>
             <button className="flex justify-center items-center ">
-              <div className="flex items-center">
-                <small className="mr-8 hidden whitespace-nowrap text-sm text-gray-500 sm:block">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <label
+                    htmlFor={`expand-switch-${props.id}`}
+                    className="whitespace-nowrap text-sm text-gray-500"
+                  >
+                    Always Expand
+                  </label>
+                  <Switch.Root
+                    id={`expand-switch-${props.id}`}
+                    checked={isExpanded}
+                    onCheckedChange={handleToggleChange}
+                    className="w-[34px] h-[20px] bg-gray-200 rounded-full relative data-[state=checked]:bg-blue-600 outline-none cursor-pointer"
+                  >
+                    <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[16px]" />
+                  </Switch.Root>
+                </div>
+
+                {/* <small className="hidden whitespace-nowrap text-sm text-gray-500 sm:block">
                   Added {timeAgo(props.createdAt, true)}
-                </small>
+                </small> */}
                 <PopoverDesktop {...props} />
               </div>
             </button>

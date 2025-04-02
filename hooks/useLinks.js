@@ -36,11 +36,11 @@ const useLinks = userId => {
         toast.error(error instanceof Error ? error.message : 'Failed to load links');
       }
     },
-    staleTime: 1000 * 60 * 10, // Consider data fresh for 10 minutes
-    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    staleTime: 3000, // Consider data fresh for just 3 seconds to ensure frequent updates
+    cacheTime: 1000 * 60 * 5, // Keep data in cache for 5 minutes
     retry: 2, // Retry failed requests twice
-    refetchOnWindowFocus: false, // Don't refetch when window gains focus
-    refetchOnReconnect: false, // Don't refetch when network reconnects
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnReconnect: true, // Refetch when network reconnects
     refetchOnMount: true, // Only refetch on mount, not on every component re-render
     keepPreviousData: true, // Keep displaying the previous data while fetching new data
     suspense: false, // Don't use React Suspense to avoid flash of loading state

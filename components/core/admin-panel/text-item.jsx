@@ -27,7 +27,7 @@ const timeAgo = (dateString, shortFormat = false) => {
 };
 
 // Popover desktop component for edit/delete options
-const PopoverDesktop = (props) => {
+const PopoverDesktop = props => {
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
 
@@ -95,15 +95,8 @@ const PopoverDesktop = (props) => {
   );
 };
 
-const TextItem = (props) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+const TextItem = props => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: props.id,
   });
 
@@ -115,11 +108,7 @@ const TextItem = (props) => {
 
   return (
     <>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="bg-white rounded-lg drop-shadow-md my-5"
-      >
+      <div ref={setNodeRef} style={style} className="bg-white rounded-lg drop-shadow-md my-5">
         <div className="flex items-center p-2">
           <div
             className="text-gray-400 text-sm hover:bg-blue-100 rounded-sm p-[3px]"
@@ -140,9 +129,7 @@ const TextItem = (props) => {
                 <div className="grid mb-1 w-full grid-cols-[minmax(0,_90%)] items-baseline">
                   <div className="w-full row-start-1 col-start-1 items-center">
                     <div className="flex items-center max-w-full rounded-[2px] outline-offset-2 outline-2 gap-2 lg:gap-4">
-                      <p className="w-fit text-gray-900 font-semibold">
-                        {props.title}
-                      </p>
+                      <p className="w-fit text-gray-900 font-semibold">{props.title}</p>
                     </div>
                   </div>
 
@@ -158,9 +145,9 @@ const TextItem = (props) => {
 
               <button className="flex justify-center items-center">
                 <div className="flex items-center">
-                  <small className="mr-8 hidden whitespace-nowrap text-sm text-gray-500 sm:block">
+                  {/* <small className="mr-8 hidden whitespace-nowrap text-sm text-gray-500 sm:block">
                     Added {timeAgo(props.createdAt, true)}
-                  </small>
+                  </small> */}
                   <PopoverDesktop {...props} />
                 </div>
               </button>

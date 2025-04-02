@@ -14,9 +14,7 @@ export default async function handler(req, res) {
 
     // Check if user is admin
     if (!currentUser.isAdmin) {
-      return res
-        .status(403)
-        .json({ error: 'Only admins can create templates' });
+      return res.status(403).json({ error: 'Only admins can create templates' });
     }
 
     const { name, description } = req.body;
@@ -53,19 +51,29 @@ export default async function handler(req, res) {
       },
     });
 
-    // Get current user's links
+    // Get current user's links, including the alwaysExpandEmbed status
     const userLinks = await db.link.findMany({
       where: {
         userId: currentUser.id,
         archived: false,
+      },
+      select: {
+        id: true,
+        alwaysExpandEmbed: true, // Select the field
       },
     });
 
     // Prepare template data
     const templateData = prepareTemplateData(currentUser, name, description);
 
+    // Prepare the linkExpansionStates JSON array
+    const linkExpansionStates = userLinks.map(link => ({
+      linkId: link.id,
+      expanded: link.alwaysExpandEmbed || false,
+    }));
+
     // Create template in a transaction
-    const template = await withTransaction(async (prisma) => {
+    const template = await withTransaction(async prisma => {
       return await prisma.template.create({
         data: {
           name: templateData.name,
@@ -74,6 +82,9 @@ export default async function handler(req, res) {
           linksLocation: templateData.linksLocation,
           themePalette: templateData.themePalette,
           buttonStyle: templateData.buttonStyle,
+          profileNameFontFamily: templateData.profileNameFontFamily,
+          bioFontFamily: templateData.bioFontFamily,
+          linkTitleFontFamily: templateData.linkTitleFontFamily,
           profileNameFontSize: templateData.profileNameFontSize,
           bioFontSize: templateData.bioFontSize,
           linkTitleFontSize: templateData.linkTitleFontSize,
@@ -89,15 +100,30 @@ export default async function handler(req, res) {
           frameAnimation: templateData.frameAnimation,
           headToPicturePadding: templateData.headToPicturePadding,
           pictureToNamePadding: templateData.pictureToNamePadding,
+          nameToBioPadding: templateData.nameToBioPadding,
+          bioToFirstCardPadding: templateData.bioToFirstCardPadding,
           betweenCardsPadding: templateData.betweenCardsPadding,
           linkCardHeight: templateData.linkCardHeight,
+          frameCornerStyle: templateData.frameCornerStyle,
+          frameBorderRadius: templateData.frameBorderRadius,
+          frameAllCorners: templateData.frameAllCorners,
+          frameTopLeftRadius: templateData.frameTopLeftRadius,
+          frameTopRightRadius: templateData.frameTopRightRadius,
+          frameBottomLeftRadius: templateData.frameBottomLeftRadius,
+          frameBottomRightRadius: templateData.frameBottomRightRadius,
+          frameWidth: templateData.frameWidth,
+          frameHeight: templateData.frameHeight,
+          backgroundImage: templateData.backgroundImage,
+          photoBookLayout: templateData.photoBookLayout,
+          photoBookOrder: templateData.photoBookOrder,
+          linkExpansionStates: linkExpansionStates,
           createdBy: {
             connect: {
               id: currentUser.id,
             },
           },
           links: {
-            connect: userLinks.map((link) => ({ id: link.id })),
+            connect: userLinks.map(link => ({ id: link.id })),
           },
         },
         include: {

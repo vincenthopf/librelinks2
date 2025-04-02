@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import RichMediaPreview from './rich-media-preview';
 import { GOOGLE_FAVICON_URL } from '@/utils/constants';
@@ -7,11 +7,18 @@ import { getApexDomain } from '@/utils/helpers';
 import useCurrentUser from '@/hooks/useCurrentUser';
 
 const LinkCard = props => {
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(props.alwaysExpandEmbed || false);
   const { data: currentUser } = useCurrentUser();
   const isTransparent = props.buttonStyle.includes('bg-transparent');
   const hasShadowProp = props.buttonStyle.includes('shadow');
   const faviconSize = currentUser?.faviconSize || 32;
+
+  // Update showPreview state when alwaysExpandEmbed prop changes
+  useEffect(() => {
+    if (props.alwaysExpandEmbed !== undefined) {
+      setShowPreview(props.alwaysExpandEmbed);
+    }
+  }, [props.alwaysExpandEmbed]);
 
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,

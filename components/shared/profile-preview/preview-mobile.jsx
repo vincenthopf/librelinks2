@@ -40,6 +40,13 @@ const PreviewMobile = ({ close }) => {
 
   const nonSocialLinks = useMemo(() => userLinks?.filter(link => !link.isSocial), [userLinks]);
 
+  // Add effect to refresh whenever links data changes
+  useEffect(() => {
+    if (userLinks) {
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [userLinks]);
+
   useEffect(() => {
     if (currentUser && userLinks) {
       setIsDataLoaded(true);
@@ -133,7 +140,7 @@ const PreviewMobile = ({ close }) => {
       >
         <iframe
           ref={iframeRef}
-          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}`}
+          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${userLinks ? userLinks.length : 0}`}
           seamless
           loading="lazy"
           title="preview"

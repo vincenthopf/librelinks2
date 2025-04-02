@@ -67,6 +67,9 @@ model User {
   backgroundImages     BackgroundImage[]
   photoBookImages      PhotoBookImage[] // Relation to photo book images
 
+  // Store the expansion state for connected links
+  linkExpansionStates  Json?
+
   @@unique([handle, email])
 }
 
@@ -114,6 +117,8 @@ model Link {
   authorName   String? // Content author
   authorUrl    String? // Author profile URL
   iframelyMeta Json? // Additional metadata
+
+  alwaysExpandEmbed Boolean @default(false) // Control default embed expansion
 
   @@index([userId])
   @@index([templateId])
@@ -174,10 +179,29 @@ model Template {
   // Add missing padding and spacing fields
   headToPicturePadding Int     @default(40)
   pictureToNamePadding Int     @default(16)
-  betweenCardsPadding  Int     @default(16)
-  linkCardHeight       Int     @default(16)
   nameToBioPadding     Int     @default(10)
   bioToFirstCardPadding Int    @default(16)
+  betweenCardsPadding  Int     @default(16)
+  linkCardHeight       Int     @default(16)
+
+  // Add missing frame corner fields
+  frameCornerStyle     String  @default("squircle")
+  frameBorderRadius    Int     @default(20)
+  frameAllCorners      Boolean @default(true)
+  frameTopLeftRadius   Int     @default(20)
+  frameTopRightRadius  Int     @default(20)
+  frameBottomLeftRadius Int    @default(20)
+  frameBottomRightRadius Int   @default(20)
+  // Add missing frame dimension fields
+  frameWidth           Int     @default(512)
+  frameHeight          Int     @default(512)
+  // Add missing background and photo book fields
+  backgroundImage      String?
+  photoBookLayout      String  @default("grid")
+  photoBookOrder       Int?    @default(9999)
+
+  // Store the expansion state for connected links
+  linkExpansionStates  Json?
 
   @@index([userId])
 }

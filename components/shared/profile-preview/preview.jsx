@@ -1,6 +1,7 @@
 import useCurrentUser from '@/hooks/useCurrentUser';
 import { getCurrentBaseURL } from '@/utils/helpers';
 import { useEffect, useRef, useState } from 'react';
+import useLinks from '@/hooks/useLinks';
 
 const Preview = () => {
   const { data: currentUser } = useCurrentUser();
@@ -9,6 +10,8 @@ const Preview = () => {
   const iframeRef = useRef(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const dimensionUpdateTimeoutRef = useRef(null);
+
+  const { data: userLinks } = useLinks(currentUser?.id);
 
   useEffect(() => {
     if (!iframeRef.current) return;
@@ -25,6 +28,12 @@ const Preview = () => {
     observer.observe(iframeRef.current.parentElement);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (userLinks) {
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [userLinks]);
 
   useEffect(() => {
     const handleMessage = event => {
@@ -105,7 +114,7 @@ const Preview = () => {
           {currentUser && (
             <iframe
               ref={iframeRef}
-              key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}`}
+              key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${userLinks ? userLinks.length : 0}`}
               seamless
               loading="lazy"
               title="preview"

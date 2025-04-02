@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PATCH') {
-      const { newTitle, newUrl, archived } = req.body;
+      const { newTitle, newUrl, archived, alwaysExpandEmbed } = req.body;
 
       // Get current link data to check if URL changed
       const currentLink = await db.link.findUnique({
@@ -32,9 +32,7 @@ export default async function handler(req, res) {
         iframelyData = await fetchIframelyData(newUrl);
       }
 
-      const processedData = iframelyData
-        ? processIframelyResponse(iframelyData)
-        : null;
+      const processedData = iframelyData ? processIframelyResponse(iframelyData) : null;
 
       const updatedLink = await db.link.update({
         where: {
@@ -44,6 +42,7 @@ export default async function handler(req, res) {
           title: newTitle,
           url: newUrl,
           archived: archived,
+          alwaysExpandEmbed: alwaysExpandEmbed,
           // Only update Iframely data if we have new data
           ...(processedData && {
             type: processedData.type,
