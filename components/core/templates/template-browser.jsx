@@ -13,7 +13,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
   const [failedImages, setFailedImages] = useState(new Set());
 
   const filteredTemplates = templates?.filter(
-    (template) =>
+    template =>
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -29,8 +29,8 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
     }
   };
 
-  const handleImageError = (templateId) => {
-    setFailedImages((prev) => new Set([...prev, templateId]));
+  const handleImageError = templateId => {
+    setFailedImages(prev => new Set([...prev, templateId]));
   };
 
   return (
@@ -44,13 +44,13 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
           type="text"
           placeholder="Search templates..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={e => setSearchQuery(e.target.value)}
           className="pl-10 w-full"
         />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredTemplates?.map((template) => (
+        {filteredTemplates?.map(template => (
           <div
             key={template.id}
             className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -84,9 +84,7 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
             </div>
 
             <div className="p-4">
-              <h3 className="font-medium text-base mb-3 text-center">
-                {template.name}
-              </h3>
+              <h3 className="font-medium text-base mb-3 text-center">{template.name}</h3>
               <div className="flex items-center justify-center">
                 <Button
                   onClick={() => {
@@ -127,16 +125,10 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
               <TemplatePreview template={selectedTemplate} />
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
-              <Button
-                onClick={() => setSelectedTemplate(null)}
-                variant="outline"
-              >
+              <Button onClick={() => setSelectedTemplate(null)} variant="outline">
                 Close
               </Button>
-              <Button
-                onClick={() => setShowConfirmDialog(true)}
-                variant="default"
-              >
+              <Button onClick={() => setShowConfirmDialog(true)} variant="default">
                 Apply Template
               </Button>
             </div>
@@ -145,18 +137,15 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
       )}
 
       {showConfirmDialog && selectedTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h2 className="text-lg font-medium mb-4">Apply Template</h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to apply this template? This will update
-              your page appearance and layout.
+              Are you sure you want to apply this template? This will update your page appearance
+              and layout.
             </p>
             <div className="flex justify-end gap-2">
-              <Button
-                onClick={() => setShowConfirmDialog(false)}
-                variant="outline"
-              >
+              <Button onClick={() => setShowConfirmDialog(false)} variant="outline">
                 Cancel
               </Button>
               <Button onClick={handleApplyTemplate} variant="default">

@@ -17,7 +17,7 @@ import SaveTemplateButton from '@/components/utils/save-template-button';
 import SiteHeader from './main-nav';
 import ShareModal from '@/components/shared/modals/share-modal';
 import SaveAsTemplateModal from '@/components/shared/modals/save-as-template-modal';
-import React from 'react';
+import React, { useState } from 'react';
 import useMediaQuery from '@/hooks/use-media-query';
 
 const items = [
@@ -66,6 +66,8 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
   const isAdmin = session?.data?.user?.isAdmin;
   const { isNavigationOverflow } = useMediaQuery();
 
+  const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
+
   const filteredItems = items.filter(item => (isAdmin ? true : !item.showForAdmin));
 
   const NavItem = ({ item, compact = false }) => (
@@ -103,11 +105,14 @@ const Navbar = ({ showName = false, isHomePage = true }) => {
             {session.status === 'authenticated' && (
               <div className="flex items-center gap-2">
                 {isAdmin && (
-                  <Dialog.Root>
+                  <Dialog.Root
+                    open={isSaveTemplateModalOpen}
+                    onOpenChange={setIsSaveTemplateModalOpen}
+                  >
                     <Dialog.Trigger asChild>
-                      <SaveTemplateButton />
+                      <SaveTemplateButton onClick={() => setIsSaveTemplateModalOpen(true)} />
                     </Dialog.Trigger>
-                    <SaveAsTemplateModal onClose={() => {}} />
+                    <SaveAsTemplateModal onClose={() => setIsSaveTemplateModalOpen(false)} />
                   </Dialog.Root>
                 )}
                 <Dialog.Root>
