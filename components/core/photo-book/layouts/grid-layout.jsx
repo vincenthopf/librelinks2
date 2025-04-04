@@ -9,26 +9,16 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  rectSortingStrategy,
-  useSortable,
-  arrayMove,
-} from '@dnd-kit/sortable';
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable photo item component
 const SortablePhoto = ({ photo, index, onPhotoClick, isPublicView }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: photo.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: photo.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -72,13 +62,9 @@ const SortablePhoto = ({ photo, index, onPhotoClick, isPublicView }) => {
           <div
             className={`absolute inset-0 bg-black ${isPublicView ? 'bg-opacity-0 hover:bg-opacity-40' : 'group-hover:bg-opacity-60 bg-opacity-0'} flex flex-col justify-end p-3 text-white ${isPublicView ? 'opacity-0 hover:opacity-100' : 'group-hover:opacity-100 opacity-0'} transition-all duration-200`}
           >
-            {photo.title && (
-              <h4 className="font-medium text-sm truncate">{photo.title}</h4>
-            )}
+            {photo.title && <h4 className="font-medium text-sm truncate">{photo.title}</h4>}
             {photo.description && (
-              <p className="text-xs mt-1 line-clamp-2 text-gray-200">
-                {photo.description}
-              </p>
+              <p className="text-xs mt-1 line-clamp-2 text-gray-200">{photo.description}</p>
             )}
           </div>
         )}
@@ -109,7 +95,7 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
     useSensor(KeyboardSensor)
   );
 
-  const handlePhotoClick = (photo) => {
+  const handlePhotoClick = photo => {
     if (isPublicView) return; // Don't open modal in public view
 
     setSelectedPhoto(photo);
@@ -121,13 +107,13 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
     setSelectedPhoto(null);
   };
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async event => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
       // Find indices of the dragged item and the target
-      const oldIndex = items.findIndex((item) => item.id === active.id);
-      const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over.id);
 
       // Create new array with the item moved
       const newItems = arrayMove(items, oldIndex, newIndex);
@@ -143,9 +129,6 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
         );
 
         await Promise.all(updatePromises);
-
-        // Signal iframe to update the preview
-        signalIframe();
       } catch (error) {
         console.error('Failed to update photo order:', error);
         // Revert to original order if update fails
@@ -166,9 +149,7 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
     <div className="space-y-4">
       {!isPublicView && (
         <div className="mb-4 text-center">
-          <p className="text-sm text-gray-500">
-            Drag and drop photos to rearrange them
-          </p>
+          <p className="text-sm text-gray-500">Drag and drop photos to rearrange them</p>
         </div>
       )}
 
@@ -180,7 +161,7 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
         autoScroll={!isPublicView}
       >
         <SortableContext
-          items={items.map((photo) => photo.id)}
+          items={items.map(photo => photo.id)}
           strategy={rectSortingStrategy}
           disabled={isPublicView}
         >
@@ -199,11 +180,7 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
       </DndContext>
 
       {!isPublicView && isModalOpen && selectedPhoto && (
-        <PhotoEditModal
-          photo={selectedPhoto}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-        />
+        <PhotoEditModal photo={selectedPhoto} isOpen={isModalOpen} onClose={handleCloseModal} />
       )}
     </div>
   );

@@ -9,26 +9,16 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  rectSortingStrategy,
-  useSortable,
-  arrayMove,
-} from '@dnd-kit/sortable';
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable photo item component
 const SortablePhoto = ({ photo, onPhotoClick, isPublicView }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: photo.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: photo.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -71,9 +61,7 @@ const SortablePhoto = ({ photo, onPhotoClick, isPublicView }) => {
         {(photo.title || photo.description) && isPublicView && (
           <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 flex flex-col justify-end p-3 text-white opacity-0 hover:opacity-100 transition-all duration-200">
             {photo.title && (
-              <h4 className="font-medium text-sm md:text-base truncate">
-                {photo.title}
-              </h4>
+              <h4 className="font-medium text-sm md:text-base truncate">{photo.title}</h4>
             )}
             {photo.description && (
               <p className="text-xs md:text-sm mt-1 line-clamp-2 text-gray-200">
@@ -87,11 +75,7 @@ const SortablePhoto = ({ photo, onPhotoClick, isPublicView }) => {
   );
 };
 
-const PortfolioLayout = ({
-  photos,
-  isPublicView = false,
-  showTitle = true,
-}) => {
+const PortfolioLayout = ({ photos, isPublicView = false, showTitle = true }) => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [items, setItems] = useState(photos || []);
@@ -113,7 +97,7 @@ const PortfolioLayout = ({
     useSensor(KeyboardSensor)
   );
 
-  const handlePhotoClick = (photo) => {
+  const handlePhotoClick = photo => {
     if (isPublicView) return; // Don't open modal in public view
 
     setSelectedPhoto(photo);
@@ -125,13 +109,13 @@ const PortfolioLayout = ({
     setSelectedPhoto(null);
   };
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async event => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
       // Find indices of the dragged item and the target
-      const oldIndex = items.findIndex((item) => item.id === active.id);
-      const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over.id);
 
       // Create new array with the item moved
       const newItems = arrayMove(items, oldIndex, newIndex);
@@ -147,9 +131,6 @@ const PortfolioLayout = ({
         );
 
         await Promise.all(updatePromises);
-
-        // Signal iframe to update the preview
-        signalIframe();
       } catch (error) {
         console.error('Failed to update photo order:', error);
         // Revert to original order if update fails
@@ -167,7 +148,7 @@ const PortfolioLayout = ({
   }
 
   // Create groups of photos for the asymmetrical grid
-  const createPhotoGroups = (photoList) => {
+  const createPhotoGroups = photoList => {
     // Ensure photoList is an array
     if (!Array.isArray(photoList)) {
       console.error('photoList is not an array:', photoList);
@@ -175,7 +156,7 @@ const PortfolioLayout = ({
     }
 
     // Filter out invalid photos first
-    const validPhotos = photoList.filter((photo) => photo && photo.url);
+    const validPhotos = photoList.filter(photo => photo && photo.url);
 
     if (validPhotos.length === 0) {
       return [];
@@ -233,7 +214,7 @@ const PortfolioLayout = ({
   };
 
   // Render a specific pattern group
-  const renderPatternGroup = (group) => {
+  const renderPatternGroup = group => {
     if (!group || !group.photos) {
       console.error('Invalid group data:', group);
       return null; // Return null for invalid groups
@@ -253,9 +234,7 @@ const PortfolioLayout = ({
         <div className="mb-1">
           <div className="flex flex-wrap">
             {/* Feature large photo on left */}
-            <div className="w-full md:w-1/2 p-0.5">
-              {renderPhoto(groupPhotos[0])}
-            </div>
+            <div className="w-full md:w-1/2 p-0.5">{renderPhoto(groupPhotos[0])}</div>
             {/* 2x2 grid on right */}
             <div className="w-full md:w-1/2 p-0.5">
               <div className="flex flex-wrap h-full">
@@ -286,12 +265,8 @@ const PortfolioLayout = ({
             {/* Bottom row with 3 photos */}
             <div className="w-2/3 p-0.5">{renderPhoto(groupPhotos[2])}</div>
             <div className="w-1/3 p-0.5">
-              <div className="h-1/2 p-0.5 pb-0">
-                {renderPhoto(groupPhotos[3])}
-              </div>
-              <div className="h-1/2 p-0.5 pt-0">
-                {renderPhoto(groupPhotos[4])}
-              </div>
+              <div className="h-1/2 p-0.5 pb-0">{renderPhoto(groupPhotos[3])}</div>
+              <div className="h-1/2 p-0.5 pt-0">{renderPhoto(groupPhotos[4])}</div>
             </div>
           </div>
         </div>
@@ -332,7 +307,7 @@ const PortfolioLayout = ({
   };
 
   // Render an individual photo
-  const renderPhoto = (photo) => {
+  const renderPhoto = photo => {
     if (!photo || !photo.url) {
       console.error('Invalid photo data:', photo);
       return (
@@ -346,11 +321,7 @@ const PortfolioLayout = ({
     }
 
     return (
-      <SortablePhoto
-        photo={photo}
-        onPhotoClick={handlePhotoClick}
-        isPublicView={isPublicView}
-      />
+      <SortablePhoto photo={photo} onPhotoClick={handlePhotoClick} isPublicView={isPublicView} />
     );
   };
 
@@ -361,9 +332,7 @@ const PortfolioLayout = ({
     <div className="space-y-2">
       {!isPublicView && (
         <div className="mb-4 text-center">
-          <p className="text-sm text-gray-500">
-            Drag and drop photos to rearrange them
-          </p>
+          <p className="text-sm text-gray-500">Drag and drop photos to rearrange them</p>
         </div>
       )}
 
@@ -375,7 +344,7 @@ const PortfolioLayout = ({
         autoScroll={!isPublicView}
       >
         <SortableContext
-          items={items.map((photo) => photo.id)}
+          items={items.map(photo => photo.id)}
           strategy={rectSortingStrategy}
           disabled={isPublicView}
         >
@@ -386,11 +355,7 @@ const PortfolioLayout = ({
       </DndContext>
 
       {!isPublicView && isModalOpen && selectedPhoto && (
-        <PhotoEditModal
-          photo={selectedPhoto}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-        />
+        <PhotoEditModal photo={selectedPhoto} isOpen={isModalOpen} onClose={handleCloseModal} />
       )}
     </div>
   );

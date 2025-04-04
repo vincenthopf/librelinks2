@@ -2,6 +2,8 @@ import useCurrentUser from '@/hooks/useCurrentUser';
 import { getCurrentBaseURL } from '@/utils/helpers';
 import { useEffect, useRef, useState } from 'react';
 import useLinks from '@/hooks/useLinks';
+import useTexts from '@/hooks/useTexts';
+import { usePhotoBook } from '@/hooks/usePhotoBook';
 
 const Preview = () => {
   const { data: currentUser } = useCurrentUser();
@@ -12,6 +14,16 @@ const Preview = () => {
   const dimensionUpdateTimeoutRef = useRef(null);
 
   const { data: userLinks } = useLinks(currentUser?.id);
+  const { data: userTexts } = useTexts(currentUser?.id);
+  const { photos } = usePhotoBook();
+
+  const refreshDependencies = [
+    currentUser?.handle,
+    currentUser?.photoBookLayout,
+    userLinks?.length,
+    userTexts?.length,
+    photos?.length,
+  ];
 
   useEffect(() => {
     if (!iframeRef.current) return;
@@ -30,10 +42,8 @@ const Preview = () => {
   }, []);
 
   useEffect(() => {
-    if (userLinks) {
-      setRefreshKey(prev => prev + 1);
-    }
-  }, [userLinks]);
+    setRefreshKey(prev => prev + 1);
+  }, refreshDependencies);
 
   useEffect(() => {
     const handleMessage = event => {

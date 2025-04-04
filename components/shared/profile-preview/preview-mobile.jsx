@@ -11,6 +11,8 @@ import useCurrentUser from '@/hooks/useCurrentUser';
 import { X } from 'lucide-react';
 import { UserAvatarSetting } from '@/components/utils/avatar';
 import { getCurrentBaseURL } from '@/utils/helpers';
+import useTexts from '@/hooks/useTexts';
+import { usePhotoBook } from '@/hooks/usePhotoBook';
 
 const PreviewMobile = ({ close }) => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -22,6 +24,16 @@ const PreviewMobile = ({ close }) => {
   const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}`;
 
   const { data: userLinks } = useLinks(currentUser?.id);
+  const { data: userTexts } = useTexts(currentUser?.id);
+  const { photos } = usePhotoBook();
+
+  const refreshDependencies = [
+    currentUser?.handle,
+    currentUser?.photoBookLayout,
+    userLinks?.length,
+    userTexts?.length,
+    photos?.length,
+  ];
 
   const theme = useMemo(
     () => ({
@@ -40,12 +52,9 @@ const PreviewMobile = ({ close }) => {
 
   const nonSocialLinks = useMemo(() => userLinks?.filter(link => !link.isSocial), [userLinks]);
 
-  // Add effect to refresh whenever links data changes
   useEffect(() => {
-    if (userLinks) {
-      setRefreshKey(prev => prev + 1);
-    }
-  }, [userLinks]);
+    setRefreshKey(prev => prev + 1);
+  }, refreshDependencies);
 
   useEffect(() => {
     if (currentUser && userLinks) {
@@ -140,7 +149,7 @@ const PreviewMobile = ({ close }) => {
       >
         <iframe
           ref={iframeRef}
-          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${userLinks ? userLinks.length : 0}`}
+          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${userLinks ? userLinks.length : 0}-${userTexts ? userTexts.length : 0}-${photos ? photos.length : 0}`}
           seamless
           loading="lazy"
           title="preview"

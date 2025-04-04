@@ -9,32 +9,16 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  rectSortingStrategy,
-  useSortable,
-  arrayMove,
-} from '@dnd-kit/sortable';
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable thumbnail component for the carousel
-const SortableThumbnail = ({
-  photo,
-  index,
-  currentIndex,
-  onThumbnailClick,
-  isPublicView,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: photo.id });
+const SortableThumbnail = ({ photo, index, currentIndex, onThumbnailClick, isPublicView }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: photo.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -78,11 +62,7 @@ const SortableThumbnail = ({
   );
 };
 
-const CarouselLayout = ({
-  photos,
-  isPublicView = false,
-  showTitle = false,
-}) => {
+const CarouselLayout = ({ photos, isPublicView = false, showTitle = false }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,14 +97,14 @@ const CarouselLayout = ({
     useSensor(KeyboardSensor)
   );
 
-  const handlePhotoClick = (photo) => {
+  const handlePhotoClick = photo => {
     if (isPublicView) return; // Don't open modal in public view
 
     setSelectedPhoto(photo);
     setIsModalOpen(true);
   };
 
-  const handleThumbnailClick = (index) => {
+  const handleThumbnailClick = index => {
     setCurrentIndex(index);
   };
 
@@ -149,7 +129,7 @@ const CarouselLayout = ({
   useEffect(() => {
     if (!isPublicView) {
       // Move handleKeyDown inside useEffect
-      const handleKeyDown = (e) => {
+      const handleKeyDown = e => {
         if (e.key === 'ArrowLeft') {
           goToPrevious();
         } else if (e.key === 'ArrowRight') {
@@ -164,13 +144,13 @@ const CarouselLayout = ({
     }
   }, [isPublicView, goToPrevious, goToNext]);
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async event => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
       // Find indices of the dragged item and the target
-      const oldIndex = items.findIndex((item) => item.id === active.id);
-      const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over.id);
 
       // Create new array with the item moved
       const newItems = arrayMove(items, oldIndex, newIndex);
@@ -193,9 +173,6 @@ const CarouselLayout = ({
         );
 
         await Promise.all(updatePromises);
-
-        // Signal iframe to update the preview
-        signalIframe();
       } catch (error) {
         console.error('Failed to update photo order:', error);
         // Revert to original order if update fails
@@ -218,9 +195,7 @@ const CarouselLayout = ({
     <div className="space-y-4">
       {!isPublicView && (
         <div className="mb-4 text-center">
-          <p className="text-sm text-gray-500">
-            Drag and drop thumbnails to rearrange photos
-          </p>
+          <p className="text-sm text-gray-500">Drag and drop thumbnails to rearrange photos</p>
         </div>
       )}
 
@@ -235,9 +210,7 @@ const CarouselLayout = ({
           <div
             ref={mainImageRef}
             className="w-full h-full flex items-center justify-center"
-            onClick={
-              isPublicView ? undefined : () => handlePhotoClick(currentPhoto)
-            }
+            onClick={isPublicView ? undefined : () => handlePhotoClick(currentPhoto)}
           >
             <div className="w-full max-w-4xl mx-auto relative">
               <CloudinaryImage
@@ -251,21 +224,20 @@ const CarouselLayout = ({
               />
 
               {/* Photo info overlay on hover */}
-              {(currentPhoto.title || currentPhoto.description) &&
-                isPublicView && (
-                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 flex flex-col justify-end p-3 text-white opacity-0 hover:opacity-100 transition-all duration-200">
-                    {currentPhoto.title && (
-                      <h4 className="font-medium text-sm md:text-base truncate">
-                        {currentPhoto.title}
-                      </h4>
-                    )}
-                    {currentPhoto.description && (
-                      <p className="text-xs md:text-sm mt-1 line-clamp-2 text-gray-200">
-                        {currentPhoto.description}
-                      </p>
-                    )}
-                  </div>
-                )}
+              {(currentPhoto.title || currentPhoto.description) && isPublicView && (
+                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 flex flex-col justify-end p-3 text-white opacity-0 hover:opacity-100 transition-all duration-200">
+                  {currentPhoto.title && (
+                    <h4 className="font-medium text-sm md:text-base truncate">
+                      {currentPhoto.title}
+                    </h4>
+                  )}
+                  {currentPhoto.description && (
+                    <p className="text-xs md:text-sm mt-1 line-clamp-2 text-gray-200">
+                      {currentPhoto.description}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -322,9 +294,7 @@ const CarouselLayout = ({
             <button
               key={index}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex
-                  ? 'bg-blue-500 w-4'
-                  : 'bg-gray-300 hover:bg-gray-400'
+                index === currentIndex ? 'bg-blue-500 w-4' : 'bg-gray-300 hover:bg-gray-400'
               }`}
               onClick={() => setCurrentIndex(index)}
               aria-label={`Go to slide ${index + 1}`}
@@ -341,10 +311,7 @@ const CarouselLayout = ({
           onDragEnd={handleDragEnd}
           autoScroll={true}
         >
-          <SortableContext
-            items={items.map((photo) => photo.id)}
-            strategy={rectSortingStrategy}
-          >
+          <SortableContext items={items.map(photo => photo.id)} strategy={rectSortingStrategy}>
             <div className="thumbnail-strip flex items-center space-x-2 overflow-x-auto py-2 px-4 bg-gray-50">
               {items.map((photo, index) => (
                 <SortableThumbnail
@@ -362,11 +329,7 @@ const CarouselLayout = ({
       )}
 
       {!isPublicView && isModalOpen && selectedPhoto && (
-        <PhotoEditModal
-          photo={selectedPhoto}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-        />
+        <PhotoEditModal photo={selectedPhoto} isOpen={isModalOpen} onClose={handleCloseModal} />
       )}
     </div>
   );

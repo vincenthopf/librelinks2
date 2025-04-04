@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import { signalIframe } from '@/utils/helpers';
 
-const EditTextModal = (props) => {
+const EditTextModal = props => {
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +43,6 @@ const EditTextModal = (props) => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['texts', userId] });
-        signalIframe();
       },
     }
   );
@@ -53,14 +52,11 @@ const EditTextModal = (props) => {
       toast.error('Please enter a title');
       return;
     }
-    await toast.promise(
-      updateTextMutation.mutateAsync({ title: newTitle, content: newContent }),
-      {
-        loading: 'Updating text...',
-        success: 'Text updated successfully',
-        error: 'An error occurred while updating the text',
-      }
-    );
+    await toast.promise(updateTextMutation.mutateAsync({ title: newTitle, content: newContent }), {
+      loading: 'Updating text...',
+      success: 'Text updated successfully',
+      error: 'An error occurred while updating the text',
+    });
   };
 
   return (
@@ -82,7 +78,7 @@ const EditTextModal = (props) => {
             <div className="relative mb-4">
               <input
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={e => setNewTitle(e.target.value)}
                 className="block w-full h-10 px-4 py-6 mb-2 leading-tight text-gray-700 border rounded-2xl appearance-none focus:outline-none focus:shadow-outline"
                 id="title"
                 type="text"
@@ -93,7 +89,7 @@ const EditTextModal = (props) => {
             <div className="relative">
               <textarea
                 value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
+                onChange={e => setNewContent(e.target.value)}
                 className="block w-full h-32 px-4 py-3 mb-2 leading-tight text-gray-700 border rounded-2xl appearance-none focus:outline-none focus:shadow-outline"
                 id="content"
                 placeholder="Content"
@@ -107,11 +103,7 @@ const EditTextModal = (props) => {
                 disabled={isLoading}
                 className={`inline-block w-full px-4 py-4 leading-none 
                      			 text-lg mt-2 text-white rounded-3xl 
-                      			${
-                              !isLoading
-                                ? 'bg-slate-800 hover:bg-slate-900'
-                                : 'bg-slate-500'
-                            }`}
+                      			${!isLoading ? 'bg-slate-800 hover:bg-slate-900' : 'bg-slate-500'}`}
               >
                 {isLoading ? 'Updating...' : 'Update Text'}{' '}
                 <span role="img" aria-label="sparkling star">

@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  GripVertical,
-  Image as ImageIcon,
-  ChevronDown,
-  ChevronUp,
-  Trash2,
-} from 'lucide-react';
+import { GripVertical, Image as ImageIcon, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import PhotoBookTab from '@/components/core/photo-book/photo-book-tab';
@@ -29,25 +23,23 @@ const PhotoBookItem = ({ id }) => {
 
   // Use static title since we don't have these fields in the database
   const photoBookTitle = 'Photo Book';
-  const photoBookDescription =
-    'Your collection of photos displayed in your chosen layout';
+  const photoBookDescription = 'Your collection of photos displayed in your chosen layout';
 
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: id, // Use a special ID to represent the photo book
-    });
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: id, // Use a special ID to represent the photo book
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  const toggleExpand = (e) => {
+  const toggleExpand = e => {
     e.preventDefault();
     setIsExpanded(!isExpanded);
   };
 
-  const handleDeletePhotoBook = async (e) => {
+  const handleDeletePhotoBook = async e => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -66,7 +58,7 @@ const PhotoBookItem = ({ id }) => {
       // Step 1: Delete all photos in the database first
       if (Array.isArray(photos) && photos.length > 0) {
         // Create an array of all delete promises
-        const deletePromises = photos.map(async (photo) => {
+        const deletePromises = photos.map(async photo => {
           try {
             await deletePhoto(photo.id);
             return { success: true };
@@ -80,7 +72,7 @@ const PhotoBookItem = ({ id }) => {
         const results = await Promise.all(deletePromises);
 
         // Check if any deletions failed
-        hasErrors = results.some((result) => !result.success);
+        hasErrors = results.some(result => !result.success);
       }
 
       // Step 2: Remove the photo book section by setting photoBookOrder to null
@@ -97,9 +89,7 @@ const PhotoBookItem = ({ id }) => {
 
       // Step 4: Show appropriate toast message based on results
       if (hasErrors) {
-        toast.error(
-          'Some photos could not be deleted, but the photo book section was removed'
-        );
+        toast.error('Some photos could not be deleted, but the photo book section was removed');
       } else if (photoCount > 0) {
         toast.success('Photo book and all photos removed successfully');
       } else {
@@ -107,7 +97,7 @@ const PhotoBookItem = ({ id }) => {
       }
 
       // Step 5: Signal iframe to refresh
-      signalIframe();
+      // signalIframe('refresh'); // Removed - Let data invalidation handle refresh
     } catch (error) {
       console.error('Error removing photo book:', error);
       toast.error('Failed to remove photo book');
@@ -141,9 +131,7 @@ const PhotoBookItem = ({ id }) => {
               <div className="grid mb-1 w-full grid-cols-[minmax(0,_90%)] items-baseline">
                 <div className="w-full row-start-1 col-start-1 items-center">
                   <div className="flex items-center max-w-full rounded-[2px] outline-offset-2 outline-2 gap-2 lg:gap-4">
-                    <p className="w-fit text-gray-900 font-semibold">
-                      {photoBookTitle}
-                    </p>
+                    <p className="w-fit text-gray-900 font-semibold">{photoBookTitle}</p>
                     <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
                       {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
                     </span>
@@ -152,9 +140,7 @@ const PhotoBookItem = ({ id }) => {
 
                 <div className="">
                   <div className="row-start-1 col-start-1 inline-flex">
-                    <p className="text-gray-500 text-sm">
-                      {photoBookDescription}
-                    </p>
+                    <p className="text-gray-500 text-sm">{photoBookDescription}</p>
                   </div>
                 </div>
               </div>

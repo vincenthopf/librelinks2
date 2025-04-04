@@ -10,14 +10,8 @@ import { Button } from '@/components/ui/button';
 import { signalIframe } from '@/utils/helpers';
 
 const PhotoBookTab = ({ embedded = false }) => {
-  const {
-    photos,
-    isLoadingPhotos,
-    photosError,
-    photoBookLayout,
-    updateLayout,
-    isUpdatingLayout,
-  } = usePhotoBook();
+  const { photos, isLoadingPhotos, photosError, photoBookLayout, updateLayout, isUpdatingLayout } =
+    usePhotoBook();
 
   const [activeLayout, setActiveLayout] = useState(photoBookLayout || 'grid');
 
@@ -28,12 +22,10 @@ const PhotoBookTab = ({ embedded = false }) => {
     }
   }, [photoBookLayout]);
 
-  const handleLayoutChange = async (layout) => {
+  const handleLayoutChange = async layout => {
     setActiveLayout(layout);
     try {
       await updateLayout(layout);
-      // Signal iframe to refresh after layout change
-      signalIframe();
     } catch (error) {
       console.error('Failed to update layout:', error);
       // Revert to previous layout if update fails
@@ -52,18 +44,14 @@ const PhotoBookTab = ({ embedded = false }) => {
 
     if (photosError) {
       return (
-        <div className="text-center p-4 text-red-500">
-          Error loading photos. Please try again.
-        </div>
+        <div className="text-center p-4 text-red-500">Error loading photos. Please try again.</div>
       );
     }
 
     if (!photos || photos.length === 0) {
       return (
         <div className="text-center p-8">
-          <p className="text-gray-500 mb-4">
-            No photos yet. Upload your first photo!
-          </p>
+          <p className="text-gray-500 mb-4">No photos yet. Upload your first photo!</p>
         </div>
       );
     }
@@ -88,9 +76,7 @@ const PhotoBookTab = ({ embedded = false }) => {
 
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col space-y-4">
-            <p className="text-sm text-gray-500">
-              Upload photos to create your photo book
-            </p>
+            <p className="text-sm text-gray-500">Upload photos to create your photo book</p>
 
             {/* Layout Style Options */}
             <div className="border rounded-lg p-4 bg-gray-50">

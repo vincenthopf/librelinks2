@@ -39,8 +39,6 @@ const PopoverDesktop = props => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['texts', currentUser?.id]);
-        toast.success('Text deleted successfully');
-        signalIframe();
       },
       onError: () => {
         toast.error('Failed to delete text');

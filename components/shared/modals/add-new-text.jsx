@@ -41,7 +41,6 @@ const AddTextModal = () => {
         queryClient.invalidateQueries({ queryKey: ['texts', userId] });
         setTitle('');
         setContent('');
-        signalIframe();
       },
     }
   );
@@ -51,14 +50,11 @@ const AddTextModal = () => {
       toast.error('Please enter a title');
       return;
     }
-    await toast.promise(
-      addTextMutation.mutateAsync({ title, content, order }),
-      {
-        loading: 'Adding text...',
-        success: 'Text added successfully',
-        error: 'An error occurred while adding the text',
-      }
-    );
+    await toast.promise(addTextMutation.mutateAsync({ title, content, order }), {
+      loading: 'Adding text...',
+      success: 'Text added successfully',
+      error: 'An error occurred while adding the text',
+    });
   };
 
   return (
@@ -80,7 +76,7 @@ const AddTextModal = () => {
             <div className="relative mb-4">
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={e => setTitle(e.target.value)}
                 className="block w-full h-10 px-4 py-6 mb-2 leading-tight text-gray-700 border rounded-2xl appearance-none focus:outline-none focus:shadow-outline"
                 id="title"
                 type="text"
@@ -91,7 +87,7 @@ const AddTextModal = () => {
             <div className="relative">
               <textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={e => setContent(e.target.value)}
                 className="block w-full h-32 px-4 py-3 mb-2 leading-tight text-gray-700 border rounded-2xl appearance-none focus:outline-none focus:shadow-outline"
                 id="content"
                 placeholder="Content"
@@ -105,11 +101,7 @@ const AddTextModal = () => {
                 disabled={isLoading}
                 className={`inline-block w-full px-4 py-4 leading-none 
                      			 text-lg mt-2 text-white rounded-3xl 
-                      			${
-                              !isLoading
-                                ? 'bg-slate-800 hover:bg-slate-900'
-                                : 'bg-slate-500'
-                            }`}
+                      			${!isLoading ? 'bg-slate-800 hover:bg-slate-900' : 'bg-slate-500'}`}
               >
                 {isLoading ? 'Creating...' : 'Create Text'}{' '}
                 <span role="img" aria-label="sparkling star">

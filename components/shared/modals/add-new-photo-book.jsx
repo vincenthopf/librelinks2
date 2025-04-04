@@ -27,8 +27,7 @@ const AddPhotoBookModal = () => {
 
   // Check if photo book section exists (based on photoBookOrder)
   const hasPhotoBookSection =
-    currentUser?.photoBookOrder !== null &&
-    currentUser?.photoBookOrder !== undefined;
+    currentUser?.photoBookOrder !== null && currentUser?.photoBookOrder !== undefined;
 
   // Check if there are existing photos
   const hasExistingPhotos = Array.isArray(photos) && photos.length > 0;
@@ -58,16 +57,15 @@ const AddPhotoBookModal = () => {
         setTitle('');
         setDescription('');
         setStep(1);
-        signalIframe();
       },
-      onError: (error) => {
+      onError: error => {
         console.error('Error creating photo book:', error);
         toast.error('Failed to create photo book');
       },
     }
   );
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (title.trim() === '') {
       toast.error('Please enter a title for your photo book');
@@ -108,21 +106,19 @@ const AddPhotoBookModal = () => {
         {hasPhotoBookSection ? (
           // If the photo book section already exists, show the photo upload component directly
           <div className="space-y-4">
-            <p className="text-gray-500 text-sm">
-              Add photos to your existing photo book
-            </p>
+            <p className="text-gray-500 text-sm">Add photos to your existing photo book</p>
             <PhotoUpload embedded={true} />
           </div>
         ) : hasExistingPhotos ? (
           // If user has photos but no photo book section (was deleted), show restoration option
           <div className="space-y-4">
             <p className="text-gray-500 text-sm">
-              You have photos but your photo book section was removed. Create a
-              new photo book to display your existing photos.
+              You have photos but your photo book section was removed. Create a new photo book to
+              display your existing photos.
             </p>
             <form
               className="space-y-4"
-              onSubmit={(e) => {
+              onSubmit={e => {
                 e.preventDefault();
                 handleSubmit(e);
               }}
@@ -132,7 +128,7 @@ const AddPhotoBookModal = () => {
                 <Input
                   id="title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={e => setTitle(e.target.value)}
                   placeholder="My Photo Collection"
                   className="mt-1"
                   required
@@ -143,7 +139,7 @@ const AddPhotoBookModal = () => {
                 <Textarea
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={e => setDescription(e.target.value)}
                   placeholder="A collection of my favorite photos..."
                   className="mt-1"
                   rows={3}
@@ -165,7 +161,7 @@ const AddPhotoBookModal = () => {
         step === 1 ? (
           <form
             className="space-y-4"
-            onSubmit={(e) => {
+            onSubmit={e => {
               e.preventDefault();
               handleContinue();
             }}
@@ -175,7 +171,7 @@ const AddPhotoBookModal = () => {
               <Input
                 id="title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={e => setTitle(e.target.value)}
                 placeholder="My Photo Collection"
                 className="mt-1"
                 required
@@ -186,15 +182,15 @@ const AddPhotoBookModal = () => {
               <Textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="A collection of my favorite photos..."
                 className="mt-1"
                 rows={3}
               />
             </div>
             <p className="text-xs text-gray-500 italic mt-2">
-              Note: Currently, title and description are only for your reference
-              and are not saved in the database.
+              Note: Currently, title and description are only for your reference and are not saved
+              in the database.
             </p>
             <div className="flex justify-end space-x-2 pt-4">
               <Dialog.Close asChild>
