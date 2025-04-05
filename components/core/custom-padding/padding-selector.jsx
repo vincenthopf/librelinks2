@@ -14,6 +14,7 @@ const PaddingSelector = () => {
     cardHeight: 16,
     nameToBio: 10,
     bioToFirstCard: 16,
+    horizontalMargin: 8,
   });
   const debounceTimerRef = useRef(null);
   const pendingUpdatesRef = useRef({});
@@ -45,6 +46,8 @@ const PaddingSelector = () => {
   useEffect(() => {
     // Only update from API data if we're not in the middle of a user operation
     if (currentUser) {
+      isUpdatingFromAPIRef.current = true;
+      // Update all padding values
       const newValues = {
         headToPicture: currentUser.headToPicturePadding ?? 40,
         pictureToName: currentUser.pictureToNamePadding ?? 16,
@@ -52,6 +55,7 @@ const PaddingSelector = () => {
         cardHeight: currentUser.linkCardHeight ?? 16,
         nameToBio: currentUser.nameToBioPadding ?? 10,
         bioToFirstCard: currentUser.bioToFirstCardPadding ?? 16,
+        horizontalMargin: currentUser.pageHorizontalMargin ?? 8,
       };
 
       // Compare values individually to prevent unnecessary updates
@@ -60,7 +64,6 @@ const PaddingSelector = () => {
       });
 
       if (hasChanges) {
-        isUpdatingFromAPIRef.current = true;
         setPaddingValues(newValues);
         // Reset flag immediately after updating state
         requestAnimationFrame(() => {
@@ -79,6 +82,7 @@ const PaddingSelector = () => {
         linkCardHeight: newPaddingValues.cardHeight,
         nameToBioPadding: newPaddingValues.nameToBio,
         bioToFirstCardPadding: newPaddingValues.bioToFirstCard,
+        horizontalMargin: newPaddingValues.horizontalMargin,
       });
     },
     {
@@ -109,62 +113,90 @@ const PaddingSelector = () => {
 
   // Speed up the debounced API update
   const debouncedApiUpdate = useCallback(
-    updates => {
+    updateValues => {
+      // Merge values into the pendingUpdates ref
+      pendingUpdatesRef.current = { ...pendingUpdatesRef.current, ...updateValues };
+
+      // Clear any existing debounce timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
 
-      // Store updates in ref to prevent closure issues
-      const currentUpdates = { ...updates };
+      // Set a new debounce timer
+      debounceTimerRef.current = setTimeout(async () => {
+        const pendingUpdates = pendingUpdatesRef.current;
+        pendingUpdatesRef.current = {}; // Clear pending updates
 
-      // Use a minimal debounce
-      debounceTimerRef.current = setTimeout(() => {
-        if (!isMountedRef.current) return;
+        if (Object.keys(pendingUpdates).length === 0) return;
 
-        const updatedValues = { ...paddingValues, ...currentUpdates };
-
-        // Round all values to nearest 5
-        Object.keys(updatedValues).forEach(key => {
-          updatedValues[key] = Math.round(updatedValues[key] / 5) * 5;
-        });
-
-        // Show feedback toast
+        // Show loading toast
         if (toastIdRef.current) {
           toast.dismiss(toastIdRef.current);
         }
+        toastIdRef.current = toast.loading('Saving padding preferences...');
 
-        toastIdRef.current = toast.loading('Updating padding');
-        mutatePadding.mutate(updatedValues, {
-          onSuccess: () => {
-            if (isMountedRef.current && toastIdRef.current) {
-              toast.success('Padding updated', { id: toastIdRef.current });
-              toastIdRef.current = null;
+        try {
+          // Convert the local state keys to the API field names
+          const newPaddingValues = {
+            headToPicturePadding: pendingUpdates.headToPicture,
+            pictureToNamePadding: pendingUpdates.pictureToName,
+            betweenCardsPadding: pendingUpdates.betweenCards,
+            linkCardHeight: pendingUpdates.cardHeight,
+            nameToBioPadding: pendingUpdates.nameToBio,
+            bioToFirstCardPadding: pendingUpdates.bioToFirstCard,
+            pageHorizontalMargin: pendingUpdates.horizontalMargin,
+          };
 
-              // Signal iframe to refresh after success
-              signalIframe('refresh');
+          // Filter out undefined values
+          Object.keys(newPaddingValues).forEach(key => {
+            if (newPaddingValues[key] === undefined) {
+              delete newPaddingValues[key];
             }
-          },
-          onError: () => {
-            if (isMountedRef.current && toastIdRef.current) {
-              toast.error('Update failed', { id: toastIdRef.current });
-              toastIdRef.current = null;
-            }
-          },
-        });
-      }, 100); // Reduce debounce time for better responsiveness
+          });
+
+          // Send to the API
+          await axios.patch('/api/users/update', newPaddingValues);
+
+          // Update toast on success
+          toast.success('Padding saved successfully!', { id: toastIdRef.current });
+          toastIdRef.current = null;
+
+          // Invalidate the queries to refetch the data
+          queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+          if (currentUser?.handle) {
+            queryClient.invalidateQueries({ queryKey: ['users', currentUser.handle] });
+          }
+
+          // Signal iframe to reflect changes immediately
+          signalIframe('update_user');
+        } catch (error) {
+          console.error('Error updating padding values:', error);
+          toast.error('Error saving padding preferences', { id: toastIdRef.current });
+          toastIdRef.current = null;
+        }
+      }, 500); // 500ms debounce time
     },
-    [paddingValues, mutatePadding]
+    [queryClient, currentUser]
   );
 
-  // Improve padding change handler
+  // Define the valid horizontal margin values based on Tailwind config
+  const validHorizontalMargins = [0, 1, 2, 3, 4, 6, 8, 10, 16];
+
+  // Update handlePaddingChange to clamp against the valid options array if needed (optional but safer)
   const handlePaddingChange = useCallback(
     async (type, value) => {
       if (isUpdatingFromAPIRef.current) return;
 
-      // Round to nearest 5
-      const roundedValue = Math.round(value / 5) * 5;
-      // Clamp between -500 and 500
-      const clampedValue = Math.max(-500, Math.min(500, roundedValue));
+      let clampedValue = value; // Initialize clampedValue
+
+      if (type === 'horizontalMargin') {
+        // Ensure the value is one of the valid ones, default to 8 if not
+        clampedValue = validHorizontalMargins.includes(value) ? value : 8;
+      } else {
+        // For other padding types
+        const roundedValue = Math.round(value / 5) * 5;
+        clampedValue = Math.max(-500, Math.min(500, roundedValue));
+      }
 
       // Update local state immediately
       setPaddingValues(prev => ({ ...prev, [type]: clampedValue }));
@@ -175,7 +207,7 @@ const PaddingSelector = () => {
       // Queue the API update
       debouncedApiUpdate({ [type]: clampedValue });
     },
-    [debouncedApiUpdate]
+    [debouncedApiUpdate, validHorizontalMargins] // Add validHorizontalMargins to dependency array
   );
 
   // Generate padding options from -500 to 500 in steps of 5
@@ -193,6 +225,7 @@ const PaddingSelector = () => {
       cardHeight: 16,
       nameToBio: 10,
       bioToFirstCard: 16,
+      horizontalMargin: 8,
     };
 
     // Update local state immediately
@@ -527,6 +560,32 @@ const PaddingSelector = () => {
               className="mt-2 bg-gray-200 rounded"
               style={{ height: `${paddingValues.cardHeight}px` }}
             />
+          </div>
+
+          {/* Horizontal Margin */}
+          <div>
+            <p className="text-inherit pb-2">Horizontal Margin</p>
+            <div className="flex space-x-4">
+              <select
+                value={paddingValues.horizontalMargin}
+                onChange={e => handlePaddingChange('horizontalMargin', parseInt(e.target.value))}
+                className="w-full p-2 border rounded-md"
+              >
+                {validHorizontalMargins.map(size => (
+                  <option key={size} value={size}>
+                    px-{size}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mt-2 bg-gray-200 rounded flex items-center justify-center">
+              <div
+                className="bg-gray-300 h-10 flex items-center justify-center"
+                style={{ width: `calc(100% - ${paddingValues.horizontalMargin * 2}px)` }}
+              >
+                <span className="text-xs text-gray-500">px-{paddingValues.horizontalMargin}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

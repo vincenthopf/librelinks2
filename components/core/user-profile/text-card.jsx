@@ -13,7 +13,7 @@ import { useState } from 'react';
  * @param {number} props.cardHeight - Height of the card padding
  * @returns {JSX.Element} - Rendered component
  */
-const TextCard = (props) => {
+const TextCard = props => {
   const [expanded, setExpanded] = useState(false);
 
   const isTransparent = props.buttonStyle.includes('bg-transparent');
@@ -29,13 +29,10 @@ const TextCard = (props) => {
 
   return (
     <div
-      className={`w-full flex flex-col rounded-md transition-all duration-200 ${props.buttonStyle || 'rounded-md'}`}
+      className={`w-full flex flex-col transition-all duration-200 ${props.buttonStyle || 'rounded-md'}`}
       style={style}
     >
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full text-left"
-      >
+      <button onClick={() => setExpanded(!expanded)} className="w-full text-left">
         <p
           style={{
             color: props.theme.accent,
@@ -63,10 +60,7 @@ const TextCard = (props) => {
 
         {/* Only show "Read more" if content is long enough */}
         {props.content && props.content.length > 180 && (
-          <div
-            style={{ color: props.theme.neutral }}
-            className="text-xs font-semibold mt-2"
-          >
+          <div style={{ color: props.theme.neutral }} className="text-xs font-semibold mt-2">
             {expanded ? 'Show less' : 'Read more'}
           </div>
         )}

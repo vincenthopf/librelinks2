@@ -314,6 +314,15 @@ const ProfilePage = () => {
       }
     : {};
 
+  // Calculate dynamic margin based on fetchedUser data
+  const horizontalMarginPercent = fetchedUser?.pageHorizontalMargin ?? 8; // Default to 8%
+  const dynamicMarginStyle = {
+    // Apply margin to both left and right
+    marginLeft: `${horizontalMarginPercent}px`,
+    marginRight: `${horizontalMarginPercent}px`,
+    // No need for max-width adjustment when using pixel values
+  };
+
   // Function to render photo book based on layout
   const renderPhotoBook = () => {
     if (!photos || !Array.isArray(photos) || photos.length === 0) {
@@ -339,6 +348,19 @@ const ProfilePage = () => {
       return null;
     }
   };
+
+  // Combine links and texts for sorting
+  const allItems = [
+    ...(userLinks?.filter(link => !link.isSocial && !link.archived) || []),
+    ...(userTexts || []),
+  ].sort((a, b) => a.order - b.order);
+
+  // Determine photo book position
+  const photoBookOrder = fetchedUser?.photoBookOrder ?? 9999; // Default to end
+
+  // Split items based on photo book position
+  const itemsBeforePhotoBook = allItems.filter(item => item.order < photoBookOrder);
+  const itemsAfterPhotoBook = allItems.filter(item => item.order >= photoBookOrder);
 
   return (
     <>
@@ -370,25 +392,19 @@ const ProfilePage = () => {
         />
       )}
       <section
+        className="min-h-screen w-full relative"
         style={{
-          // CSS precedence solution:
-          // If background image exists, use backgroundImageStyles which includes both
-          // the theme color and background image with proper layering
-          // If no background image, just use theme color with transition
-          ...(fetchedUser?.backgroundImage
-            ? backgroundImageStyles
-            : {
-                backgroundColor: theme.primary,
-                transition: 'background-color 0.3s ease-in-out',
-                // Set default background properties to avoid shift when adding image
-                backgroundPosition: 'center center',
-                backgroundSize: 'cover',
-              }),
+          backgroundColor: theme.primary,
+          backgroundImage: fetchedUser?.backgroundImage
+            ? `url(${fetchedUser.backgroundImage})`
+            : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed', // Optional: make background fixed
         }}
-        className="h-[100vh] w-[100vw] overflow-auto"
       >
         <div
-          className="flex items-center w-full flex-col mx-auto max-w-3xl justify-center px-8"
+          className={`flex items-center w-full flex-col mx-auto max-w-3xl justify-center px-${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 8}`}
           style={{
             paddingTop: `${fetchedUser?.headToPicturePadding || 40}px`,
             paddingBottom: `${fetchedUser?.headToPicturePadding || 40}px`,
@@ -464,162 +480,99 @@ const ProfilePage = () => {
               })}
           </div>
 
-          {/* Combined Links and Photo Book Section */}
+          {/* Apply dynamic margin to the container holding the link/text cards and photobook */}
           <div
-            className="w-full flex flex-col"
-            style={{
-              gap: `${fetchedUser?.betweenCardsPadding || 16}px`,
-              marginTop: `${fetchedUser?.bioToFirstCardPadding || 24}px`,
-            }}
+            className="w-full mx-auto" // Use mx-auto for centering
+            style={dynamicMarginStyle} // Apply calculated margin
           >
-            {/* Render content based on photoBookOrder */}
-            {(() => {
-              // If there are no photos or no links, just render what exists
-              if (!photos || photos.length === 0) {
-                // Combine links and texts
-                const allItems = [
-                  ...(userLinks?.filter(link => !link.isSocial && !link.archived) || []),
-                  ...(userTexts || []),
-                ].sort((a, b) => a.order - b.order);
-
-                return allItems.map(item => {
-                  // If it has URL property, it's a link
-                  if ('url' in item) {
-                    return (
-                      <LinkCard
-                        buttonStyle={buttonStyle}
-                        theme={theme}
-                        id={item.id}
-                        key={item.id}
-                        fontSize={fetchedUser?.linkTitleFontSize || 14}
-                        fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                        cardHeight={fetchedUser?.linkCardHeight || 16}
-                        {...item}
-                        registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
-                      />
-                    );
-                  } else {
-                    // Otherwise it's a text item
-                    return (
-                      <TextCard
-                        buttonStyle={buttonStyle}
-                        theme={theme}
-                        id={item.id}
-                        key={item.id}
-                        fontSize={fetchedUser?.linkTitleFontSize || 14}
-                        fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                        cardHeight={fetchedUser?.linkCardHeight || 16}
-                        {...item}
-                      />
-                    );
-                  }
-                });
-              }
-
-              if (
-                !userLinks &&
-                !userTexts &&
-                !userLinks?.filter(l => !l.isSocial && !l.archived).length === 0 &&
-                !userTexts?.length === 0
-              ) {
-                // Just render photo book (no links or texts)
-                return <div className="w-full">{renderPhotoBook()}</div>;
-              }
-
-              // Combine regular links and texts
-              const regularLinks =
-                userLinks?.filter(link => !link.isSocial && !link.archived) || [];
-              const allItems = [...regularLinks, ...(userTexts || [])].sort(
-                (a, b) => a.order - b.order
-              );
-
-              // Determine photo book position based on photoBookOrder
-              const photoBookOrder = fetchedUser?.photoBookOrder || 9999;
-              const photoBookPosition = Math.min(photoBookOrder, allItems.length);
-
-              // Split items into before and after photo book
-              const itemsBeforePhotoBook = allItems.slice(0, photoBookPosition);
-              const itemsAfterPhotoBook = allItems.slice(photoBookPosition);
-
-              // Render items before photo book
-              const beforeContent = itemsBeforePhotoBook.map(item => {
-                // If it has URL property, it's a link
-                if ('url' in item) {
+            {/* Render items before Photo Book */}
+            <div
+              className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
+              style={{
+                marginTop: `${fetchedUser?.bioToFirstCardPadding || 16}px`,
+                gap: `${fetchedUser?.betweenCardsPadding || 16}px`,
+              }}
+            >
+              {itemsBeforePhotoBook.map(item => {
+                // Check if the item is a link or text
+                if (item.url) {
+                  // Render LinkCard
                   return (
                     <LinkCard
-                      buttonStyle={buttonStyle}
-                      theme={theme}
-                      id={item.id}
                       key={item.id}
-                      fontSize={fetchedUser?.linkTitleFontSize || 14}
-                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                      cardHeight={fetchedUser?.linkCardHeight || 16}
                       {...item}
+                      fontSize={fetchedUser?.linkTitleFontSize}
+                      fontFamily={fetchedUser?.linkTitleFontFamily}
+                      buttonStyle={fetchedUser?.buttonStyle}
+                      theme={theme}
+                      faviconSize={fetchedUser?.faviconSize}
+                      cardHeight={fetchedUser?.linkCardHeight}
                       registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
+                      alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
                     />
                   );
                 } else {
-                  // Otherwise it's a text item
+                  // Render TextCard
                   return (
                     <TextCard
-                      buttonStyle={buttonStyle}
-                      theme={theme}
-                      id={item.id}
                       key={item.id}
-                      fontSize={fetchedUser?.linkTitleFontSize || 14}
-                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                      cardHeight={fetchedUser?.linkCardHeight || 16}
                       {...item}
+                      fontSize={fetchedUser?.linkTitleFontSize} // Assuming same font settings for now
+                      fontFamily={fetchedUser?.linkTitleFontFamily}
+                      buttonStyle={fetchedUser?.buttonStyle}
+                      theme={theme}
+                      cardHeight={fetchedUser?.linkCardHeight} // Assuming same height setting for now
                     />
                   );
                 }
-              });
+              })}
+            </div>
 
-              // Render photo book
-              const photoBookContent =
-                photos && photos.length > 0 ? (
-                  <div key="photo-book" className="w-full">
-                    {renderPhotoBook()}
-                  </div>
-                ) : null;
+            {/* Render Photo Book */}
+            {renderPhotoBook()}
 
-              // Render items after photo book
-              const afterContent = itemsAfterPhotoBook.map(item => {
-                // If it has URL property, it's a link
-                if ('url' in item) {
+            {/* Render items after Photo Book */}
+            <div
+              className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
+              style={{
+                gap: `${fetchedUser?.betweenCardsPadding || 16}px`,
+                // No marginTop needed here as it follows the photobook or the itemsBefore
+              }}
+            >
+              {itemsAfterPhotoBook.map(item => {
+                // Check if the item is a link or text
+                if (item.url) {
+                  // Render LinkCard
                   return (
                     <LinkCard
-                      buttonStyle={buttonStyle}
-                      theme={theme}
-                      id={item.id}
                       key={item.id}
-                      fontSize={fetchedUser?.linkTitleFontSize || 14}
-                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                      cardHeight={fetchedUser?.linkCardHeight || 16}
                       {...item}
+                      fontSize={fetchedUser?.linkTitleFontSize}
+                      fontFamily={fetchedUser?.linkTitleFontFamily}
+                      buttonStyle={fetchedUser?.buttonStyle}
+                      theme={theme}
+                      faviconSize={fetchedUser?.faviconSize}
+                      cardHeight={fetchedUser?.linkCardHeight}
                       registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
+                      alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
                     />
                   );
                 } else {
-                  // Otherwise it's a text item
+                  // Render TextCard
                   return (
                     <TextCard
-                      buttonStyle={buttonStyle}
-                      theme={theme}
-                      id={item.id}
                       key={item.id}
-                      fontSize={fetchedUser?.linkTitleFontSize || 14}
-                      fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
-                      cardHeight={fetchedUser?.linkCardHeight || 16}
                       {...item}
+                      fontSize={fetchedUser?.linkTitleFontSize} // Assuming same font settings for now
+                      fontFamily={fetchedUser?.linkTitleFontFamily}
+                      buttonStyle={fetchedUser?.buttonStyle}
+                      theme={theme}
+                      cardHeight={fetchedUser?.linkCardHeight} // Assuming same height setting for now
                     />
                   );
                 }
-              });
-
-              // Combine all content in the correct order
-              return [...beforeContent, photoBookContent, ...afterContent];
-            })()}
+              })}
+            </div>
           </div>
 
           {userLinks?.length === 0 && !photos?.length && (!userTexts || userTexts.length === 0) && (

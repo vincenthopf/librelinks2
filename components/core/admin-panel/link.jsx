@@ -68,6 +68,9 @@ const LinkCard = props => {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    gap: props.buttonStyle.includes('edge-to-edge')
+      ? '0px'
+      : `${props.betweenCardsPadding ?? 16}px`,
   };
 
   const apexDomain = getApexDomain(props.url);

@@ -31,6 +31,7 @@ export default async function handler(req, res) {
       backgroundImage,
       // Spacing fields
       bioToFirstCardPadding,
+      pageHorizontalMargin,
       // Other customization fields
       ...otherFields
     } = req.body;
@@ -60,6 +61,19 @@ export default async function handler(req, res) {
     }
     if (faviconSize && (faviconSize < 16 || faviconSize > 64)) {
       res.status(400).json({ message: 'Favicon size must be between 16px and 64px' });
+      return;
+    }
+
+    // Validate pageHorizontalMargin
+    if (
+      pageHorizontalMargin !== undefined &&
+      (typeof pageHorizontalMargin !== 'number' ||
+        pageHorizontalMargin < 0 ||
+        pageHorizontalMargin > 20)
+    ) {
+      res.status(400).json({
+        message: 'Page Horizontal Margin must be a number between 0 and 20',
+      });
       return;
     }
 
@@ -101,6 +115,7 @@ export default async function handler(req, res) {
         backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
         // Spacing fields
         bioToFirstCardPadding,
+        pageHorizontalMargin,
         // Other customization fields
         ...otherFields,
       },

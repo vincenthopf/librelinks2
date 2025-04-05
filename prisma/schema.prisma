@@ -41,6 +41,7 @@ model User {
   linkCardHeight       Int         @default(16)
   nameToBioPadding     Int         @default(10)
   bioToFirstCardPadding Int        @default(16)
+  pageHorizontalMargin Int         @default(8) // Added field for horizontal page margin (0-20%)
   // Frame customization fields
   frameTemplate        String      @default("none")
   frameColor           String      @default("#000000")

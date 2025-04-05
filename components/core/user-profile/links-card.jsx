@@ -49,7 +49,7 @@ const LinkCard = props => {
           onClick={props.registerClicks}
           target="_blank"
           rel="noopener noreferrer"
-          className={`block w-full rounded-lg ${props.buttonStyle} transition-all duration-300`}
+          className={`block w-full ${props.buttonStyle} transition-all duration-300`}
           style={style}
         >
           <div className="flex items-center gap-3">
