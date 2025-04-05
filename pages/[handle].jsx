@@ -489,8 +489,8 @@ const ProfilePage = () => {
             <div
               className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
               style={{
-                marginTop: `${fetchedUser?.bioToFirstCardPadding || 16}px`,
-                gap: `${fetchedUser?.betweenCardsPadding || 16}px`,
+                marginTop: `${fetchedUser?.bioToFirstCardPadding ?? 16}px`,
+                gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
               }}
             >
               {itemsBeforePhotoBook.map(item => {
@@ -535,7 +535,7 @@ const ProfilePage = () => {
             <div
               className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
               style={{
-                gap: `${fetchedUser?.betweenCardsPadding || 16}px`,
+                gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
                 // No marginTop needed here as it follows the photobook or the itemsBefore
               }}
             >

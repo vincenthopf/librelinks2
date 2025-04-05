@@ -1,9 +1,12 @@
 import useCurrentUser from '@/hooks/useCurrentUser';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
+
+// Define the valid horizontal margin values based on Tailwind config
+const VALID_TAILWIND_MARGINS = [0, 1, 2, 3, 4, 6, 8, 10, 16];
 
 const PaddingSelector = () => {
   const { data: currentUser } = useCurrentUser();
@@ -11,7 +14,7 @@ const PaddingSelector = () => {
     headToPicture: 40,
     pictureToName: 16,
     betweenCards: 16,
-    cardHeight: 16,
+    cardHeight: 40,
     nameToBio: 10,
     bioToFirstCard: 16,
     horizontalMargin: 8,
@@ -20,12 +23,13 @@ const PaddingSelector = () => {
   const pendingUpdatesRef = useRef({});
   const toastIdRef = useRef(null);
   const isMountedRef = useRef(true);
-  // Flag to prevent local state updates when API data is loading
-  const isUpdatingFromAPIRef = useRef(false);
   // Flag to prevent multiple API calls during initial load
   const isInitialLoadRef = useRef(true);
 
   const queryClient = useQueryClient();
+
+  // Memoized valid horizontal margins
+  const validHorizontalMargins = useMemo(() => VALID_TAILWIND_MARGINS, []);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -44,34 +48,24 @@ const PaddingSelector = () => {
   }, []);
 
   useEffect(() => {
-    // Only update from API data if we're not in the middle of a user operation
+    // Only update from API data
     if (currentUser) {
-      isUpdatingFromAPIRef.current = true;
-      // Update all padding values
+      // No need for isUpdatingFromAPIRef flag here anymore
+      // Update all padding values directly from currentUser
       const newValues = {
         headToPicture: currentUser.headToPicturePadding ?? 40,
         pictureToName: currentUser.pictureToNamePadding ?? 16,
         betweenCards: currentUser.betweenCardsPadding ?? 16,
-        cardHeight: currentUser.linkCardHeight ?? 16,
+        cardHeight: currentUser.linkCardHeight ?? 40,
         nameToBio: currentUser.nameToBioPadding ?? 10,
         bioToFirstCard: currentUser.bioToFirstCardPadding ?? 16,
         horizontalMargin: currentUser.pageHorizontalMargin ?? 8,
       };
 
-      // Compare values individually to prevent unnecessary updates
-      const hasChanges = Object.entries(newValues).some(([key, value]) => {
-        return paddingValues[key] !== value;
-      });
-
-      if (hasChanges) {
-        setPaddingValues(newValues);
-        // Reset flag immediately after updating state
-        requestAnimationFrame(() => {
-          isUpdatingFromAPIRef.current = false;
-        });
-      }
+      // Update state directly, React handles optimization if values are the same
+      setPaddingValues(newValues);
     }
-  }, [currentUser]);
+  }, [currentUser]); // Only depend on currentUser
 
   const mutatePadding = useMutation(
     async newPaddingValues => {
@@ -179,21 +173,24 @@ const PaddingSelector = () => {
     [queryClient, currentUser]
   );
 
-  // Define the valid horizontal margin values based on Tailwind config
-  const validHorizontalMargins = [0, 1, 2, 3, 4, 6, 8, 10, 16];
-
-  // Update handlePaddingChange to clamp against the valid options array if needed (optional but safer)
+  // Update handlePaddingChange
   const handlePaddingChange = useCallback(
     async (type, value) => {
-      if (isUpdatingFromAPIRef.current) return;
-
       let clampedValue = value; // Initialize clampedValue
 
       if (type === 'horizontalMargin') {
         // Ensure the value is one of the valid ones, default to 8 if not
         clampedValue = validHorizontalMargins.includes(value) ? value : 8;
+      } else if (type === 'betweenCards') {
+        // Ensure betweenCards value is always at least 0
+        const roundedValue = Math.round(value / 5) * 5;
+        clampedValue = Math.max(0, Math.min(500, roundedValue));
+      } else if (type === 'cardHeight') {
+        // Ensure card height is between 0 and 200, step 5
+        const roundedValue = Math.round(value / 5) * 5;
+        clampedValue = Math.max(0, Math.min(200, roundedValue));
       } else {
-        // For other padding types
+        // For other padding types (excluding horizontalMargin and betweenCards)
         const roundedValue = Math.round(value / 5) * 5;
         clampedValue = Math.max(-500, Math.min(500, roundedValue));
       }
@@ -207,14 +204,27 @@ const PaddingSelector = () => {
       // Queue the API update
       debouncedApiUpdate({ [type]: clampedValue });
     },
-    [debouncedApiUpdate, validHorizontalMargins] // Add validHorizontalMargins to dependency array
+    [debouncedApiUpdate, validHorizontalMargins]
   );
 
   // Generate padding options from -500 to 500 in steps of 5
   const paddingOptions = Array.from({ length: 201 }, (_, i) => -500 + i * 5);
 
-  // Generate card height options from 40 to 200 in steps of 5
-  const cardHeightOptions = Array.from({ length: 33 }, (_, i) => (i + 8) * 5);
+  // Generate positive padding options from 0 to 500 in steps of 5 (for Between Link Cards)
+  const positivePaddingOptions = Array.from({ length: 101 }, (_, i) => i * 5);
+
+  // Generate card height options from 0 to 200 in steps of 5
+  const cardHeightOptions = Array.from({ length: 41 }, (_, i) => i * 5);
+
+  // Helper function to ensure the current value is in the options array for selects
+  const getOptionsWithCurrentValue = (options, currentValue) => {
+    // Check if current value is already in options
+    if (options.includes(currentValue)) {
+      return options;
+    }
+    // Add the current value and sort the array
+    return [...options, currentValue].sort((a, b) => a - b);
+  };
 
   // Reset to defaults handler
   const handleResetToDefaults = useCallback(() => {
@@ -222,7 +232,7 @@ const PaddingSelector = () => {
       headToPicture: 40,
       pictureToName: 16,
       betweenCards: 16,
-      cardHeight: 16,
+      cardHeight: 40,
       nameToBio: 10,
       bioToFirstCard: 16,
       horizontalMargin: 8,
@@ -288,11 +298,13 @@ const PaddingSelector = () => {
                 onChange={e => handlePaddingChange('headToPicture', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {paddingOptions.map(size => (
-                  <option key={size} value={size}>
-                    {size}px
-                  </option>
-                ))}
+                {getOptionsWithCurrentValue(paddingOptions, paddingValues.headToPicture).map(
+                  size => (
+                    <option key={size} value={size}>
+                      {size}px
+                    </option>
+                  )
+                )}
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
@@ -337,11 +349,13 @@ const PaddingSelector = () => {
                 onChange={e => handlePaddingChange('pictureToName', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {paddingOptions.map(size => (
-                  <option key={size} value={size}>
-                    {size}px
-                  </option>
-                ))}
+                {getOptionsWithCurrentValue(paddingOptions, paddingValues.pictureToName).map(
+                  size => (
+                    <option key={size} value={size}>
+                      {size}px
+                    </option>
+                  )
+                )}
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
@@ -386,7 +400,7 @@ const PaddingSelector = () => {
                 onChange={e => handlePaddingChange('nameToBio', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {paddingOptions.map(size => (
+                {getOptionsWithCurrentValue(paddingOptions, paddingValues.nameToBio).map(size => (
                   <option key={size} value={size}>
                     {size}px
                   </option>
@@ -435,11 +449,13 @@ const PaddingSelector = () => {
                 onChange={e => handlePaddingChange('bioToFirstCard', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {paddingOptions.map(size => (
-                  <option key={size} value={size}>
-                    {size}px
-                  </option>
-                ))}
+                {getOptionsWithCurrentValue(paddingOptions, paddingValues.bioToFirstCard).map(
+                  size => (
+                    <option key={size} value={size}>
+                      {size}px
+                    </option>
+                  )
+                )}
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
@@ -476,17 +492,17 @@ const PaddingSelector = () => {
 
           {/* Between Link Cards */}
           <div>
-            <p className="text-inherit pb-2">
-              Between Link Cards{' '}
-              <span className="text-xs text-blue-500">(negative values = overlap)</span>
-            </p>
+            <p className="text-inherit pb-2">Between Link Cards</p>
             <div className="flex space-x-4">
               <select
                 value={paddingValues.betweenCards}
                 onChange={e => handlePaddingChange('betweenCards', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {paddingOptions.map(size => (
+                {getOptionsWithCurrentValue(
+                  positivePaddingOptions,
+                  paddingValues.betweenCards >= 0 ? paddingValues.betweenCards : 0
+                ).map(size => (
                   <option key={size} value={size}>
                     {size}px
                   </option>
@@ -494,14 +510,14 @@ const PaddingSelector = () => {
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
-                  <span className="text-xs text-gray-500 mr-2">-500px</span>
+                  <span className="text-xs text-gray-500 mr-2">0px</span>
                   <div className="w-full px-1">
                     <input
                       type="range"
-                      min="-500"
+                      min="0"
                       max="500"
                       step="5"
-                      value={paddingValues.betweenCards}
+                      value={paddingValues.betweenCards >= 0 ? paddingValues.betweenCards : 0}
                       onChange={e => handlePaddingChange('betweenCards', parseInt(e.target.value))}
                       className="w-full"
                     />
@@ -511,15 +527,11 @@ const PaddingSelector = () => {
               </div>
             </div>
             <div className="mt-2 bg-gray-100 rounded relative">
-              <div style={{ height: `${Math.max(0, paddingValues.betweenCards)}px` }}></div>
-              {paddingValues.betweenCards < 0 && (
-                <div
-                  className="bg-red-200 opacity-40 w-full flex items-center justify-center text-red-600 text-xs font-bold"
-                  style={{ height: `${Math.abs(paddingValues.betweenCards)}px` }}
-                >
-                  Overlap: {paddingValues.betweenCards}px
-                </div>
-              )}
+              <div
+                style={{
+                  height: `${paddingValues.betweenCards >= 0 ? paddingValues.betweenCards : 0}px`,
+                }}
+              ></div>
             </div>
           </div>
 
@@ -532,19 +544,21 @@ const PaddingSelector = () => {
                 onChange={e => handlePaddingChange('cardHeight', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {cardHeightOptions.map(size => (
-                  <option key={size} value={size}>
-                    {size}px
-                  </option>
-                ))}
+                {getOptionsWithCurrentValue(cardHeightOptions, paddingValues.cardHeight).map(
+                  size => (
+                    <option key={size} value={size}>
+                      {size}px
+                    </option>
+                  )
+                )}
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
-                  <span className="text-xs text-gray-500 mr-2">40px</span>
+                  <span className="text-xs text-gray-500 mr-2">0px</span>
                   <div className="w-full px-1">
                     <input
                       type="range"
-                      min="40"
+                      min="0"
                       max="200"
                       step="5"
                       value={paddingValues.cardHeight}

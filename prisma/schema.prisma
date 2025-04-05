@@ -38,7 +38,7 @@ model User {
   headToPicturePadding Int         @default(40)
   pictureToNamePadding Int         @default(16)
   betweenCardsPadding  Int         @default(16)
-  linkCardHeight       Int         @default(16)
+  linkCardHeight       Int         @default(40)
   nameToBioPadding     Int         @default(10)
   bioToFirstCardPadding Int        @default(16)
   pageHorizontalMargin Int         @default(8) // Added field for horizontal page margin (0-20%)
@@ -183,7 +183,7 @@ model Template {
   nameToBioPadding     Int     @default(10)
   bioToFirstCardPadding Int    @default(16)
   betweenCardsPadding  Int     @default(16)
-  linkCardHeight       Int     @default(16)
+  linkCardHeight       Int     @default(40)
 
   // Add missing frame corner fields
   frameCornerStyle     String  @default("squircle")

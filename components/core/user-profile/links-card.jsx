@@ -25,7 +25,7 @@ const LinkCard = props => {
     display: props.archived ? 'none' : 'flex',
     border: `1.5px solid ${props.theme.neutral}`,
     boxShadow: hasShadowProp ? `5px 5px 0 0 ${props.theme.neutral}` : '',
-    padding: `${props.cardHeight || 16}px`,
+    minHeight: `${props.cardHeight || 40}px`,
   };
 
   // Extract only the Iframely-related props
@@ -49,7 +49,7 @@ const LinkCard = props => {
           onClick={props.registerClicks}
           target="_blank"
           rel="noopener noreferrer"
-          className={`block w-full ${props.buttonStyle} transition-all duration-300`}
+          className={`block w-full ${props.buttonStyle} p-4 transition-all duration-300`}
           style={style}
         >
           <div className="flex items-center gap-3">

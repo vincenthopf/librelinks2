@@ -24,12 +24,12 @@ const TextCard = props => {
     display: props.archived ? 'none' : 'flex',
     border: `1.5px solid ${props.theme.neutral}`,
     boxShadow: hasShadowProp ? `5px 5px 0 0 ${props.theme.neutral}` : '',
-    padding: `${props.cardHeight || 16}px`,
+    minHeight: `${props.cardHeight || 40}px`,
   };
 
   return (
     <div
-      className={`w-full flex flex-col transition-all duration-200 ${props.buttonStyle || 'rounded-md'}`}
+      className={`w-full flex flex-col transition-all duration-200 ${props.buttonStyle || 'rounded-md'} p-4`}
       style={style}
     >
       <button onClick={() => setExpanded(!expanded)} className="w-full text-left">
