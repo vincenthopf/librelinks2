@@ -18,8 +18,6 @@ const SizeSelector = () => {
     // Image sizes
     socialIcon: 30,
     favicon: 32,
-    // Page Layout
-    pageHorizontalMargin: 8,
   });
 
   const queryClient = useQueryClient();
@@ -34,8 +32,6 @@ const SizeSelector = () => {
         // Image sizes
         socialIcon: currentUser.socialIconSize || 30,
         favicon: currentUser.faviconSize || 32,
-        // Page Layout
-        pageHorizontalMargin: currentUser.pageHorizontalMargin ?? 8,
       });
     }
   }, [currentUser]);
@@ -50,8 +46,6 @@ const SizeSelector = () => {
         // Image sizes
         socialIconSize: newSizes.socialIcon,
         faviconSize: newSizes.favicon,
-        // Page Layout
-        pageHorizontalMargin: newSizes.pageHorizontalMargin,
       });
     },
     {
@@ -205,36 +199,6 @@ const SizeSelector = () => {
                   }}
                 />
               </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t my-6" />
-
-          {/* Page Layout */}
-          <div>
-            <h4 className="text-lg font-medium mb-4">Page Layout</h4>
-            {/* Page Horizontal Margin */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="page-horizontal-margin" className="text-sm font-medium">
-                  Page Horizontal Margin
-                </Label>
-                <span className="text-sm font-medium">{sizes.pageHorizontalMargin}%</span>
-              </div>
-              <Slider
-                id="page-horizontal-margin"
-                value={[sizes.pageHorizontalMargin]}
-                min={0}
-                max={20}
-                step={1}
-                onValueChange={value => handleSliderChange('pageHorizontalMargin', value[0])}
-                className="w-full"
-                aria-label="Page horizontal margin"
-              />
-              <p className="text-xs text-gray-500">
-                Controls the space on the left/right edges of the page (0% = full width).
-              </p>
             </div>
           </div>
         </div>

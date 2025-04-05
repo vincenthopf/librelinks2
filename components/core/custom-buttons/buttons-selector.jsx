@@ -22,7 +22,7 @@ const ButtonSelector = () => {
   }, [buttonFromDB]);
 
   const mutateButtonStyle = useMutation(
-    async (buttonCSS) => {
+    async buttonCSS => {
       await axios.patch('/api/customize', {
         buttonStyle: buttonCSS,
       });
@@ -35,7 +35,7 @@ const ButtonSelector = () => {
     }
   );
 
-  const handleChangeBtn = async (buttonCSS) => {
+  const handleChangeBtn = async buttonCSS => {
     await toast.promise(mutateButtonStyle.mutateAsync(buttonCSS), {
       loading: 'Applying style',
       success: 'Style applied successfully',
@@ -45,7 +45,7 @@ const ButtonSelector = () => {
     localStorage.setItem('button-style', buttonCSS);
   };
 
-  const getThemeStyles = (css) => {
+  const getThemeStyles = css => {
     if (buttonStyle === css) {
       return {
         border: '2px solid #a8aaa2',
@@ -65,21 +65,15 @@ const ButtonSelector = () => {
       buttonType: [
         {
           css: ' rounded-none',
-          button: (
-            <button className="w-[180px] h-[36px] bg-black border-none" />
-          ),
+          button: <button className="w-[180px] h-[36px] bg-black border-none" />,
         },
         {
           css: ' rounded-md',
-          button: (
-            <button className="w-[180px] h-[36px] bg-black border-none rounded-md" />
-          ),
+          button: <button className="w-[180px] h-[36px] bg-black border-none rounded-md" />,
         },
         {
           css: ' rounded-full',
-          button: (
-            <button className="w-[180px] h-[36px] bg-black border-none rounded-full" />
-          ),
+          button: <button className="w-[180px] h-[36px] bg-black border-none rounded-full" />,
         },
       ],
     },
@@ -92,15 +86,11 @@ const ButtonSelector = () => {
         },
         {
           css: 'rounded-md bg-transparent',
-          button: (
-            <button className="w-[180px] h-[36px] border border-black rounded-md" />
-          ),
+          button: <button className="w-[180px] h-[36px] border border-black rounded-md" />,
         },
         {
           css: 'rounded-full bg-transparent',
-          button: (
-            <button className="w-[180px] h-[36px] border border-black rounded-full" />
-          ),
+          button: <button className="w-[180px] h-[36px] border border-black rounded-full" />,
         },
       ],
     },
@@ -123,6 +113,52 @@ const ButtonSelector = () => {
           css: ' rounded-full shadow',
           button: (
             <button className="w-[180px] h-[36px] border border-black rounded-full shadow-[4px_4px_0_0_#000000]" />
+          ),
+        },
+      ],
+    },
+    {
+      category: 'Horizontal lines',
+      buttonType: [
+        {
+          css: 'rounded-none bg-transparent horizontal-only',
+          button: (
+            <button className="w-[180px] h-[36px] border-t border-b border-black border-x-0" />
+          ),
+        },
+        {
+          css: 'rounded-md bg-transparent horizontal-only',
+          button: (
+            <button className="w-[180px] h-[36px] border-t border-b border-black border-x-0 rounded-md" />
+          ),
+        },
+        {
+          css: 'rounded-full bg-transparent horizontal-only',
+          button: (
+            <button className="w-[180px] h-[36px] border-t border-b border-black border-x-0 rounded-full" />
+          ),
+        },
+      ],
+    },
+    {
+      category: 'Bottom line only',
+      buttonType: [
+        {
+          css: 'rounded-none bg-transparent bottom-only',
+          button: (
+            <button className="w-[180px] h-[36px] border-b border-black border-t-0 border-x-0" />
+          ),
+        },
+        {
+          css: 'rounded-md bg-transparent bottom-only',
+          button: (
+            <button className="w-[180px] h-[36px] border-b border-black border-t-0 border-x-0 rounded-md" />
+          ),
+        },
+        {
+          css: 'rounded-full bg-transparent bottom-only',
+          button: (
+            <button className="w-[180px] h-[36px] border-b border-black border-t-0 border-x-0 rounded-full" />
           ),
         },
       ],

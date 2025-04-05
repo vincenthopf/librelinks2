@@ -18,11 +18,16 @@ const TextCard = props => {
 
   const isTransparent = props.buttonStyle.includes('bg-transparent');
   const hasShadowProp = props.buttonStyle.includes('shadow');
+  const isHorizontalOnly = props.buttonStyle.includes('horizontal-only');
+  const isBottomOnly = props.buttonStyle.includes('bottom-only');
 
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,
     display: props.archived ? 'none' : 'flex',
-    border: `1.5px solid ${props.theme.neutral}`,
+    border: isHorizontalOnly || isBottomOnly ? 'none' : `1.5px solid ${props.theme.neutral}`,
+    borderTop: isHorizontalOnly && !isBottomOnly ? `1.5px solid ${props.theme.neutral}` : undefined,
+    borderBottom:
+      isHorizontalOnly || isBottomOnly ? `1.5px solid ${props.theme.neutral}` : undefined,
     boxShadow: hasShadowProp ? `5px 5px 0 0 ${props.theme.neutral}` : '',
     minHeight: `${props.cardHeight || 40}px`,
   };
