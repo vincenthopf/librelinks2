@@ -27,12 +27,35 @@ const PreviewMobile = ({ close }) => {
   const { data: userTexts } = useTexts(currentUser?.id);
   const { photos } = usePhotoBook();
 
+  // Create a value that changes when link orders change
+  const linksOrderString = useMemo(() => {
+    if (!userLinks) return '';
+    // Sort the links by order to create a consistent ordering before joining
+    return [...userLinks]
+      .sort((a, b) => a.order - b.order)
+      .map(link => `${link.id}-${link.order}`)
+      .join('|');
+  }, [userLinks]);
+
+  // Create a value that changes when text orders change
+  const textsOrderString = useMemo(() => {
+    if (!userTexts) return '';
+    // Sort the texts by order to create a consistent ordering before joining
+    return [...userTexts]
+      .sort((a, b) => a.order - b.order)
+      .map(text => `${text.id}-${text.order}`)
+      .join('|');
+  }, [userTexts]);
+
   const refreshDependencies = [
     currentUser?.handle,
     currentUser?.photoBookLayout,
     userLinks?.length,
     userTexts?.length,
     photos?.length,
+    linksOrderString, // Add dependency on link orders
+    textsOrderString, // Add dependency on text orders
+    currentUser?.photoBookOrder, // Add dependency on photo book order
   ];
 
   const theme = useMemo(
@@ -149,7 +172,7 @@ const PreviewMobile = ({ close }) => {
       >
         <iframe
           ref={iframeRef}
-          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${userLinks ? userLinks.length : 0}-${userTexts ? userTexts.length : 0}-${photos ? photos.length : 0}`}
+          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${userLinks ? userLinks.length : 0}-${userTexts ? userTexts.length : 0}-${photos ? photos.length : 0}-${linksOrderString}-${textsOrderString}-${currentUser?.photoBookOrder}`}
           seamless
           loading="lazy"
           title="preview"

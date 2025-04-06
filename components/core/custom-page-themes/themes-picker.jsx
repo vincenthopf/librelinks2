@@ -24,11 +24,9 @@ const ThemesPicker = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const storedTheme = themeFromDB
-      ? themeFromDB
-      : localStorage.getItem('selectedTheme');
+    const storedTheme = themeFromDB ? themeFromDB : localStorage.getItem('selectedTheme');
     if (storedTheme) {
-      const theme = themes.find((t) => t.name === storedTheme);
+      const theme = themes.find(t => t.name === storedTheme);
       if (theme) {
         setSelectedTheme(theme);
         setCustomColors({
@@ -52,7 +50,7 @@ const ThemesPicker = () => {
   };
 
   const mutateTheme = useMutation(
-    async (themeData) => {
+    async themeData => {
       const backgroundImage = currentUser?.backgroundImage;
       await axios.patch('/api/customize', {
         themePalette: {
@@ -76,7 +74,7 @@ const ThemesPicker = () => {
     }
   );
 
-  const handleThemeSelect = async (theme) => {
+  const handleThemeSelect = async theme => {
     setSelectedTheme(theme);
     setCustomColors({
       background: theme.palette[0],
@@ -109,10 +107,17 @@ const ThemesPicker = () => {
     setCustomColors(newColors);
 
     if (selectedTheme) {
-      await mutateTheme.mutateAsync({
-        ...selectedTheme,
-        customColors: newColors,
-      });
+      await toast.promise(
+        mutateTheme.mutateAsync({
+          ...selectedTheme,
+          customColors: newColors,
+        }),
+        {
+          loading: 'Updating color...',
+          success: 'Color updated!',
+          error: 'Failed to update color',
+        }
+      );
     }
   };
 
@@ -137,23 +142,17 @@ const ThemesPicker = () => {
       <div className="max-w-[640px] mx-auto my-6">
         <h3 className="text-xl font-semibold">Themes</h3>
         <div className="my-4 grid grid-cols-2 lg:grid-cols-3 rounded-2xl auto-rows-max gap-4 max-w-md md:gap-6 md:max-w-2xl lg:max-w-3xl p-4 mx-auto md:basis-3/5 w-full overflow-y-auto bg-white">
-          {displayedThemes?.map((theme) => (
+          {displayedThemes?.map(theme => (
             <div
               key={theme.name}
               className={`rounded-2xl overflow-hidden cursor-pointer relative z-0 duration-200 w-full border-2 ${
-                selectedTheme === theme
-                  ? 'border-[2.5px] border-blue-500'
-                  : 'border-primary'
+                selectedTheme === theme ? 'border-[2.5px] border-blue-500' : 'border-primary'
               }`}
               onClick={() => handleThemeSelect(theme)}
             >
               <div className="grid grid-cols-4 h-24 md:h-28">
-                {theme.palette.map((color) => (
-                  <div
-                    key={color}
-                    className="h-full"
-                    style={{ background: color }}
-                  />
+                {theme.palette.map(color => (
+                  <div key={color} className="h-full" style={{ background: color }} />
                 ))}
               </div>
               <span
@@ -205,22 +204,22 @@ const ThemesPicker = () => {
               <ColorSpectrumSelector
                 label="Background Color"
                 initialColor={customColors.background}
-                onChange={(color) => handleColorChange('background', color)}
+                onChange={color => handleColorChange('background', color)}
               />
               <ColorSpectrumSelector
                 label="Secondary Color"
                 initialColor={customColors.secondary}
-                onChange={(color) => handleColorChange('secondary', color)}
+                onChange={color => handleColorChange('secondary', color)}
               />
               <ColorSpectrumSelector
                 label="Text Color"
                 initialColor={customColors.text}
-                onChange={(color) => handleColorChange('text', color)}
+                onChange={color => handleColorChange('text', color)}
               />
               <ColorSpectrumSelector
                 label="Accent Color"
                 initialColor={customColors.accent}
-                onChange={(color) => handleColorChange('accent', color)}
+                onChange={color => handleColorChange('accent', color)}
               />
             </div>
           </div>

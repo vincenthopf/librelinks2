@@ -35,8 +35,15 @@ const LinkCard = props => {
     },
     {
       onSuccess: () => {
+        // Invalidate both links and user data to ensure preview has latest expansion states
         queryClient.invalidateQueries({ queryKey: ['links', userId] });
+        queryClient.invalidateQueries({ queryKey: ['users', currentUser?.handle] });
+
+        // Force a refresh of the preview to show the changes
         signalIframe('refresh');
+
+        // Additional delayed refresh to ensure the iframe updates
+        setTimeout(() => signalIframe('refresh'), 300);
       },
       onError: error => {
         setIsExpanded(!isExpanded);
@@ -50,15 +57,23 @@ const LinkCard = props => {
     setIsExpanded(checked);
 
     try {
-      // Immediately invalidate queries and signal iframe
-      queryClient.invalidateQueries({ queryKey: ['links', userId] });
+      // Immediately update the preview with the new state
       signalIframe('refresh');
 
+      // Then perform the actual API update
       await toast.promise(updateExpandMutation.mutateAsync(checked), {
         loading: 'Updating setting...',
-        success: 'Setting updated!',
+        success: () => {
+          // Force another refresh after successful update to ensure preview shows the change
+          setTimeout(() => signalIframe('refresh'), 100);
+          return 'Setting updated!';
+        },
         error: 'Failed to update setting', // Generic error for promise
       });
+
+      // Invalidate queries to ensure data is fresh
+      queryClient.invalidateQueries({ queryKey: ['links', userId] });
+      queryClient.invalidateQueries({ queryKey: ['users', currentUser?.handle] });
     } catch (error) {
       // Error is handled by mutation's onError, toast already shown.
       console.error('Error updating link expand setting:', error);

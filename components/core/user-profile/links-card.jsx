@@ -17,10 +17,10 @@ const LinkCard = props => {
 
   // Update showPreview state when alwaysExpandEmbed prop changes
   useEffect(() => {
-    if (props.alwaysExpandEmbed !== undefined) {
-      setShowPreview(props.alwaysExpandEmbed);
-    }
-  }, [props.alwaysExpandEmbed]);
+    console.log(`Link ${props.id} - alwaysExpandEmbed changed to:`, props.alwaysExpandEmbed);
+    // Always set the state explicitly based on the prop value
+    setShowPreview(!!props.alwaysExpandEmbed);
+  }, [props.alwaysExpandEmbed, props.id]);
 
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,

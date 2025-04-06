@@ -64,14 +64,39 @@ export default async function handler(req, res) {
         pageHorizontalMargin: true,
         photoBookLayout: true,
         photoBookOrder: true,
-        links: true,
+        linkExpansionStates: true,
       },
     });
 
-    res.status(200).json({ ...existingUser });
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userLinks = await db.link.findMany({
+      where: {
+        userId: existingUser.id,
+      },
+      select: {
+        id: true,
+        alwaysExpandEmbed: true,
+      },
+    });
+
+    const linkExpansionMap = {};
+    userLinks.forEach(link => {
+      linkExpansionMap[link.id] = link.alwaysExpandEmbed || false;
+    });
+
+    const userData = {
+      ...existingUser,
+      linkExpansionStates: linkExpansionMap,
+    };
+
+    res.status(200).json(userData);
     return;
   } catch (error) {
-    res.status(400).end();
+    console.error('Error fetching user data:', error);
+    res.status(400).json({ error: error.message || 'Bad Request' });
     return;
   }
 }

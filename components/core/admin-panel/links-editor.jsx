@@ -134,8 +134,8 @@ const LinksEditor = () => {
           };
         });
 
-        // Signal iframe to refresh
-        signalIframe('update_user');
+        // Signal iframe to refresh with full refresh rather than just 'update_user'
+        signalIframe('refresh');
       } catch (error) {
         console.error('Error updating photo book position:', error);
         // Revert to original state on error
@@ -187,8 +187,8 @@ const LinksEditor = () => {
           };
         });
 
-        // Signal iframe to refresh
-        signalIframe('update_user');
+        // Signal iframe to refresh with full refresh rather than just 'update_user'
+        signalIframe('refresh');
       } catch (error) {
         console.error('Error updating orders:', error);
         // Revert to original state on error
@@ -239,7 +239,7 @@ const LinksEditor = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['links', currentUser?.id]);
-        signalIframe('update_links');
+        signalIframe('refresh');
       },
     }
   );
@@ -253,7 +253,7 @@ const LinksEditor = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['texts', currentUser?.id]);
-        signalIframe('update_links');
+        signalIframe('refresh');
       },
     }
   );
