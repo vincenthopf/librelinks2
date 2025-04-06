@@ -189,9 +189,6 @@ const Settings = () => {
                             submit={handleSubmit}
                           />
                         </Dialog.Root>
-                        <div className="mt-4 mb-4">
-                          <ProfileImageSizeSelector />
-                        </div>
                         <button
                           onClick={handleDeletePfp}
                           className="w-full h-[45px] border border-[#aaa] 

@@ -66,7 +66,7 @@ export default async function handler(req, res) {
         headToPicturePadding: template.headToPicturePadding,
         pictureToNamePadding: template.pictureToNamePadding,
         nameToBioPadding: template.nameToBioPadding,
-        bioToFirstCardPadding: template.bioToFirstCardPadding,
+        bioToSocialPadding: template.bioToSocialPadding,
         betweenCardsPadding: template.betweenCardsPadding,
         linkCardHeight: template.linkCardHeight,
         frameCornerStyle: template.frameCornerStyle,
@@ -81,6 +81,7 @@ export default async function handler(req, res) {
         backgroundImage: template.backgroundImage,
         photoBookLayout: template.photoBookLayout,
         photoBookOrder: template.photoBookOrder,
+        pageHorizontalMargin: template.pageHorizontalMargin,
       },
     });
 

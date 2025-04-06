@@ -11,7 +11,7 @@ const FontSizeSelector = () => {
   const [fontSizes, setFontSizes] = useState({
     profileName: 16,
     bio: 14,
-    linkTitle: 14
+    linkTitle: 14,
   });
 
   const queryClient = useQueryClient();
@@ -21,17 +21,17 @@ const FontSizeSelector = () => {
       setFontSizes({
         profileName: currentUser.profileNameFontSize || 16,
         bio: currentUser.bioFontSize || 14,
-        linkTitle: currentUser.linkTitleFontSize || 14
+        linkTitle: currentUser.linkTitleFontSize || 14,
       });
     }
   }, [currentUser]);
 
   const mutateFontSizes = useMutation(
-    async (newFontSizes) => {
+    async newFontSizes => {
       await axios.patch('/api/customize', {
         profileNameFontSize: newFontSizes.profileName,
         bioFontSize: newFontSizes.bio,
-        linkTitleFontSize: newFontSizes.linkTitle
+        linkTitleFontSize: newFontSizes.linkTitle,
       });
     },
     {
@@ -47,12 +47,12 @@ const FontSizeSelector = () => {
     await toast.promise(mutateFontSizes.mutateAsync(newFontSizes), {
       loading: 'Updating font size',
       success: 'Font size updated successfully',
-      error: 'An error occurred'
+      error: 'An error occurred',
     });
     setFontSizes(newFontSizes);
   };
 
-  const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32];
+  const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64];
 
   return (
     <div className="max-w-[640px] mx-auto my-4">
@@ -62,13 +62,15 @@ const FontSizeSelector = () => {
           {/* Profile Name Font Size */}
           <div>
             <p className="text-inherit pb-2">Profile Name</p>
-            <select 
+            <select
               value={fontSizes.profileName}
-              onChange={(e) => handleFontSizeChange('profileName', parseInt(e.target.value))}
+              onChange={e => handleFontSizeChange('profileName', parseInt(e.target.value))}
               className="w-full p-2 border rounded-md"
             >
               {fontSizeOptions.map(size => (
-                <option key={size} value={size}>{size}px</option>
+                <option key={size} value={size}>
+                  {size}px
+                </option>
               ))}
             </select>
             <div className="mt-2">
@@ -81,38 +83,38 @@ const FontSizeSelector = () => {
           {/* Bio Font Size */}
           <div>
             <p className="text-inherit pb-2">Bio</p>
-            <select 
+            <select
               value={fontSizes.bio}
-              onChange={(e) => handleFontSizeChange('bio', parseInt(e.target.value))}
+              onChange={e => handleFontSizeChange('bio', parseInt(e.target.value))}
               className="w-full p-2 border rounded-md"
             >
               {fontSizeOptions.map(size => (
-                <option key={size} value={size}>{size}px</option>
+                <option key={size} value={size}>
+                  {size}px
+                </option>
               ))}
             </select>
             <div className="mt-2">
-              <span style={{ fontSize: `${fontSizes.bio}px` }}>
-                Preview Text
-              </span>
+              <span style={{ fontSize: `${fontSizes.bio}px` }}>Preview Text</span>
             </div>
           </div>
 
           {/* Link Title Font Size */}
           <div>
             <p className="text-inherit pb-2">Link Title</p>
-            <select 
+            <select
               value={fontSizes.linkTitle}
-              onChange={(e) => handleFontSizeChange('linkTitle', parseInt(e.target.value))}
+              onChange={e => handleFontSizeChange('linkTitle', parseInt(e.target.value))}
               className="w-full p-2 border rounded-md"
             >
               {fontSizeOptions.map(size => (
-                <option key={size} value={size}>{size}px</option>
+                <option key={size} value={size}>
+                  {size}px
+                </option>
               ))}
             </select>
             <div className="mt-2">
-              <span style={{ fontSize: `${fontSizes.linkTitle}px` }}>
-                Preview Text
-              </span>
+              <span style={{ fontSize: `${fontSizes.linkTitle}px` }}>Preview Text</span>
             </div>
           </div>
         </div>
@@ -121,4 +123,4 @@ const FontSizeSelector = () => {
   );
 };
 
-export default FontSizeSelector; 
+export default FontSizeSelector;

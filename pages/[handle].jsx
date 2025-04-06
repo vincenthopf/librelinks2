@@ -464,7 +464,13 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">
+          {/* Apply dynamic margin to the social icons container */}
+          <div
+            className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4"
+            style={{
+              marginTop: `${fetchedUser?.bioToSocialPadding ?? 16}px`,
+            }}
+          >
             {userLinks
               ?.filter(link => link.isSocial && !link.archived)
               .map(({ id, title, url }) => {
@@ -474,6 +480,7 @@ const ProfilePage = () => {
                     title={title}
                     url={url}
                     color={theme.accent}
+                    socialIconSize={fetchedUser?.socialIconSize ?? 30}
                     registerClicks={() => handleRegisterClick(id, url, title)}
                   />
                 );
@@ -489,7 +496,6 @@ const ProfilePage = () => {
             <div
               className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
               style={{
-                marginTop: `${fetchedUser?.bioToFirstCardPadding ?? 16}px`,
                 gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
               }}
             >
@@ -505,7 +511,7 @@ const ProfilePage = () => {
                       fontFamily={fetchedUser?.linkTitleFontFamily}
                       buttonStyle={fetchedUser?.buttonStyle}
                       theme={theme}
-                      faviconSize={fetchedUser?.faviconSize}
+                      faviconSize={fetchedUser?.faviconSize ?? 32}
                       cardHeight={fetchedUser?.linkCardHeight}
                       registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
                       alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
@@ -536,7 +542,6 @@ const ProfilePage = () => {
               className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
               style={{
                 gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
-                // No marginTop needed here as it follows the photobook or the itemsBefore
               }}
             >
               {itemsAfterPhotoBook.map(item => {
@@ -551,7 +556,7 @@ const ProfilePage = () => {
                       fontFamily={fetchedUser?.linkTitleFontFamily}
                       buttonStyle={fetchedUser?.buttonStyle}
                       theme={theme}
-                      faviconSize={fetchedUser?.faviconSize}
+                      faviconSize={fetchedUser?.faviconSize ?? 32}
                       cardHeight={fetchedUser?.linkCardHeight}
                       registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
                       alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import ProfileImageSizeSelector from './profile-image-size-selector';
 
 const SizeSelector = () => {
   const { data: currentUser } = useCurrentUser();
@@ -19,6 +20,15 @@ const SizeSelector = () => {
     socialIcon: 30,
     favicon: 32,
   });
+
+  // Define default sizes
+  const defaultSizes = {
+    profileName: 16,
+    bio: 14,
+    linkTitle: 14,
+    socialIcon: 30,
+    favicon: 32,
+  };
 
   const queryClient = useQueryClient();
 
@@ -66,18 +76,37 @@ const SizeSelector = () => {
     setSizes(newSizes);
   };
 
+  // Add Reset Handler
+  const handleResetToDefaults = async () => {
+    await toast.promise(mutateSizes.mutateAsync(defaultSizes), {
+      loading: 'Resetting sizes to default',
+      success: 'Sizes reset successfully',
+      error: 'An error occurred while resetting',
+    });
+    setSizes(defaultSizes); // Update local state after successful API call
+  };
+
   const handleSliderChange = (type, value) => {
     const newSizes = { ...sizes, [type]: value };
     setSizes(newSizes);
     mutateSizes.mutate(newSizes);
   };
 
-  const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32];
+  const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64];
   const imageSizeOptions = [16, 20, 24, 28, 32, 40, 48, 56, 64];
 
   return (
     <div className="max-w-[640px] mx-auto my-4">
-      <h3 className="text-xl font-semibold">Sizes</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold">Sizes</h3>
+        {/* Add Reset Button */}
+        <button
+          onClick={handleResetToDefaults}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors duration-150 ease-in-out text-sm"
+        >
+          Reset to Default
+        </button>
+      </div>
       <div className="mt-4 rounded-2xl border bg-white p-4 w-full h-auto">
         <div className="space-y-6">
           {/* Font Sizes */}
@@ -149,6 +178,12 @@ const SizeSelector = () => {
           {/* Image Sizes */}
           <div>
             <h4 className="text-lg font-medium mb-4">Image Sizes</h4>
+            {/* Add Profile Image Size Selector */}
+            <div className="mb-6">
+              <p className="text-inherit pb-2">Profile Image Size</p>
+              <ProfileImageSizeSelector />
+            </div>
+
             {/* Social Icon Size */}
             <div className="mb-6">
               <p className="text-inherit pb-2">Social Icon Size</p>

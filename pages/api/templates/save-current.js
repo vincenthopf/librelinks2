@@ -101,7 +101,7 @@ export default async function handler(req, res) {
           headToPicturePadding: templateData.headToPicturePadding,
           pictureToNamePadding: templateData.pictureToNamePadding,
           nameToBioPadding: templateData.nameToBioPadding,
-          bioToFirstCardPadding: templateData.bioToFirstCardPadding,
+          bioToSocialPadding: templateData.bioToSocialPadding,
           betweenCardsPadding: templateData.betweenCardsPadding,
           linkCardHeight: templateData.linkCardHeight,
           frameCornerStyle: templateData.frameCornerStyle,

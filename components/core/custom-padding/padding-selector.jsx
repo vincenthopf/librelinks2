@@ -16,7 +16,7 @@ const PaddingSelector = () => {
     betweenCards: 16,
     cardHeight: 40,
     nameToBio: 10,
-    bioToFirstCard: 16,
+    bioToSocial: 16,
     horizontalMargin: 8,
   });
   const debounceTimerRef = useRef(null);
@@ -58,7 +58,7 @@ const PaddingSelector = () => {
         betweenCards: currentUser.betweenCardsPadding ?? 16,
         cardHeight: currentUser.linkCardHeight ?? 40,
         nameToBio: currentUser.nameToBioPadding ?? 10,
-        bioToFirstCard: currentUser.bioToFirstCardPadding ?? 16,
+        bioToSocial: currentUser.bioToSocialPadding ?? 16,
         horizontalMargin: currentUser.pageHorizontalMargin ?? 8,
       };
 
@@ -75,7 +75,7 @@ const PaddingSelector = () => {
         betweenCardsPadding: newPaddingValues.betweenCards,
         linkCardHeight: newPaddingValues.cardHeight,
         nameToBioPadding: newPaddingValues.nameToBio,
-        bioToFirstCardPadding: newPaddingValues.bioToFirstCard,
+        bioToSocialPadding: newPaddingValues.bioToSocial,
         horizontalMargin: newPaddingValues.horizontalMargin,
       });
     },
@@ -137,7 +137,7 @@ const PaddingSelector = () => {
             betweenCardsPadding: pendingUpdates.betweenCards,
             linkCardHeight: pendingUpdates.cardHeight,
             nameToBioPadding: pendingUpdates.nameToBio,
-            bioToFirstCardPadding: pendingUpdates.bioToFirstCard,
+            bioToSocialPadding: pendingUpdates.bioToSocial,
             pageHorizontalMargin: pendingUpdates.horizontalMargin,
           };
 
@@ -189,8 +189,12 @@ const PaddingSelector = () => {
         // Ensure card height is between 0 and 200, step 5
         const roundedValue = Math.round(value / 5) * 5;
         clampedValue = Math.max(0, Math.min(200, roundedValue));
+      } else if (type === 'bioToSocial') {
+        // Allow negative values for bioToSocial
+        const roundedValue = Math.round(value / 5) * 5;
+        clampedValue = Math.max(-500, Math.min(500, roundedValue));
       } else {
-        // For other padding types (excluding horizontalMargin and betweenCards)
+        // For other padding types (excluding horizontalMargin, betweenCards, cardHeight, bioToSocial)
         const roundedValue = Math.round(value / 5) * 5;
         clampedValue = Math.max(-500, Math.min(500, roundedValue));
       }
@@ -234,7 +238,7 @@ const PaddingSelector = () => {
       betweenCards: 16,
       cardHeight: 40,
       nameToBio: 10,
-      bioToFirstCard: 16,
+      bioToSocial: 16,
       horizontalMargin: 8,
     };
 
@@ -437,25 +441,23 @@ const PaddingSelector = () => {
             </div>
           </div>
 
-          {/* Bio to First Link Card - New padding control */}
+          {/* Bio to Social Icon - Updated Label and type */}
           <div>
             <p className="text-inherit pb-2">
-              Bio to First Link Card{' '}
+              Bio to Social Icon{' '}
               <span className="text-xs text-blue-500">(negative values = overlap)</span>
             </p>
             <div className="flex space-x-4">
               <select
-                value={paddingValues.bioToFirstCard}
-                onChange={e => handlePaddingChange('bioToFirstCard', parseInt(e.target.value))}
+                value={paddingValues.bioToSocial}
+                onChange={e => handlePaddingChange('bioToSocial', parseInt(e.target.value))}
                 className="w-1/3 p-2 border rounded-md"
               >
-                {getOptionsWithCurrentValue(paddingOptions, paddingValues.bioToFirstCard).map(
-                  size => (
-                    <option key={size} value={size}>
-                      {size}px
-                    </option>
-                  )
-                )}
+                {getOptionsWithCurrentValue(paddingOptions, paddingValues.bioToSocial).map(size => (
+                  <option key={size} value={size}>
+                    {size}px
+                  </option>
+                ))}
               </select>
               <div className="w-2/3">
                 <div className="flex items-center">
@@ -466,10 +468,8 @@ const PaddingSelector = () => {
                       min="-500"
                       max="500"
                       step="5"
-                      value={paddingValues.bioToFirstCard}
-                      onChange={e =>
-                        handlePaddingChange('bioToFirstCard', parseInt(e.target.value))
-                      }
+                      value={paddingValues.bioToSocial}
+                      onChange={e => handlePaddingChange('bioToSocial', parseInt(e.target.value))}
                       className="w-full"
                     />
                   </div>
@@ -478,13 +478,13 @@ const PaddingSelector = () => {
               </div>
             </div>
             <div className="mt-2 bg-gray-200 rounded relative">
-              <div style={{ height: `${Math.max(0, paddingValues.bioToFirstCard)}px` }}></div>
-              {paddingValues.bioToFirstCard < 0 && (
+              <div style={{ height: `${Math.max(0, paddingValues.bioToSocial)}px` }}></div>
+              {paddingValues.bioToSocial < 0 && (
                 <div
                   className="bg-red-200 opacity-40 w-full flex items-center justify-center text-red-600 text-xs font-bold"
-                  style={{ height: `${Math.abs(paddingValues.bioToFirstCard)}px` }}
+                  style={{ height: `${Math.abs(paddingValues.bioToSocial)}px` }}
                 >
-                  Overlap: {paddingValues.bioToFirstCard}px
+                  Overlap: {paddingValues.bioToSocial}px
                 </div>
               )}
             </div>

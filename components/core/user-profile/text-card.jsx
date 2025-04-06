@@ -24,13 +24,25 @@ const TextCard = props => {
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,
     display: props.archived ? 'none' : 'flex',
-    border: isHorizontalOnly || isBottomOnly ? 'none' : `1.5px solid ${props.theme.neutral}`,
-    borderTop: isHorizontalOnly && !isBottomOnly ? `1.5px solid ${props.theme.neutral}` : undefined,
-    borderBottom:
-      isHorizontalOnly || isBottomOnly ? `1.5px solid ${props.theme.neutral}` : undefined,
     boxShadow: hasShadowProp ? `5px 5px 0 0 ${props.theme.neutral}` : '',
     minHeight: `${props.cardHeight || 40}px`,
   };
+
+  // Apply border styles conditionally and explicitly
+  if (isHorizontalOnly) {
+    style.borderTop = `1.5px solid ${props.theme.neutral}`;
+    style.borderBottom = `1.5px solid ${props.theme.neutral}`;
+    style.borderLeft = 'none';
+    style.borderRight = 'none';
+  } else if (isBottomOnly) {
+    style.borderBottom = `1.5px solid ${props.theme.neutral}`;
+    style.borderTop = 'none';
+    style.borderLeft = 'none';
+    style.borderRight = 'none';
+  } else {
+    // Default case: apply border to all sides
+    style.border = `1.5px solid ${props.theme.neutral}`;
+  }
 
   return (
     <div

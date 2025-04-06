@@ -30,26 +30,26 @@ export default async function handler(req, res) {
       // Background image
       backgroundImage,
       // Spacing fields
-      bioToFirstCardPadding,
+      bioToSocialPadding,
       pageHorizontalMargin,
       // Other customization fields
       ...otherFields
     } = req.body;
 
     // Validate font sizes
-    if (profileNameFontSize && (profileNameFontSize < 12 || profileNameFontSize > 32)) {
+    if (profileNameFontSize && (profileNameFontSize < 12 || profileNameFontSize > 64)) {
       res.status(400).json({
-        message: 'Profile name font size must be between 12px and 32px',
+        message: 'Profile name font size must be between 12px and 64px',
       });
       return;
     }
-    if (bioFontSize && (bioFontSize < 12 || bioFontSize > 32)) {
-      res.status(400).json({ message: 'Bio font size must be between 12px and 32px' });
+    if (bioFontSize && (bioFontSize < 12 || bioFontSize > 64)) {
+      res.status(400).json({ message: 'Bio font size must be between 12px and 64px' });
       return;
     }
-    if (linkTitleFontSize && (linkTitleFontSize < 12 || linkTitleFontSize > 32)) {
+    if (linkTitleFontSize && (linkTitleFontSize < 12 || linkTitleFontSize > 64)) {
       res.status(400).json({
-        message: 'Link title font size must be between 12px and 32px',
+        message: 'Link title font size must be between 12px and 64px',
       });
       return;
     }
@@ -114,7 +114,7 @@ export default async function handler(req, res) {
         // Background image - set to null if 'none' is selected
         backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
         // Spacing fields
-        bioToFirstCardPadding,
+        bioToSocialPadding,
         pageHorizontalMargin,
         // Other customization fields
         ...otherFields,

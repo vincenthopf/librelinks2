@@ -4,16 +4,14 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import RichMediaPreview from './rich-media-preview';
 import { GOOGLE_FAVICON_URL } from '@/utils/constants';
 import { getApexDomain } from '@/utils/helpers';
-import useCurrentUser from '@/hooks/useCurrentUser';
 
 const LinkCard = props => {
   const [showPreview, setShowPreview] = useState(props.alwaysExpandEmbed || false);
-  const { data: currentUser } = useCurrentUser();
   const isTransparent = props.buttonStyle.includes('bg-transparent');
   const hasShadowProp = props.buttonStyle.includes('shadow');
   const isHorizontalOnly = props.buttonStyle.includes('horizontal-only');
   const isBottomOnly = props.buttonStyle.includes('bottom-only');
-  const faviconSize = currentUser?.faviconSize || 32;
+  const faviconSize = props.faviconSize || 32;
 
   // Update showPreview state when alwaysExpandEmbed prop changes
   useEffect(() => {
@@ -25,13 +23,25 @@ const LinkCard = props => {
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,
     display: props.archived ? 'none' : 'flex',
-    border: isHorizontalOnly || isBottomOnly ? 'none' : `1.5px solid ${props.theme.neutral}`,
-    borderTop: isHorizontalOnly && !isBottomOnly ? `1.5px solid ${props.theme.neutral}` : undefined,
-    borderBottom:
-      isHorizontalOnly || isBottomOnly ? `1.5px solid ${props.theme.neutral}` : undefined,
     boxShadow: hasShadowProp ? `5px 5px 0 0 ${props.theme.neutral}` : '',
     minHeight: `${props.cardHeight || 40}px`,
   };
+
+  // Apply border styles conditionally and explicitly
+  if (isHorizontalOnly) {
+    style.borderTop = `1.5px solid ${props.theme.neutral}`;
+    style.borderBottom = `1.5px solid ${props.theme.neutral}`;
+    style.borderLeft = 'none';
+    style.borderRight = 'none';
+  } else if (isBottomOnly) {
+    style.borderBottom = `1.5px solid ${props.theme.neutral}`;
+    style.borderTop = 'none';
+    style.borderLeft = 'none';
+    style.borderRight = 'none';
+  } else {
+    // Default case: apply border to all sides
+    style.border = `1.5px solid ${props.theme.neutral}`;
+  }
 
   // Extract only the Iframely-related props
   const iframelyData = {

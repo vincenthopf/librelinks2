@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { themes } from '@/utils/themes';
 import { CheckMark } from '@/components/utils/checkmark';
 import useCurrentUser from '@/hooks/useCurrentUser';
@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signalIframe } from '@/utils/helpers';
 import ColorSpectrumSelector from './ColorSpectrumSelector';
+import { debounce } from 'lodash';
 
 const ThemesPicker = () => {
   const { data: currentUser } = useCurrentUser();
@@ -74,6 +75,13 @@ const ThemesPicker = () => {
     }
   );
 
+  const debouncedThemeUpdate = useCallback(
+    debounce(async themeData => {
+      await mutateTheme.mutateAsync(themeData);
+    }, 1000),
+    [mutateTheme]
+  );
+
   const handleThemeSelect = async theme => {
     setSelectedTheme(theme);
     setCustomColors({
@@ -102,22 +110,15 @@ const ThemesPicker = () => {
     localStorage.setItem('selectedTheme', theme.name);
   };
 
-  const handleColorChange = async (colorKey, value) => {
+  const handleColorChange = (colorKey, value) => {
     const newColors = { ...customColors, [colorKey]: value };
     setCustomColors(newColors);
 
     if (selectedTheme) {
-      await toast.promise(
-        mutateTheme.mutateAsync({
-          ...selectedTheme,
-          customColors: newColors,
-        }),
-        {
-          loading: 'Updating color...',
-          success: 'Color updated!',
-          error: 'Failed to update color',
-        }
-      );
+      debouncedThemeUpdate({
+        ...selectedTheme,
+        customColors: newColors,
+      });
     }
   };
 

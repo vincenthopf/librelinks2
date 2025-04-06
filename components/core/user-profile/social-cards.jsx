@@ -2,12 +2,10 @@
 import { useState } from 'react';
 import { getApexDomain, removeHashFromHexColor } from '@/utils/helpers';
 import { GOOGLE_FAVICON_URL } from '@/utils/constants';
-import useCurrentUser from '@/hooks/useCurrentUser';
 
-export const SocialCards = ({ url, title, color, registerClicks }) => {
+export const SocialCards = ({ url, title, color, socialIconSize, registerClicks }) => {
   const validColor = removeHashFromHexColor(color);
-  const { data: currentUser } = useCurrentUser();
-  const iconSize = currentUser?.socialIconSize || 30;
+  const iconSize = socialIconSize || 30;
   const [svgLoadError, setSvgLoadError] = useState(false);
 
   // checking for website aliases: adding more soon
@@ -19,7 +17,7 @@ export const SocialCards = ({ url, title, color, registerClicks }) => {
     t: 'telegram',
   };
 
-  const getSocialMediaName = (url) => {
+  const getSocialMediaName = url => {
     const domainURL = getApexDomain(url);
     // Use a regular expression to match only the site name
     const siteName = domainURL.match(/^[^.]+/);
@@ -41,22 +39,25 @@ export const SocialCards = ({ url, title, color, registerClicks }) => {
         href={url}
         className="hover:scale-125 transition-all rounded-full px-2"
       >
-        <div style={{
-          width: `${iconSize}px`,
-          height: `${iconSize}px`,
-          display: '-webkit-flex',
-          display: 'flex',
-          WebkitAlignItems: 'center',
-          alignItems: 'center',
-          WebkitJustifyContent: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden'
-        }}>
+        <div
+          style={{
+            width: `${iconSize}px`,
+            height: `${iconSize}px`,
+            display: '-webkit-flex',
+            display: 'flex',
+            WebkitAlignItems: 'center',
+            alignItems: 'center',
+            WebkitJustifyContent: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
           <img
             loading="lazy"
-            src={svgLoadError 
-              ? `${GOOGLE_FAVICON_URL}${getApexDomain(url)}`
-              : `https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`
+            src={
+              svgLoadError
+                ? `${GOOGLE_FAVICON_URL}${getApexDomain(url)}`
+                : `https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`
             }
             onError={() => {
               console.warn(`SVG icon failed to load for ${url}, falling back to favicon`);
@@ -66,7 +67,7 @@ export const SocialCards = ({ url, title, color, registerClicks }) => {
               width: '100%',
               height: '100%',
               WebkitObjectFit: 'contain',
-              objectFit: 'contain'
+              objectFit: 'contain',
             }}
             alt={title}
           />
