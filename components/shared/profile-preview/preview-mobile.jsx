@@ -20,12 +20,10 @@ const PreviewMobile = ({ close }) => {
   const iframeRef = useRef(null);
   const dimensionUpdateTimeoutRef = useRef(null);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
-  const baseURL = getCurrentBaseURL();
-  const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}`;
+  const { photos } = usePhotoBook();
 
   const { data: userLinks } = useLinks(currentUser?.id);
   const { data: userTexts } = useTexts(currentUser?.id);
-  const { photos } = usePhotoBook();
 
   // Create a value that changes when link orders change
   const linksOrderString = useMemo(() => {
@@ -75,6 +73,7 @@ const PreviewMobile = ({ close }) => {
 
   const nonSocialLinks = useMemo(() => userLinks?.filter(link => !link.isSocial), [userLinks]);
 
+  // Restore effects
   useEffect(() => {
     setRefreshKey(prev => prev + 1);
   }, refreshDependencies);
@@ -85,6 +84,7 @@ const PreviewMobile = ({ close }) => {
     }
   }, [currentUser, userLinks]);
 
+  // Restore effects
   useEffect(() => {
     const handleMessage = event => {
       // Handle string messages (standard format)
@@ -94,8 +94,16 @@ const PreviewMobile = ({ close }) => {
         ['refresh', 'update_user', 'update_links'].includes(event.data) &&
         iframeRef.current
       ) {
-        // Force a complete iframe refresh by updating the key
-        setRefreshKey(prev => prev + 1);
+        // DO NOT force refresh via setRefreshKey
+        // Instead, FORWARD the message to the iframe
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          try {
+            iframeRef.current.contentWindow.postMessage(event.data, '*');
+            console.log('Mobile Preview: Forwarded string message to iframe:', event.data);
+          } catch (error) {
+            console.error('Mobile Preview: Error forwarding string message:', error);
+          }
+        }
         return;
       }
 
@@ -103,55 +111,35 @@ const PreviewMobile = ({ close }) => {
       if (event.data && typeof event.data === 'object' && event.data.type && iframeRef.current) {
         const { type } = event.data;
 
-        // Special handling for dimension updates to avoid screen flashing
-        if (type === 'update_dimensions') {
-          // For dimension updates, we don't need to refresh the entire iframe
-          // Instead, we can forward the message to the iframe content
-          if (iframeRef.current && iframeRef.current.contentWindow) {
-            try {
-              // Forward the dimension update to the iframe content
-              iframeRef.current.contentWindow.postMessage(event.data, '*');
-              console.log('Forwarded dimension update to mobile iframe:', event.data);
-
-              // Clear any existing timeout
-              if (dimensionUpdateTimeoutRef.current) {
-                clearTimeout(dimensionUpdateTimeoutRef.current);
-              }
-
-              // Set a fallback refresh after a delay to ensure synchronization
-              // This will only happen if the forwarded message doesn't work properly
-              dimensionUpdateTimeoutRef.current = setTimeout(() => {
-                console.log('Fallback refresh for dimension update in mobile preview');
-                setRefreshKey(prev => prev + 1);
-                dimensionUpdateTimeoutRef.current = null;
-              }, 500);
-
-              return;
-            } catch (error) {
-              console.error('Error forwarding dimension update to mobile iframe:', error);
-              // Fall through to full refresh on error
-            }
+        // Forward ALL structured messages to the iframe
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          try {
+            iframeRef.current.contentWindow.postMessage(event.data, '*');
+            console.log('Mobile Preview: Forwarded structured message to iframe:', event.data);
+          } catch (error) {
+            console.error('Mobile Preview: Error forwarding structured message:', error);
           }
         }
-
-        // For other message types, fall back to a full refresh
-        setRefreshKey(prev => prev + 1);
+        // Remove the special handling for 'update_dimensions' that used setRefreshKey as fallback
+        // Remove the final setRefreshKey fallback
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => {
       window.removeEventListener('message', handleMessage);
-      // Clean up timeout on unmount
-      if (dimensionUpdateTimeoutRef.current) {
-        clearTimeout(dimensionUpdateTimeoutRef.current);
-      }
+      // Keep timeout cleanup if needed, though dimensionUpdateTimeoutRef is no longer used here
+      // if (dimensionUpdateTimeoutRef.current) {
+      //   clearTimeout(dimensionUpdateTimeoutRef.current);
+      // }
     };
   }, []);
 
-  // Re-render iframe when photoBookLayout changes
+  // Restore effects (but this refresh might still be problematic - monitor)
   useEffect(() => {
     if (currentUser?.photoBookLayout) {
+      // Let's keep this one for now, as layout change might NEED a full refresh
+      // If still issues, this might need replacing with a postMessage call too
       setRefreshKey(prev => prev + 1);
     }
   }, [currentUser?.photoBookLayout]);
@@ -164,15 +152,18 @@ const PreviewMobile = ({ close }) => {
     return <NotFound />;
   }
 
+  // Construct URL only when currentUser is available
+  const baseURL = getCurrentBaseURL();
+  const url = `${baseURL}/${currentUser.handle}?isIframe=true&photoBookLayout=${currentUser.photoBookLayout || 'grid'}`;
+
   return (
     <>
       <section
         style={{ background: theme.primary }}
-        className="h-[100vh] w-[100vw] overflow-auto relative"
+        className="h-[100vh] w-full overflow-auto relative"
       >
         <iframe
           ref={iframeRef}
-          key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${userLinks ? userLinks.length : 0}-${userTexts ? userTexts.length : 0}-${photos ? photos.length : 0}-${linksOrderString}-${textsOrderString}-${currentUser?.photoBookOrder}`}
           seamless
           loading="lazy"
           title="preview"
