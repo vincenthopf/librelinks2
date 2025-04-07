@@ -113,3 +113,17 @@
 - Improved the API to properly collect and process expansion states from all links
 - Added proper dependency tracking in the links-card component
 - Invalidated both link queries and user queries when toggle state changes
+
+## Button Styling
+
+- The application has independent button styling for link cards (`buttonStyle`) and text cards (`textCardButtonStyle`)
+- Each button style can be customized separately in the Customize tab
+- TextCard component uses textCardButtonStyle if available, with buttonStyle as a fallback
+- Button styles include options for Fill, Transparent, Hard shadow, Horizontal lines, and Bottom line only
+
+## Database Schema
+
+- User and Template models include fields for various customization options
+- Button styling fields:
+  - `buttonStyle`: Style for link cards
+  - `textCardButtonStyle`: Style for text cards

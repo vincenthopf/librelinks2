@@ -6,7 +6,8 @@ import { useState } from 'react';
  * @param {Object} props - Component props
  * @param {string} props.title - Title of the text item
  * @param {string} props.content - Content of the text item
- * @param {string} props.buttonStyle - Style of the button/card
+ * @param {string} props.buttonStyle - Style of the button/card (fallback if textCardButtonStyle not provided)
+ * @param {string} props.textCardButtonStyle - Specific style for text cards
  * @param {Object} props.theme - Theme colors
  * @param {number} props.fontSize - Font size for the title
  * @param {string} props.fontFamily - Font family for the title
@@ -16,10 +17,13 @@ import { useState } from 'react';
 const TextCard = props => {
   const [expanded, setExpanded] = useState(false);
 
-  const isTransparent = props.buttonStyle.includes('bg-transparent');
-  const hasShadowProp = props.buttonStyle.includes('shadow');
-  const isHorizontalOnly = props.buttonStyle.includes('horizontal-only');
-  const isBottomOnly = props.buttonStyle.includes('bottom-only');
+  // Use textCardButtonStyle if available, otherwise fall back to buttonStyle
+  const buttonStyle = props.textCardButtonStyle || props.buttonStyle;
+
+  const isTransparent = buttonStyle.includes('bg-transparent');
+  const hasShadowProp = buttonStyle.includes('shadow');
+  const isHorizontalOnly = buttonStyle.includes('horizontal-only');
+  const isBottomOnly = buttonStyle.includes('bottom-only');
 
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,
@@ -46,7 +50,7 @@ const TextCard = props => {
 
   return (
     <div
-      className={`w-full flex flex-col transition-all duration-200 ${props.buttonStyle || 'rounded-md'} p-4`}
+      className={`w-full flex flex-col transition-all duration-200 ${buttonStyle || 'rounded-md'} p-4`}
       style={style}
     >
       <button onClick={() => setExpanded(!expanded)} className="w-full text-left">

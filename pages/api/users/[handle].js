@@ -29,6 +29,7 @@ export default async function handler(req, res) {
         linksLocation: true,
         themePalette: true,
         buttonStyle: true,
+        textCardButtonStyle: true,
         profileNameFontSize: true,
         bioFontSize: true,
         linkTitleFontSize: true,

@@ -563,6 +563,7 @@ const ProfilePage = () => {
                       fontSize={fetchedUser?.linkTitleFontSize} // Assuming same font settings for now
                       fontFamily={fetchedUser?.linkTitleFontFamily}
                       buttonStyle={fetchedUser?.buttonStyle}
+                      textCardButtonStyle={fetchedUser?.textCardButtonStyle}
                       theme={theme}
                       cardHeight={fetchedUser?.linkCardHeight} // Assuming same height setting for now
                     />

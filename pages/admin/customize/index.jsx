@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import Layout from '@/components/layout/Layout';
 import Footer from '@/components/layout/footer/footer';
 import ButtonSelector from '@/components/core/custom-buttons/buttons-selector';
+import TextCardButtonSelector from '@/components/core/custom-buttons/text-card-button-selector';
 import ThemesPicker from '@/components/core/custom-page-themes/themes-picker';
 import FontSizeSelector from '@/components/core/custom-font-sizes/font-size-selector';
 import FontSelector from '@/components/core/custom-fonts/font-selector';
@@ -144,6 +145,8 @@ const Customize = () => {
             {activeTab === 'buttons' && (
               <div className="space-y-8">
                 <ButtonSelector />
+                <div className="border-t my-8 pt-4"></div>
+                <TextCardButtonSelector />
               </div>
             )}
 
