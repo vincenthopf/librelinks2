@@ -349,18 +349,43 @@ const ProfilePage = () => {
     }
   };
 
-  // Combine links and texts for sorting
-  const allItems = [
-    ...(userLinks?.filter(link => !link.isSocial && !link.archived) || []),
-    ...(userTexts || []),
-  ].sort((a, b) => a.order - b.order);
+  // Combine links and texts for sorting, excluding archived items
+  const visibleLinks = userLinks?.filter(link => !link.isSocial && !link.archived) || [];
+  const visibleTexts = userTexts?.filter(text => !text.archived) || []; // Filter archived texts too
+  const allContentItems = [...visibleLinks, ...visibleTexts];
 
-  // Determine photo book position
-  const photoBookOrder = fetchedUser?.photoBookOrder ?? 9999; // Default to end
+  // Sort all content items together by their order property
+  allContentItems.sort((a, b) => a.order - b.order);
 
-  // Split items based on photo book position
-  const itemsBeforePhotoBook = allItems.filter(item => item.order < photoBookOrder);
-  const itemsAfterPhotoBook = allItems.filter(item => item.order >= photoBookOrder);
+  // Prepare the final list of items to display, including the photo book placeholder
+  const displayItems = [];
+  const photoBookOrder = fetchedUser?.photoBookOrder;
+  const photosExist = photos && Array.isArray(photos) && photos.length > 0;
+  let photoBookInserted = false;
+
+  // If photo book should be shown and has a valid order, try to insert it
+  if (photosExist && photoBookOrder !== null && photoBookOrder !== undefined) {
+    // Iterate through sorted links/texts and insert photo book placeholder
+    for (const item of allContentItems) {
+      // Insert photo book *before* the first item with order >= photoBookOrder
+      if (!photoBookInserted && item.order >= photoBookOrder) {
+        displayItems.push({
+          id: 'photobook-placeholder',
+          type: 'photobook',
+          order: photoBookOrder,
+        });
+        photoBookInserted = true;
+      }
+      displayItems.push(item);
+    }
+    // If photo book order is after all other items, or there are no other items
+    if (!photoBookInserted) {
+      displayItems.push({ id: 'photobook-placeholder', type: 'photobook', order: photoBookOrder });
+    }
+  } else {
+    // If no photo book, just use the sorted links and texts
+    displayItems.push(...allContentItems);
+  }
 
   return (
     <>
@@ -492,17 +517,28 @@ const ProfilePage = () => {
             className="w-full mx-auto" // Use mx-auto for centering
             style={dynamicMarginStyle} // Apply calculated margin
           >
-            {/* Render items before Photo Book */}
+            {/* --- Unified Rendering Container --- */}
             <div
-              className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
+              className="flex flex-col items-center w-full mx-auto max-w-3xl pb-10"
               style={{
                 gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
               }}
             >
-              {itemsBeforePhotoBook.map(item => {
-                // Check if the item is a link or text
-                if (item.url) {
-                  // Render LinkCard
+              {displayItems.map(item => {
+                // --- Render Photo Book ---
+                if (item.type === 'photobook') {
+                  // Ensure renderPhotoBook() returns a component compatible with the flex gap
+                  // Adding a key here for React list rendering
+                  return (
+                    <div key={item.id} className="w-full">
+                      {' '}
+                      {/* Ensure full width if needed */}
+                      {renderPhotoBook()}
+                    </div>
+                  );
+                }
+                // --- Render LinkCard ---
+                else if (item.url) {
                   return (
                     <LinkCard
                       key={item.id}
@@ -515,55 +551,11 @@ const ProfilePage = () => {
                       cardHeight={fetchedUser?.linkCardHeight}
                       registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
                       alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
-                    />
-                  );
-                } else {
-                  // Render TextCard
-                  return (
-                    <TextCard
-                      key={item.id}
-                      {...item}
-                      fontSize={fetchedUser?.linkTitleFontSize} // Assuming same font settings for now
-                      fontFamily={fetchedUser?.linkTitleFontFamily}
-                      buttonStyle={fetchedUser?.buttonStyle}
-                      theme={theme}
-                      cardHeight={fetchedUser?.linkCardHeight} // Assuming same height setting for now
                     />
                   );
                 }
-              })}
-            </div>
-
-            {/* Render Photo Book */}
-            {renderPhotoBook()}
-
-            {/* Render items after Photo Book */}
-            <div
-              className="flex flex-col items-center w-full mx-auto max-w-3xl gap-4 pb-10"
-              style={{
-                gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
-              }}
-            >
-              {itemsAfterPhotoBook.map(item => {
-                // Check if the item is a link or text
-                if (item.url) {
-                  // Render LinkCard
-                  return (
-                    <LinkCard
-                      key={item.id}
-                      {...item}
-                      fontSize={fetchedUser?.linkTitleFontSize}
-                      fontFamily={fetchedUser?.linkTitleFontFamily}
-                      buttonStyle={fetchedUser?.buttonStyle}
-                      theme={theme}
-                      faviconSize={fetchedUser?.faviconSize ?? 32}
-                      cardHeight={fetchedUser?.linkCardHeight}
-                      registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
-                      alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
-                    />
-                  );
-                } else {
-                  // Render TextCard
+                // --- Render TextCard ---
+                else {
                   return (
                     <TextCard
                       key={item.id}

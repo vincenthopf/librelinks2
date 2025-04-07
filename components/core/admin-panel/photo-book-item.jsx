@@ -23,7 +23,7 @@ const PhotoBookItem = ({ id }) => {
 
   // Use static title since we don't have these fields in the database
   const photoBookTitle = 'Photo Book';
-  const photoBookDescription = 'Your collection of photos displayed in your chosen layout';
+  const photoBookDescription = 'Displayed in your chosen layout';
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: id, // Use a special ID to represent the photo book
@@ -133,7 +133,7 @@ const PhotoBookItem = ({ id }) => {
                   <div className="flex items-center max-w-full rounded-[2px] outline-offset-2 outline-2 gap-2 lg:gap-4">
                     <p className="w-fit text-gray-900 font-semibold">{photoBookTitle}</p>
                     <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                      {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
+                      {photoCount}
                     </span>
                   </div>
                 </div>

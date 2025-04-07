@@ -101,106 +101,82 @@ const LinkCard = props => {
       <div
         ref={setNodeRef}
         style={style}
-        className=" flex bg-white items-center p-2 rounded-lg drop-shadow-md my-5"
+        className=" flex bg-white items-center py-2 px-1 rounded-lg drop-shadow-md my-5"
       >
         <div
-          className=" text-gray-400 text-sm hover:bg-blue-100 rounded-sm p-[3px]"
+          className=" text-gray-400 text-xs hover:bg-blue-100 rounded-sm p-0 cursor-grab flex-shrink-0"
           {...attributes}
           {...listeners}
         >
-          <GripVertical color="grey" size={17} />
+          <GripVertical color="grey" size={14} />
         </div>
+        {/* Favicon - Removed mt-1 */}
         {!props.archived ? (
           <Image
             src={`${GOOGLE_FAVICON_URL}${apexDomain}`}
             alt={apexDomain}
-            className="h-8 w-8 blur-0 rounded-full sm:h-10 sm:w-10"
+            className="h-8 w-8 rounded-full flex-shrink-0"
             unoptimized
-            width={20}
-            height={20}
+            width={24}
+            height={24}
             priority
           />
         ) : (
           <TooltipWrapper title="This link has been archived by you" component={<ArchiveSVG />} />
         )}
-        <div className="flex-1 p-2 h-full relative">
-          <div className="flex">
-            <div className="w-full pr-3">
-              <div className="grid mb-1 w-full grid-cols-[minmax(0,_90%)] items-baseline">
-                <div className=" w-full row-start-1 col-start-1 items-center">
-                  <div
-                    target="_blank"
-                    className="flex items-center max-w-full rounded-[2px] outline-offset-2 outline-2 gap-2 lg:gap-4"
-                  >
-                    <p className="truncate w-fit max-w-[80px] text-gray-500 text-sm whitespace-nowrap overflow-hidden font-semibold lg:w-fit lg:max-w-[150px]">
-                      {props.title}
-                    </p>
-
-                    <div className="flex justify-between items-start">
-                      <div className="flex flex-wrap gap-2">
-                        <Link
-                          onClick={handleCopyLink}
-                          href="#"
-                          className="group rounded-full bg-gray-100 p-1.5 transition-all duration-75 hover:scale-105 hover:bg-blue-100 active:scale-95"
-                        >
-                          <Copy color="grey" size={15} />
-                        </Link>
-
-                        <Link
-                          href="/admin/analytics"
-                          className="flex items-center space-x-1 rounded-md bg-gray-100 px-2 py-0.5 transition-all duration-75 hover:scale-105 hover:bg-blue-100 active:scale-100"
-                        >
-                          <BarChart color="grey" size={15} />
-                          <p className="whitespace-nowrap text-sm text-gray-500">
-                            {props.clicks}
-                            <span className="ml-1 hidden sm:inline-block">clicks</span>
-                          </p>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="">
-                  <div className="row-start-1 col-start-1 inline-flex">
-                    <a
-                      target="_blank"
-                      href={props.url}
-                      className="flex items-center max-w-full rounded-[2px] outline-offset-2 outline-2"
-                    >
-                      <p className="text-gray-500 w-[200px] text-sm lg:w-[320px] whitespace-nowrap overflow-hidden font-semibold text-ellipsis">
-                        {props.url}
-                      </p>
-                    </a>
-                  </div>
-                </div>
-              </div>
+        {/* Content Area - Removed items-center from parent, reverting padding */}
+        <div className="flex-1 p-0.5 pr-6 sm:pr-8 h-full relative overflow-hidden">
+          <div className="flex flex-col">
+            {/* Row 1: Title */}
+            <div className="flex items-center max-w-full rounded-[2px] outline-offset-2 outline-2 gap-1">
+              <p className="truncate text-gray-900 text-base font-semibold">{props.title}</p>
             </div>
-            <button className="flex justify-center items-center ">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <label
-                    htmlFor={`expand-switch-${props.id}`}
-                    className="whitespace-nowrap text-sm text-gray-500"
-                  >
-                    Always Expand
-                  </label>
-                  <Switch.Root
-                    id={`expand-switch-${props.id}`}
-                    checked={isExpanded}
-                    onCheckedChange={handleToggleChange}
-                    className="w-[34px] h-[20px] bg-gray-200 rounded-full relative data-[state=checked]:bg-blue-600 outline-none cursor-pointer"
-                  >
-                    <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[16px]" />
-                  </Switch.Root>
-                </div>
 
-                {/* <small className="hidden whitespace-nowrap text-sm text-gray-500 sm:block">
-                  Added {timeAgo(props.createdAt, true)}
-                </small> */}
-                <PopoverDesktop {...props} />
+            {/* ---- Default Layout for Regular Links ---- */}
+            {!props.isSocial && (
+              <>
+                {/* Row 2: URL */}
+                <div className="flex items-center max-w-full rounded-[2px] outline-offset-2 outline-2 mt-0.5">
+                  <p className="text-gray-500 text-sm font-semibold truncate">{props.url}</p>
+                </div>
+                {/* Row 3: Controls area */}
+                <div className={`flex justify-between items-center flex-shrink-0 mt-1.5 space-x-2`}>
+                  {/* Always Expand Switch */}
+                  <div className="flex items-center space-x-1.5">
+                    <label
+                      htmlFor={`expand-switch-${props.id}`}
+                      className="whitespace-nowrap text-xs text-gray-500"
+                    >
+                      Always Expand
+                    </label>
+                    <Switch.Root
+                      id={`expand-switch-${props.id}`}
+                      checked={isExpanded}
+                      onCheckedChange={handleToggleChange}
+                      className="w-[24px] h-[14px] sm:w-[28px] sm:h-[16px] bg-gray-200 rounded-full relative data-[state=checked]:bg-blue-600 outline-none cursor-pointer flex-shrink-0"
+                    >
+                      <Switch.Thumb className="block w-[10px] h-[10px] sm:w-[12px] sm:h-[12px] bg-white rounded-full shadow-sm transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[12px] sm:data-[state=checked]:translate-x-[14px]" />
+                    </Switch.Root>
+                  </div>
+                  {/* Popover */}
+                  <div className="flex-shrink-0">
+                    <PopoverDesktop {...props} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ---- Compact Layout for Social Links ---- */}
+            {props.isSocial && (
+              <div className="flex justify-between items-center mt-0.5">
+                {/* Row 2 Left: URL */}
+                <p className="text-gray-500 text-sm font-semibold truncate">{props.url}</p>
+                {/* Row 2 Right: Popover */}
+                <div className="flex-shrink-0">
+                  <PopoverDesktop {...props} />
+                </div>
               </div>
-            </button>
+            )}
           </div>
         </div>
       </div>
