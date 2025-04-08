@@ -23,22 +23,22 @@ const SaveAsTemplateModal = ({ onClose = () => {} }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
         [name]: undefined,
       }));
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -78,13 +78,12 @@ const SaveAsTemplateModal = ({ onClose = () => {} }) => {
       <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
       <Dialog.Content className="fixed left-[50%] top-[50%] max-h-[85vh] w-[90vw] max-w-[500px] translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-6 shadow-lg focus:outline-none">
         <div className="flex items-center justify-between mb-4">
-          <Dialog.Title className="text-xl font-semibold">
-            Save as Template
-          </Dialog.Title>
+          <Dialog.Title className="text-xl font-semibold">Save as Template</Dialog.Title>
           <Dialog.Close asChild>
             <button
               className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:text-gray-700 transition-colors"
               aria-label="Close"
+              onClick={onClose}
             >
               <X size={20} />
             </button>
@@ -93,9 +92,7 @@ const SaveAsTemplateModal = ({ onClose = () => {} }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Template Name *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Template Name *</label>
             <Input
               name="name"
               value={formData.name}
@@ -103,6 +100,7 @@ const SaveAsTemplateModal = ({ onClose = () => {} }) => {
               placeholder="Enter template name"
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? 'name-error' : undefined}
+              disabled={isSaving}
             />
             {errors.name && (
               <p id="name-error" className="mt-1 text-sm text-red-500">
@@ -112,24 +110,21 @@ const SaveAsTemplateModal = ({ onClose = () => {} }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <Textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               placeholder="Enter template description (optional)"
               rows={3}
+              disabled={isSaving}
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Dialog.Close asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </Dialog.Close>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Template'}
             </Button>

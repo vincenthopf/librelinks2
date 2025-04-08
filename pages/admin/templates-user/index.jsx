@@ -15,21 +15,51 @@ const TemplatesUser = () => {
     queryKey: ['templates'],
     queryFn: async () => {
       const { data } = await axios.get('/api/templates');
-      return data;
+
+      // Ensure JSON fields are properly parsed
+      return data.map(template => {
+        // Convert string JSON to objects if needed
+        try {
+          if (template.themePalette && typeof template.themePalette === 'string') {
+            template.themePalette = JSON.parse(template.themePalette);
+          }
+
+          if (template.frameAnimation && typeof template.frameAnimation === 'string') {
+            template.frameAnimation = JSON.parse(template.frameAnimation);
+          }
+
+          if (template.linkExpansionStates && typeof template.linkExpansionStates === 'string') {
+            template.linkExpansionStates = JSON.parse(template.linkExpansionStates);
+          }
+
+          if (template.photoBookImageData && typeof template.photoBookImageData === 'string') {
+            template.photoBookImageData = JSON.parse(template.photoBookImageData);
+          }
+        } catch (e) {
+          console.error('Error parsing template JSON fields:', e, { templateId: template.id });
+        }
+
+        return template;
+      });
     },
   });
 
   // Apply template mutation
   const applyMutation = useMutation({
-    mutationFn: async (templateId) => {
-      await axios.post('/api/templates/apply', { templateId });
+    mutationFn: async ({ templateId, sectionsToApply }) => {
+      console.log('Applying template mutation:', { templateId, sectionsToApply });
+      const response = await axios.post('/api/templates/apply', {
+        templateId,
+        sectionsToApply,
+      });
+      console.log('Template application response:', response.data);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['currentUser']);
-      toast.success('Template applied successfully');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.error || 'Failed to apply template');
+    onError: error => {
+      console.error('Template application mutation error:', error.response?.data || error.message);
     },
   });
 
@@ -43,8 +73,8 @@ const TemplatesUser = () => {
           <div className="max-w-[690px] mx-auto my-10">
             <h1 className="text-2xl font-bold mb-6">Templates</h1>
             <p className="text-gray-600 mb-8">
-              Browse and apply templates to your profile. Choose from a variety
-              of pre-designed layouts and styles.
+              Browse and apply templates to your profile. Choose from a variety of pre-designed
+              layouts and styles.
             </p>
 
             {isLoading ? (
@@ -52,7 +82,9 @@ const TemplatesUser = () => {
             ) : (
               <TemplateBrowser
                 templates={templates}
-                onApplyTemplate={(id) => applyMutation.mutateAsync(id)}
+                onApplyTemplate={(id, sections) =>
+                  applyMutation.mutateAsync({ templateId: id, sectionsToApply: sections })
+                }
               />
             )}
           </div>

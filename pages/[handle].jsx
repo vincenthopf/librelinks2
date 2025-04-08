@@ -429,8 +429,10 @@ const ProfilePage = () => {
         }}
       >
         <div
-          className={`flex items-center w-full flex-col mx-auto max-w-3xl justify-center px-${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 8}`}
+          className={`flex items-center w-full flex-col mx-auto max-w-3xl justify-center`}
           style={{
+            paddingLeft: `${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 20}px`,
+            paddingRight: `${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 20}px`,
             paddingTop: `${fetchedUser?.headToPicturePadding || 40}px`,
             paddingBottom: `${fetchedUser?.headToPicturePadding || 40}px`,
           }}

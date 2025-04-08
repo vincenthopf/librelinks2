@@ -42,7 +42,7 @@ model User {
   linkCardHeight       Int         @default(40)
   nameToBioPadding     Int         @default(10)
   bioToSocialPadding   Int         @default(16)
-  pageHorizontalMargin Int         @default(8) // Added field for horizontal page margin (0-20%)
+  pageHorizontalMargin Int         @default(20)
   // Frame customization fields
   frameTemplate        String      @default("none")
   frameColor           String      @default("#000000")
@@ -108,22 +108,19 @@ model Link {
   updatedAt  DateTime  @updatedAt
   userId     String    @db.ObjectId
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template   Template? @relation(fields: [templateId], references: [id])
-  templateId String?   @db.ObjectId
 
   // Iframely data
-  type         String? // video, link, etc
-  providerName String? // YouTube, Spotify, etc
-  embedHtml    String? // The iframe HTML
-  thumbnails   Json? // Array of thumbnail objects
-  authorName   String? // Content author
-  authorUrl    String? // Author profile URL
-  iframelyMeta Json? // Additional metadata
+  type         String?
+  providerName String?
+  embedHtml    String?
+  thumbnails   Json?
+  authorName   String?
+  authorUrl    String?
+  iframelyMeta Json?
 
-  alwaysExpandEmbed Boolean @default(false) // Control default embed expansion
+  alwaysExpandEmbed Boolean @default(false)
 
   @@index([userId])
-  @@index([templateId])
 }
 
 model UserImage {
@@ -157,21 +154,38 @@ model Template {
   ratingCount Int      @default(0)
   thumbnailUrl String?
 
-  // Template settings
-  links                Link[]
+  // --- User Profile Data (Mirrored from User model) ---
+  profileName          String? // Mirrored from User.name
+  profileHandle        String? // Mirrored from User.handle
+  profileBio           String? // Mirrored from User.bio
+  profileImageUrl      String? // Mirrored from User.image
+  
+  // --- Styling & Layout Settings ---
   linksLocation        String? @default("top")
   themePalette         Json?   @default("{\"name\": \"Light\", \"palette\": [\"#FFFFFF\", \"#F2F2F2\", \"#1F2937\", \"#6170F8\"]}")
   buttonStyle          String  @default("rounded-md")
   textCardButtonStyle  String  @default("rounded-md")
+  // Font sizes
   profileNameFontSize  Int     @default(16)
   bioFontSize          Int     @default(14)
   linkTitleFontSize    Int     @default(14)
+  // Font families
   profileNameFontFamily String  @default("Inter")
   bioFontFamily        String  @default("Inter")
   linkTitleFontFamily  String  @default("Inter")
+  // Element sizes
   profileImageSize     Int     @default(70)
   socialIconSize       Int     @default(20)
   faviconSize          Int     @default(32)
+  // Padding and spacing
+  headToPicturePadding Int     @default(40)
+  pictureToNamePadding Int     @default(16)
+  nameToBioPadding     Int     @default(10)
+  bioToSocialPadding    Int     @default(16)
+  betweenCardsPadding   Int     @default(16)
+  linkCardHeight        Int     @default(40)
+  pageHorizontalMargin Int     @default(20)
+  // Frame settings
   frameTemplate        String  @default("none")
   frameColor           String  @default("#000000")
   frameThickness       Int     @default(0)
@@ -179,15 +193,7 @@ model Template {
   pictureRotation      Int     @default(0)
   syncRotation         Boolean @default(true)
   frameAnimation       Json?   @default("{\"type\": null, \"enabled\": false, \"config\": {}}")
-  // Add missing padding and spacing fields
-  headToPicturePadding Int     @default(40)
-  pictureToNamePadding Int     @default(16)
-  nameToBioPadding     Int     @default(10)
-  bioToSocialPadding    Int     @default(16)
-  betweenCardsPadding   Int     @default(16)
-  linkCardHeight        Int     @default(40)
-
-  // Add missing frame corner fields
+  // Frame corner properties
   frameCornerStyle     String  @default("squircle")
   frameBorderRadius    Int     @default(20)
   frameAllCorners      Boolean @default(true)
@@ -195,16 +201,18 @@ model Template {
   frameTopRightRadius  Int     @default(20)
   frameBottomLeftRadius Int    @default(20)
   frameBottomRightRadius Int   @default(20)
-  // Add missing frame dimension fields
+  // Frame dimensions
   frameWidth           Int     @default(512)
   frameHeight          Int     @default(512)
-  // Add missing background and photo book fields
+  // Background and Photo Book
   backgroundImage      String?
   photoBookLayout      String  @default("grid")
   photoBookOrder       Int?    @default(9999)
+  photoBookImageData   Json?   // Metadata for photo book images associated with this template
 
-  // Store the expansion state for connected links
-  linkExpansionStates  Json?
+  // --- Link Data ---
+  templateLinksData    Json?   // Stores a snapshot of the link data at the time of template creation
+  linkExpansionStates  Json? // Store the expansion state for connected links
 
   @@index([userId])
 }

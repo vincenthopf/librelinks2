@@ -7,15 +7,16 @@ export default async function handler(req, res) {
     const { currentUser } = await serverAuth(req, res);
 
     if (req.method === 'GET') {
+      console.log('GET /api/templates: Fetching templates', { isAdmin: currentUser.isAdmin });
       // If admin, return all templates. If user, return only public templates
       const templates = await db.template.findMany({
         where: currentUser.isAdmin ? {} : { isPublic: true },
         include: {
-          links: true,
           createdBy: {
             select: {
               name: true,
-              email: true,
+              handle: true,
+              image: true,
             },
           },
         },
@@ -23,16 +24,14 @@ export default async function handler(req, res) {
           createdAt: 'desc',
         },
       });
-
+      console.log('GET /api/templates: Fetched templates count:', templates.length);
       return res.status(200).json(templates);
     }
 
     if (req.method === 'POST') {
       // Only admins can create templates
       if (!currentUser.isAdmin) {
-        return res
-          .status(403)
-          .json({ error: 'Only admins can create templates' });
+        return res.status(403).json({ error: 'Only admins can create templates' });
       }
 
       const {
@@ -43,6 +42,10 @@ export default async function handler(req, res) {
         linksLocation,
         themePalette,
         buttonStyle,
+        textCardButtonStyle,
+        profileNameFontFamily,
+        bioFontFamily,
+        linkTitleFontFamily,
         profileNameFontSize,
         bioFontSize,
         linkTitleFontSize,
@@ -56,6 +59,26 @@ export default async function handler(req, res) {
         pictureRotation,
         syncRotation,
         frameAnimation,
+        headToPicturePadding,
+        pictureToNamePadding,
+        nameToBioPadding,
+        bioToSocialPadding,
+        betweenCardsPadding,
+        linkCardHeight,
+        frameCornerStyle,
+        frameBorderRadius,
+        frameAllCorners,
+        frameTopLeftRadius,
+        frameTopRightRadius,
+        frameBottomLeftRadius,
+        frameBottomRightRadius,
+        frameWidth,
+        frameHeight,
+        backgroundImage,
+        photoBookLayout,
+        photoBookOrder,
+        pageHorizontalMargin,
+        linkExpansionStates,
       } = req.body;
 
       const template = await db.template.create({
@@ -63,13 +86,21 @@ export default async function handler(req, res) {
           name,
           description,
           isPublic,
-          userId: currentUser.id,
+          createdBy: {
+            connect: {
+              id: currentUser.id,
+            },
+          },
           links: {
             create: links,
           },
           linksLocation,
           themePalette,
           buttonStyle,
+          textCardButtonStyle,
+          profileNameFontFamily,
+          bioFontFamily,
+          linkTitleFontFamily,
           profileNameFontSize,
           bioFontSize,
           linkTitleFontSize,
@@ -83,6 +114,26 @@ export default async function handler(req, res) {
           pictureRotation,
           syncRotation,
           frameAnimation,
+          headToPicturePadding,
+          pictureToNamePadding,
+          nameToBioPadding,
+          bioToSocialPadding,
+          betweenCardsPadding,
+          linkCardHeight,
+          frameCornerStyle,
+          frameBorderRadius,
+          frameAllCorners,
+          frameTopLeftRadius,
+          frameTopRightRadius,
+          frameBottomLeftRadius,
+          frameBottomRightRadius,
+          frameWidth,
+          frameHeight,
+          backgroundImage,
+          photoBookLayout,
+          photoBookOrder,
+          pageHorizontalMargin,
+          linkExpansionStates,
         },
       });
 
