@@ -30,6 +30,30 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.dev.tmp
+.env*.local
 
 # vercel
 .vercel
+
+# Sensitive files that should be kept private
+**/credentials.json
+**/secrets.json
+**/private-*.js
+**/private-*.ts
+**/*.key
+**/*.pem
+**/config/private/
+
+# Exclude internal documentation and implementation notes
+*implementation-plan.md
+*implementation-notes.md
+*-fixes.md
+*-implementation.md
+docs/internal/
+
+# Business logic that you want to protect
+# Consider splitting core business logic into private modules
+# that are referenced but not included in the public repo
+/lib/core-algorithms/
+/lib/proprietary/

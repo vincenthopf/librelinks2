@@ -282,3 +282,51 @@
   2. Template screenshots are captured in this ratio for consistency
   3. The preview dialog displays thumbnails in this aspect ratio
 - Use the standardized `getTemplateUploadParams` function for all template uploads
+
+## Repository Security and Code Protection
+
+### Protecting Code While Keeping Vercel Deployment Working
+
+- **Environment Variables Protection**:
+
+  - Never commit real API keys, tokens, or secrets to the repository
+  - Use `.env.example` as a template without real values
+  - Set up environment variables directly in Vercel dashboard
+  - Add all `.env*` files to `.gitignore` (except `.env.example`)
+
+- **Sensitive Code Organization**:
+
+  - Split proprietary algorithms and business logic into specific directories:
+    - `/lib/proprietary/` - For unique business logic
+    - `/lib/core-algorithms/` - For proprietary algorithms
+    - `/config/private/` - For sensitive configuration
+  - Add these directories to `.gitignore`
+  - Use import aliases to reference these modules in public code
+
+- **Documentation Handling**:
+
+  - Implementation details and plans should be kept private
+  - Use pattern matching in `.gitignore` to exclude implementation notes:
+    - `*implementation-plan.md`
+    - `*implementation-notes.md`
+    - `*-fixes.md`
+    - `*-implementation.md`
+
+- **Vercel Configuration**:
+
+  - Create a `vercel.json` file with appropriate build configuration
+  - Configure git deployment settings in vercel.json
+  - Use environment variables for any configuration needed during build
+
+- **Preventing Direct Forking**:
+
+  - While public repos can be forked, making critical parts private helps protect IP
+  - Use environment variables for any unique service identifiers
+  - Consider obfuscating critical frontend JavaScript if needed
+  - Structure the repo so core algorithms can be moved to private packages
+
+- **Code Structure Best Practices**:
+  - Use dependency injection patterns to separate public interfaces from private implementations
+  - Implement key algorithms as services that can be moved to private packages
+  - Document public API interfaces while keeping implementation details private
+  - Reference protected modules via imports rather than including critical code inline
