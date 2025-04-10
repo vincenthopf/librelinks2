@@ -5,7 +5,7 @@ import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { User, LogOut, AlertCircle } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import useMediaQuery from '@/hooks/use-media-query';
 import { Drawer } from 'vaul';
 import UserNavButtonMobile from './usernavbutton-mobile';
@@ -55,14 +55,6 @@ const UserAccountNavDesktop = () => {
             >
               <User size={17} color="gray" />
               <h4 className="w-full truncate">{data.user.name}</h4>
-            </Link>
-            <Link
-              target="_blank"
-              href="https://github.com/urdadx/librelinks/issues/new/choose"
-              className="group flex w-full items-center gap-2 rounded-md p-3 text-sm font-medium text-gray-500 transition-all duration-75 hover:bg-gray-100"
-            >
-              <AlertCircle size={17} color="gray" />
-              <h4>Feedback</h4>
             </Link>
             <button
               onClick={handleLogout}

@@ -10,7 +10,7 @@ const PhotoUpload = ({ onComplete }) => {
   const { uploadMutation, uploadMultipleMutation } = usePhotoBook();
 
   const handleFilesSelected = useCallback(
-    async (acceptedFiles) => {
+    async acceptedFiles => {
       if (!acceptedFiles || acceptedFiles.length === 0) return;
 
       setUploading(true);
@@ -24,14 +24,14 @@ const PhotoUpload = ({ onComplete }) => {
           // Convert all files to base64
           for (const file of acceptedFiles) {
             // Validate file size
-            if (file.size > 4 * 1024 * 1024) {
-              toast.error(`File ${file.name} exceeds 4MB size limit`);
+            if (file.size > 10 * 1024 * 1024) {
+              toast.error(`File ${file.name} exceeds 10MB size limit`);
               continue;
             }
 
             const reader = new FileReader();
-            const filePromise = new Promise((resolve) => {
-              reader.onload = (event) => {
+            const filePromise = new Promise(resolve => {
+              reader.onload = event => {
                 resolve({
                   file: event.target.result,
                   title: '',
@@ -71,14 +71,14 @@ const PhotoUpload = ({ onComplete }) => {
           const file = acceptedFiles[0];
 
           // Validate file size
-          if (file.size > 4 * 1024 * 1024) {
-            toast.error('File size exceeds 4MB limit');
+          if (file.size > 10 * 1024 * 1024) {
+            toast.error('File size exceeds 10MB limit');
             setUploading(false);
             return;
           }
 
           const reader = new FileReader();
-          reader.onload = async (event) => {
+          reader.onload = async event => {
             setProgress(50);
 
             try {
@@ -119,7 +119,7 @@ const PhotoUpload = ({ onComplete }) => {
       'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
     },
     multiple: true, // Enable multiple file selection
-    maxSize: 4 * 1024 * 1024, // 4MB max size per file
+    maxSize: 10 * 1024 * 1024, // 10MB max size per file
     onDrop: handleFilesSelected,
   });
 
@@ -127,12 +127,8 @@ const PhotoUpload = ({ onComplete }) => {
     <div
       className="w-full h-64 border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors"
       style={{
-        borderColor: isDragActive
-          ? 'var(--highlight-color)'
-          : 'var(--border-color)',
-        backgroundColor: isDragActive
-          ? 'rgba(var(--highlight-color-rgb), 0.05)'
-          : 'transparent',
+        borderColor: isDragActive ? 'var(--highlight-color)' : 'var(--border-color)',
+        backgroundColor: isDragActive ? 'rgba(var(--highlight-color-rgb), 0.05)' : 'transparent',
       }}
       {...getRootProps()}
     >
@@ -152,7 +148,7 @@ const PhotoUpload = ({ onComplete }) => {
               : 'Drag & drop photos here, or click to select'}
           </p>
           <p className="mt-2 text-sm text-center text-gray-500">
-            Upload multiple photos at once (max 4MB per photo)
+            Upload multiple photos at once (max 10MB per photo)
           </p>
         </>
       )}

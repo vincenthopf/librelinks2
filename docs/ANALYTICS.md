@@ -1,10 +1,10 @@
-# Librelinks Analytics Implementation
+# Idly.pro Analytics Implementation
 
-This document outlines the analytics implementation for Librelinks using Tinybird.
+This document outlines the analytics implementation for Idly.pro using Tinybird.
 
 ## Overview
 
-Librelinks uses Tinybird for analytics tracking. The implementation includes:
+Idly.pro uses Tinybird for analytics tracking. The implementation includes:
 
 1. **Page Views**: Tracking user visits to profile pages
 2. **Device Analytics**: Tracking what devices users are using to visit profiles

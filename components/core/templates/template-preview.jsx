@@ -41,8 +41,10 @@ const TemplatePreview = ({ template }) => {
       </div>
 
       <div className="flex justify-center">
-        <div className="w-full max-w-md">
-          <Preview user={previewUser} />
+        <div className="w-full max-w-md mx-auto">
+          <div className="aspect-[9/19] relative mx-auto">
+            <Preview user={previewUser} />
+          </div>
         </div>
       </div>
     </div>

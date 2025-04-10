@@ -6,7 +6,7 @@ import cloudinary from '@/lib/cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '4mb',
+      sizeLimit: '10mb',
     },
   },
 };
@@ -29,8 +29,8 @@ export default async function handler(req, res) {
 
     // Validate file size on server side as well
     const base64Size = Buffer.from(file.split(',')[1], 'base64').length;
-    if (base64Size > 4 * 1024 * 1024) {
-      return res.status(400).json({ message: 'File size exceeds 4MB limit' });
+    if (base64Size > 10 * 1024 * 1024) {
+      return res.status(400).json({ message: 'File size exceeds 10MB limit' });
     }
 
     const user = await db.user.findUnique({
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
         folder: `librelinks/photobook/${user.id}`,
         public_id: `photobook_${user.id}_${Date.now()}`,
         transformation: [
-          { width: 1200, height: 1200, crop: 'limit', quality: 'auto' },
+          { width: 1600, height: 1600, crop: 'limit', quality: 'auto' },
           { fetch_format: 'auto' },
         ],
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],

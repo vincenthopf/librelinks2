@@ -37,21 +37,16 @@ const EmbedContainer: React.FC<EmbedContainerProps> = ({
       <div className={`relative ${aspectRatioClass}`}>
         {/* Loading Spinner */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
           </div>
         )}
 
         {/* Error State */}
         {hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 p-4">
+          <div className="absolute inset-0 flex items-center justify-center p-4">
             <div className="flex items-center gap-2 text-gray-500">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -65,12 +60,10 @@ const EmbedContainer: React.FC<EmbedContainerProps> = ({
         )}
 
         {/* Content */}
-        <div className={`h-full w-full ${isLoading || hasError ? 'hidden' : ''}`}>
-          {children}
-        </div>
+        <div className={`h-full w-full ${isLoading || hasError ? 'hidden' : ''}`}>{children}</div>
       </div>
     </div>
   );
 };
 
-export default EmbedContainer; 
+export default EmbedContainer;

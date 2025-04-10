@@ -119,9 +119,17 @@ const LinkCard = props => {
       </div>
 
       <div
-        className={`transition-all duration-300 bg-white rounded-lg ${showPreview ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0 '}`}
+        className={`transition-all duration-300 rounded-lg overflow-hidden ${
+          showPreview ? 'opacity-100 mt-2' : 'opacity-0 h-0'
+        }`}
+        style={{
+          height: showPreview ? 'auto' : '0',
+          visibility: showPreview ? 'visible' : 'hidden',
+          marginBottom: showPreview ? '8px' : '0',
+          background: 'transparent',
+        }}
       >
-        <RichMediaPreview link={iframelyData} />
+        {showPreview && <RichMediaPreview link={iframelyData} />}
       </div>
     </div>
   );

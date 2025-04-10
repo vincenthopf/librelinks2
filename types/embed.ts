@@ -70,4 +70,4 @@ export const DEFAULT_ASPECT_RATIO: AspectRatioConfig = {
   desktop: 'aspect-video',
 };
 
-export const DEFAULT_CONTAINER_CLASS = 'w-full h-full overflow-hidden rounded-lg bg-gray-50';
+export const DEFAULT_CONTAINER_CLASS = 'w-full h-full overflow-hidden rounded-lg';

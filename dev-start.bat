@@ -1,5 +1,5 @@
 @echo off
-echo 🚀 Starting LibreLinks with Enhanced Multi-core Optimization...
+echo 🚀 Starting Idly.pro with Enhanced Multi-core Optimization...
 echo 💻 System: 16 CPU cores / 16GB RAM
 echo ⚡ Using 6 cluster workers (processes) for optimal parallelism
 echo 🌐 Your app will be available at: http://localhost:3000

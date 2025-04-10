@@ -85,7 +85,7 @@ const SuperAnalyticsPage = () => {
   return (
     <>
       <Head>
-        <title>Librelinks | Super Analytics 2.0</title>
+        <title>Idly.pro | Super Analytics 2.0</title>
       </Head>
 
       {/* Include the Plausible tracker component */}

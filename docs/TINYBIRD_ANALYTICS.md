@@ -1,10 +1,10 @@
-# Tinybird Web Analytics Implementation
+# Tinybird Web Analytics Implementation in Idly.pro
 
-This document outlines how Tinybird Web Analytics is implemented in Librelinks.
+This document outlines how Tinybird Web Analytics is implemented in Idly.pro.
 
 ## Overview
 
-Librelinks uses Tinybird's Web Analytics template to track user interactions with profiles and links. This provides valuable insights into how users interact with your content.
+Idly.pro uses Tinybird's Web Analytics template to track user interactions with profiles and links. This provides valuable insights into how users interact with your content.
 
 ## Implementation Details
 

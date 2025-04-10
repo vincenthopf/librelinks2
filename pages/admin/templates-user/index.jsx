@@ -64,33 +64,31 @@ const TemplatesUser = () => {
   });
 
   return (
-    <>
+    <Layout>
       <Head>
-        <title>Librelinks | Templates</title>
+        <title>Idly.pro | Templates</title>
       </Head>
-      <Layout>
-        <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-auto">
-          <div className="max-w-[690px] mx-auto my-10">
-            <h1 className="text-2xl font-bold mb-6">Templates</h1>
-            <p className="text-gray-600 mb-8">
-              Browse and apply templates to your profile. Choose from a variety of pre-designed
-              layouts and styles.
-            </p>
+      <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-auto">
+        <div className="max-w-[640px] mx-auto my-10">
+          <h1 className="text-2xl font-bold mb-6">Templates</h1>
+          <p className="text-gray-600 mb-8">
+            Browse and apply templates to your profile. Choose from a variety of pre-designed
+            layouts and styles.
+          </p>
 
-            {isLoading ? (
-              <TemplateLoading />
-            ) : (
-              <TemplateBrowser
-                templates={templates}
-                onApplyTemplate={(id, sections) =>
-                  applyMutation.mutateAsync({ templateId: id, sectionsToApply: sections })
-                }
-              />
-            )}
-          </div>
+          {isLoading ? (
+            <TemplateLoading />
+          ) : (
+            <TemplateBrowser
+              templates={templates}
+              onApplyTemplate={(id, sections) =>
+                applyMutation.mutateAsync({ templateId: id, sectionsToApply: sections })
+              }
+            />
+          )}
         </div>
-      </Layout>
-    </>
+      </div>
+    </Layout>
   );
 };
 

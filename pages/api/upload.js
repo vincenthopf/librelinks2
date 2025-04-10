@@ -6,7 +6,7 @@ import cloudinary, { validateFile, getUploadParams } from '@/lib/cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '4mb',
+      sizeLimit: '10mb',
     },
   },
 };
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
         folder: `librelinks/user_images/${user.id}`,
         public_id: `user_${user.id}_${Date.now()}`,
         transformation: [
-          { width: 1200, height: 1200, crop: 'limit', quality: 'auto' },
+          { width: 1600, height: 1600, crop: 'limit', quality: 'auto' },
           { fetch_format: 'auto' },
         ],
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],

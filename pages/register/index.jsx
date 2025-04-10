@@ -10,7 +10,7 @@ export default function Register() {
   return (
     <>
       <Head>
-        <title>Librelinks | Register</title>
+        <title>Idly.pro | Register</title>
       </Head>
 
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] flex  items-center justify-center ">
@@ -22,9 +22,7 @@ export default function Register() {
             <h3 className="text-xl font-semibold">
               {route === '/register' ? 'Create your account' : 'Welcome back'}
             </h3>
-            <p className="text-sm text-gray-500">
-              Get started for free. No credit card required
-            </p>
+            <p className="text-sm text-gray-500">Get started for free. No credit card required</p>
           </div>
           <Form type="register" />
         </div>

@@ -6,7 +6,7 @@ import cloudinary from '@/lib/cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '4mb',
+      sizeLimit: '10mb',
     },
   },
 };
@@ -47,9 +47,7 @@ export default async function handler(req, res) {
       return res.status(200).json(backgroundImages);
     } catch (error) {
       console.error('Error fetching background images:', error);
-      return res
-        .status(500)
-        .json({ message: 'Failed to fetch background images' });
+      return res.status(500).json({ message: 'Failed to fetch background images' });
     }
   }
 
@@ -57,9 +55,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     // Check if user is admin
     if (!user.isAdmin) {
-      return res
-        .status(403)
-        .json({ message: 'Only admins can create background images' });
+      return res.status(403).json({ message: 'Only admins can create background images' });
     }
 
     try {
@@ -80,7 +76,7 @@ export default async function handler(req, res) {
         folder: `librelinks/background_images`,
         public_id: `background_${Date.now()}`,
         transformation: [
-          { width: 1920, height: 1080, crop: 'limit', quality: 'auto' },
+          { width: 2560, height: 1440, crop: 'limit', quality: 'auto' },
           { fetch_format: 'auto' },
         ],
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],

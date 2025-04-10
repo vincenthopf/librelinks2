@@ -8,19 +8,14 @@ import { Button } from '@/components/ui/button';
 import CloudinaryImage from '@/components/shared/cloudinary-image';
 import { cn } from '@/lib/utils';
 
-const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/webp': ['.webp'],
 };
 
-const UploadThumbnailDialog = ({
-  templateId,
-  onUploadComplete,
-  open,
-  onOpenChange,
-}) => {
+const UploadThumbnailDialog = ({ templateId, onUploadComplete, open, onOpenChange }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
@@ -38,7 +33,7 @@ const UploadThumbnailDialog = ({
     }
   };
 
-  const readFileAsDataURL = (file) => {
+  const readFileAsDataURL = file => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
@@ -47,7 +42,7 @@ const UploadThumbnailDialog = ({
     });
   };
 
-  const uploadToCloudinary = async (file) => {
+  const uploadToCloudinary = async file => {
     try {
       setIsUploading(true);
       setError(null);
@@ -61,10 +56,8 @@ const UploadThumbnailDialog = ({
         { file: base64Data },
         {
           signal: abortControllerRef.current.signal,
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
+          onUploadProgress: progressEvent => {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             setUploadProgress(progress);
           },
         }
@@ -84,29 +77,23 @@ const UploadThumbnailDialog = ({
         return;
       }
 
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          'Failed to upload thumbnail'
-      );
+      setError(err.response?.data?.message || err.message || 'Failed to upload thumbnail');
       setIsUploading(false);
       setUploadProgress(0);
     }
   };
 
   const handleDrop = useCallback(
-    async (files) => {
+    async files => {
       const file = files[0];
 
       if (file.size > MAX_FILE_SIZE) {
-        toast.error('File size must be under 4MB');
+        toast.error('File size must be under 10MB');
         return;
       }
 
       if (!ALLOWED_FILE_TYPES[file.type]) {
-        toast.error(
-          'Invalid file type. Please upload a JPEG, PNG, or WebP image.'
-        );
+        toast.error('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
         return;
       }
 
@@ -182,7 +169,7 @@ const UploadThumbnailDialog = ({
                 </div>
                 <button
                   className="text-sm text-blue-600 mt-4 hover:underline"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     setImageUrl('');
                     resetUploadState();
@@ -197,9 +184,7 @@ const UploadThumbnailDialog = ({
                 <p className="mt-4 text-sm text-gray-600">
                   Drop your image here, or click to select
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
-                  Maximum file size: 4MB
-                </p>
+                <p className="mt-2 text-xs text-gray-500">Maximum file size: 10MB</p>
                 {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
               </div>
             )}

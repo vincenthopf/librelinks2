@@ -1,12 +1,12 @@
-# Librelinks
+# Idly.pro
 
-Librelinks is an open-source link in bio tool for everyone.
+Idly.pro is an open-source link in bio tool for everyone.
 
-The goal of Librelinks is to provide users with a platform that helps them to connect to their audience through a single link.
+The goal of Idly.pro is to provide users with a platform that helps them to connect to their audience through a single link.
 
 Official site: [https://librelinks.vercel.app](https://librelinks.vercel.app)
 
-An example Librelinks page: [https://librelinks.vercel.app/maayez](https://librelinks.vercel.app/maayez)
+An example Idly.pro page: [https://librelinks.vercel.app/maayez](https://librelinks.vercel.app/maayez)
 
 ## ⚒️ Demo
 
@@ -14,7 +14,7 @@ Create and customize your link in bio in minutes✨
 
 <div style="width: 600px;">
 
-![Librelinks Demo](.github/demo.gif)
+![Idly.pro Demo](.github/demo.gif)
 
 </div>
 
@@ -33,7 +33,7 @@ It has 4 Core Features:
 | <div style="width:140px">**Category**</div> | <div style="width:100px">**Choice**</div>                                         | **Descriptions**                                                                                                                                                                 |
 | ------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Language**                                | [JavaScript](https://github.com/microsoft/TypeScript)                             | JavaScript (JS) is a cross-platform, object-oriented programming language used by developers to make web pages interactive.                                                      |
-| **UI Library**                              | [React](https://github.com/facebook/react)                                        | React’s declarative syntax and component-based architecture make it simple to develop reactive reusable components.                                                              |
+| **UI Library**                              | [React](https://github.com/facebook/react)                                        | React's declarative syntax and component-based architecture make it simple to develop reactive reusable components.                                                              |
 | **CSS Framework**                           | [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss)                       | Tailwind speeds up development by providing helpful css utilities and removing the need to context switch between jsx and css files.                                             |
 | **Web Framework**                           | [NextJS 13](https://github.com/vercel/next.js)                                    | Next.js supports static site generation and helps build efficient React webpages that support SEO.                                                                               |
 | **Database**                                | [MongoDB & Prisma](https://www.mongodb.com/docs/manual/reference/program/mongod/) | MongoDB is a source-available cross-platform document-oriented database program. Classified as a NoSQL database program, MongoDB uses JSON-like documents with optional schemas. |
@@ -41,7 +41,7 @@ It has 4 Core Features:
 
 ## 📁 Project Structure
 
-Librelinks is created with the NextJS web framework and follows its project structure.
+Idly.pro is created with the NextJS web framework and follows its project structure.
 
 | <div style="width:115px">**Page Route**</div> | **Code Path**               | **Description**                                 |
 | --------------------------------------------- | --------------------------- | ----------------------------------------------- |
@@ -75,7 +75,7 @@ Checkout the `.env.example` file to learn how to get started.
 2. Change the directory `cd librelinks`
 3. Install the dependency `npm install`
 4. Start a development server `npm run dev`
-5. Open your browser and visit [http://localhost:3000](http://localhost:3000) to see Librelinks live
+5. Open your browser and visit [http://localhost:3000](http://localhost:3000) to see Idly.pro live
 
 ## Contributing 🤝
 

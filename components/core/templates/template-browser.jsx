@@ -112,12 +112,14 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
                 <CloudinaryImage
                   src={template.thumbnailUrl}
                   alt={template.name}
-                  layout="fill"
-                  objectFit="cover"
-                  className="w-full h-full"
+                  width={360}
+                  height={760}
+                  className="w-full h-full object-cover"
                   onError={() => handleImageError(template.id)}
                   loading="lazy"
-                  quality={80}
+                  priority={false}
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  preserveAspectRatio={true}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
@@ -163,6 +165,9 @@ const TemplateBrowser = ({ templates, onApplyTemplate }) => {
                   width={360}
                   height={760}
                   className="w-full h-auto mx-auto"
+                  priority={false}
+                  preserveAspectRatio={true}
+                  onError={() => handleImageError(selectedTemplate.id)}
                 />
               </div>
             )}

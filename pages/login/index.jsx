@@ -7,7 +7,9 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>Librelinks | Login</title>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Idly.pro | Login</title>
       </Head>
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] flex  items-center justify-center ">
         <div className="z-10 w-full max-w-md overflow-hidden rounded-2xl border border-gray-100 shadow-xl">
@@ -16,9 +18,7 @@ export default function Login() {
               <Wand color="black" size={30} />
             </Link>
             <h3 className="text-xl font-semibold">Sign in to your account</h3>
-            <p className="text-sm text-gray-500">
-              Start transforming your online presence✨
-            </p>
+            <p className="text-sm text-gray-500">Start transforming your online presence✨</p>
           </div>
           <Form type="login" />
         </div>

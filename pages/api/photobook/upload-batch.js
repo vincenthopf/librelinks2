@@ -56,8 +56,8 @@ export default async function handler(req, res) {
 
       // Validate file size
       const base64Size = Buffer.from(file.split(',')[1], 'base64').length;
-      if (base64Size > 4 * 1024 * 1024) {
-        errors.push({ message: 'File size exceeds 4MB limit' });
+      if (base64Size > 10 * 1024 * 1024) {
+        errors.push({ message: 'File size exceeds 10MB limit' });
         continue;
       }
 
@@ -109,8 +109,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Server error:', error);
-    return res
-      .status(500)
-      .json({ message: 'Internal server error', error: error.message });
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 }

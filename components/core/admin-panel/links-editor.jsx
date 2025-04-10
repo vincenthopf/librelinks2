@@ -424,7 +424,6 @@ const LinksEditor = () => {
             ) : null /* Don't show 'no links' if only regular items are missing but social exist */
           }
         </div>
-        <div className="h-[40px] mb-12" />
       </DndContext>
     </div>
   );

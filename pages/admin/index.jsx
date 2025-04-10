@@ -9,12 +9,11 @@ const Admin = () => {
   return (
     <>
       <Head>
-        <title>Librelinks | Admin</title>
+        <title>Idly.pro | Admin</title>
       </Head>
       <Layout>
-        <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-scroll">
+        <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-auto">
           <LinksEditor />
-          {isMobile && <div className="h-[40px] mb-24" />}
         </div>
       </Layout>
     </>

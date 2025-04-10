@@ -114,11 +114,11 @@ const Settings = () => {
   return (
     <>
       <Head>
-        <title>Librelinks | Profile </title>
+        <title>Idly.pro | Profile </title>
       </Head>
       <Layout>
-        <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-scroll">
-          <div className="max-w-[690px] mx-auto my-10">
+        <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-auto">
+          <div className="max-w-[640px] mx-auto my-10">
             <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
             <div className="flex border-b mb-8">
@@ -134,26 +134,6 @@ const Settings = () => {
               </button>
               <button
                 className={`py-2 px-4 font-medium ${
-                  activeTab === 'frame'
-                    ? 'border-b-2 border-blue-500 text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                onClick={() => setActiveTab('frame')}
-              >
-                Frame Template
-              </button>
-              <button
-                className={`py-2 px-4 font-medium ${
-                  activeTab === 'padding'
-                    ? 'border-b-2 border-blue-500 text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                onClick={() => setActiveTab('padding')}
-              >
-                Padding
-              </button>
-              <button
-                className={`py-2 px-4 font-medium ${
                   activeTab === 'danger'
                     ? 'border-b-2 border-blue-500 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -166,8 +146,8 @@ const Settings = () => {
 
             {activeTab === 'profile' && (
               <div>
-                <div className="rounded-2xl border bg-white p-lg w-full h-auto pb-10">
-                  <div className="flex flex-col lg:flex-row items-start gap-x-8 p-10">
+                <div className="rounded-2xl border bg-white p-6 w-full h-auto">
+                  <div className="flex flex-col lg:flex-row items-start gap-x-8 mb-6">
                     <div className="flex-shrink-0 flex items-center justify-center mx-auto lg:mx-0 mb-6 lg:mb-0 min-w-[100px]">
                       {fetchedUser ? (
                         <UserAvatarSetting />
@@ -199,271 +179,33 @@ const Settings = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="px-10">
-                    <div className="mb-4">
-                      <label
-                        htmlFor="usernameInput"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Name
-                      </label>
-                      <input
-                        id="usernameInput"
-                        type="text"
-                        value={username ?? ''}
-                        onChange={e => setUsername(e.target.value)}
-                        onBlur={handleSubmit}
-                        placeholder="Your Name"
-                        className="outline-none w-full p-3 rounded-lg border-2
-                          bg-gray-100 text-black focus:border-slate-900"
-                      />
-                    </div>
-                    <textarea
-                      value={bio ?? ''}
-                      onChange={e => setBio(e.target.value)}
+
+                  <div className="mb-4">
+                    <label
+                      htmlFor="usernameInput"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Name
+                    </label>
+                    <input
+                      id="usernameInput"
+                      type="text"
+                      value={username ?? ''}
+                      onChange={e => setUsername(e.target.value)}
                       onBlur={handleSubmit}
-                      placeholder="@Bio"
-                      className="outline-none w-full p-4 h-[120px] rounded-lg border-2
-                    bg-gray-100 text-black focus:border-slate-900"
+                      placeholder="Your Name"
+                      className="outline-none w-full p-3 rounded-lg border-2
+                        bg-gray-100 text-black focus:border-slate-900"
                     />
                   </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'frame' && (
-              <div>
-                <div className="rounded-2xl border bg-white p-lg w-full h-auto">
-                  <div className="p-6">
-                    <FrameCustomizer
-                      template={fetchedUser?.frameTemplate || 'none'}
-                      color={fetchedUser?.frameColor || '#000000'}
-                      thickness={fetchedUser?.frameThickness ?? 0}
-                      rotation={fetchedUser?.frameRotation || 0}
-                      pictureRotation={fetchedUser?.pictureRotation || 0}
-                      syncRotation={fetchedUser?.syncRotation ?? true}
-                      animation={
-                        fetchedUser?.frameAnimation || {
-                          type: null,
-                          enabled: false,
-                          config: {},
-                        }
-                      }
-                      name={fetchedUser?.name || ''}
-                      cornerStyle={fetchedUser?.frameCornerStyle || 'squircle'}
-                      borderRadius={fetchedUser?.frameBorderRadius || 20}
-                      allCorners={fetchedUser?.frameAllCorners ?? true}
-                      topLeftRadius={fetchedUser?.frameTopLeftRadius || 20}
-                      topRightRadius={fetchedUser?.frameTopRightRadius || 20}
-                      bottomLeftRadius={fetchedUser?.frameBottomLeftRadius || 20}
-                      bottomRightRadius={fetchedUser?.frameBottomRightRadius || 20}
-                      width={fetchedUser?.frameWidth || 512}
-                      height={fetchedUser?.frameHeight || 512}
-                      onTemplateChange={async template => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameTemplate: template,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Frame template updated');
-                        } catch (error) {
-                          toast.error('Failed to update frame template');
-                        }
-                      }}
-                      onColorChange={async color => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameColor: color,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Frame color updated');
-                        } catch (error) {
-                          toast.error('Failed to update frame color');
-                        }
-                      }}
-                      onThicknessChange={async thickness => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameThickness: thickness,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Frame thickness updated');
-                        } catch (error) {
-                          console.error('Frame thickness update error:', error);
-                          toast.error('Failed to update frame thickness');
-                        }
-                      }}
-                      onRotationChange={async rotation => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameRotation: rotation,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Frame rotation updated');
-                        } catch (error) {
-                          toast.error('Failed to update frame rotation');
-                        }
-                      }}
-                      onPictureRotationChange={async rotation => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            pictureRotation: rotation,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Picture rotation updated');
-                        } catch (error) {
-                          toast.error('Failed to update picture rotation');
-                        }
-                      }}
-                      onSyncRotationChange={async sync => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            syncRotation: sync,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Sync rotation updated');
-                        } catch (error) {
-                          toast.error('Failed to update sync rotation');
-                        }
-                      }}
-                      onAnimationChange={async animation => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameAnimation: animation,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Frame animation updated');
-                        } catch (error) {
-                          toast.error('Failed to update frame animation');
-                        }
-                      }}
-                      onCornerStyleChange={async style => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameCornerStyle: style,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Corner style updated');
-                        } catch (error) {
-                          toast.error('Failed to update corner style');
-                        }
-                      }}
-                      onBorderRadiusChange={async radius => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameBorderRadius: radius,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Border radius updated');
-                        } catch (error) {
-                          toast.error('Failed to update border radius');
-                        }
-                      }}
-                      onAllCornersChange={async allCorners => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameAllCorners: allCorners,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('All corners setting updated');
-                        } catch (error) {
-                          toast.error('Failed to update all corners setting');
-                        }
-                      }}
-                      onTopLeftRadiusChange={async radius => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameTopLeftRadius: radius,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Top left radius updated');
-                        } catch (error) {
-                          toast.error('Failed to update top left radius');
-                        }
-                      }}
-                      onTopRightRadiusChange={async radius => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameTopRightRadius: radius,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Top right radius updated');
-                        } catch (error) {
-                          toast.error('Failed to update top right radius');
-                        }
-                      }}
-                      onBottomLeftRadiusChange={async radius => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameBottomLeftRadius: radius,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Bottom left radius updated');
-                        } catch (error) {
-                          toast.error('Failed to update bottom left radius');
-                        }
-                      }}
-                      onBottomRightRadiusChange={async radius => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameBottomRightRadius: radius,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Bottom right radius updated');
-                        } catch (error) {
-                          toast.error('Failed to update bottom right radius');
-                        }
-                      }}
-                      onWidthChange={async width => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameWidth: width,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Frame width updated');
-                        } catch (error) {
-                          toast.error('Failed to update frame width');
-                        }
-                      }}
-                      onHeightChange={async height => {
-                        try {
-                          await axios.patch('/api/frame', {
-                            frameHeight: height,
-                          });
-                          queryClient.invalidateQueries('users');
-                          signalIframe();
-                          toast.success('Frame height updated');
-                        } catch (error) {
-                          toast.error('Failed to update frame height');
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'padding' && (
-              <div>
-                <div className="rounded-2xl border bg-white p-lg w-full h-auto">
-                  <div className="p-6">
-                    <PaddingSelector />
-                  </div>
+                  <textarea
+                    value={bio ?? ''}
+                    onChange={e => setBio(e.target.value)}
+                    onBlur={handleSubmit}
+                    placeholder="@Bio"
+                    className="outline-none w-full p-4 h-[120px] rounded-lg border-2
+                  bg-gray-100 text-black focus:border-slate-900"
+                  />
                 </div>
               </div>
             )}
@@ -475,7 +217,7 @@ const Settings = () => {
                     Deleting your account permanently deletes your page and all your data.
                   </Balancer>
                 </h3>
-                <div className="w-full h-auto border bg-white rounded-lg p-6">
+                <div className="rounded-2xl border bg-white p-6 w-full h-auto">
                   <AlertDialog.Root>
                     <AlertDialog.Trigger asChild>
                       <button
@@ -491,8 +233,6 @@ const Settings = () => {
               </div>
             )}
           </div>
-
-          {isMobile ? <div className="h-[100px] mb-24" /> : <div className="h-[40px] mb-12" />}
         </div>
       </Layout>
     </>

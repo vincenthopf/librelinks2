@@ -1,4 +1,4 @@
-# Cursor Memory for Librelinks
+# Cursor Memory for Idly.pro
 
 ## UI Parameters and Settings
 
@@ -127,3 +127,158 @@
 - Button styling fields:
   - `buttonStyle`: Style for link cards
   - `textCardButtonStyle`: Style for text cards
+
+## Layout Consistency
+
+### Container Width and Padding Standards
+
+- The application uses a consistent container width of `max-w-[640px]` for admin panel content
+- All main content areas (LinksEditor, Settings, etc.) should use this same max-width constraint
+- Key layout standards to maintain:
+  1. All main content containers should use `max-w-[640px] mx-auto my-10`
+  2. Card elements should use `rounded-2xl border bg-white p-6 w-full h-auto`
+  3. Child elements within cards should use consistent padding and margins
+- When adding new pages or components:
+  - Check existing container widths in similar components (like LinksEditor)
+  - Maintain consistent spacing between major UI elements (set by `my-10` in containers)
+  - Use the same rounding and padding for card elements across the application
+
+### Page Structure Pattern
+
+- The standard page structure is:
+  ```jsx
+  <Layout>
+    <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-auto">
+      <div className="max-w-[640px] mx-auto my-10">{/* Page-specific content */}</div>
+    </div>
+  </Layout>
+  ```
+- This structure ensures the content has consistent width and positioning across all admin pages
+
+### Common Issues and Solutions
+
+- Inconsistent padding can create visual misalignment between different pages
+- Avoid nested padding containers (like multiple divs with padding) that compound spacing
+- Keep card padding consistent (p-6) rather than using different values for different cards
+- Use mb-6 for spacing between cards rather than adjusting padding
+
+## Responsive Design Best Practices
+
+### Profile Page Whitespace Issues
+
+- Profile pages (`pages/[handle].jsx`) can experience unwanted whitespace at the bottom on small screens or when zoomed
+- Issues commonly fixed include:
+  1. Removed the fixed margin div (`<div className="my-10 lg:my-24" />`) at the bottom of the profile page
+  2. Changed min-height from fixed `min-h-screen` to responsive `min-h-fit md:min-h-screen` to better adapt to content
+  3. Used responsive padding that scales properly on different screen sizes
+
+### Container Height Guidelines
+
+- Use `min-h-fit` or `h-auto` instead of fixed heights when content size may vary
+- Add responsive height classes that adjust based on screen size: `min-h-fit md:min-h-screen`
+- Consider adding media query breakpoints for critical height adjustments
+- Use percentage-based heights where appropriate, rather than fixed pixel values
+- When using `min-h-screen`, ensure padding and margins don't force content overflow
+
+### Padding and Margins for Mobile
+
+- Test dynamic padding settings on various screen sizes to ensure they scale appropriately
+- Use smaller padding/margin values on mobile:
+  - `className="p-2 md:p-4 lg:p-6"`
+  - `style={{ padding: isMobile ? '12px' : '24px' }}`
+- Avoid fixed vertical margins at the bottom of pages, especially with `min-h-screen`
+- Use flexible spacing units (rem/em) that scale with screen size and text
+
+### Dynamic Embed Content Expansion
+
+- Link cards with embeddable content (social media, videos, etc.) should use dynamic height rather than reserving space
+- Key implementation details:
+  1. Replace fixed `max-height` with dynamic `height: auto` for expanded state
+  2. Use `height: 0` and `visibility: hidden` for collapsed state
+  3. Only render the `RichMediaPreview` component when content is expanded (`{showPreview && <Component />}`)
+  4. Add proper transition timing and overflow handling for smooth animations
+- Benefits of dynamic expansion:
+  - No empty whitespace is reserved when previews are collapsed
+  - Page length adapts to actual visible content
+  - Better user experience on mobile devices
+  - More efficient rendering as hidden components aren't processed until needed
+- When implementing expandable sections:
+  - Always use conditional rendering for expensive components
+  - Use `overflow: hidden` to prevent content leaking during transitions
+  - Include proper ARIA attributes for accessibility
+
+### Transparent Embed Backgrounds
+
+- Embeds (iframely, social media cards, etc.) should have transparent backgrounds to blend with the theme
+- Implementation requires several changes:
+  1. Remove `bg-white` from the main container in `links-card.jsx`
+  2. Add explicit `background: transparent` to ensure consistency
+  3. Remove `bg-gray-50` from `DEFAULT_CONTAINER_CLASS` in `types/embed.ts`
+  4. Remove background color from loading and error states in `embed-container.tsx`
+- Benefits of transparent backgrounds:
+  - Embeds blend seamlessly with the user's chosen theme
+  - More cohesive and professional UI
+  - Consistent appearance across different types of embedded content
+- If a specific embed requires a background color, add it only to that specific embed container
+
+## Cloudinary Image Handling
+
+### Consistent Image Loading
+
+- All images in the application (avatars, backgrounds, template thumbnails) should use the CloudinaryImage component
+- Standardized upload parameters are defined in `lib/cloudinary.js`:
+  - `getUploadParams` - for user profile images
+  - `getTemplateUploadParams` - for template thumbnails
+- Always use these helper functions rather than inline configuration to ensure consistency
+
+### URL Parsing and Public IDs
+
+- The CloudinaryImage component handles extraction of public IDs from Cloudinary URLs
+- For robust URL handling, we use URL parsing with standardized path segment detection
+- Key implementation details:
+  1. Parse the URL properly using the URL constructor
+  2. Split pathname into segments and look for the 'upload' segment
+  3. Skip version segments (v1, v2) when extracting the public ID
+  4. Remove file extensions from public IDs to ensure consistency
+- When troubleshooting image loading:
+  - Check browser console for "Original src" and "Extracted publicId" logs
+  - Verify that Cloudinary URLs have consistent formats across different image types
+  - Use the `preserveAspectRatio` prop for template thumbnails and other non-square images
+
+### Image Component Configuration
+
+- Critical props for reliable image loading:
+  - `preserveAspectRatio`: Set to true for non-square images to maintain proportions
+  - `sizes`: Configure responsive sizing based on viewport (e.g., "(max-width: 640px) 50vw, 33vw")
+  - `priority`: Set to true only for above-the-fold critical images
+  - `loading`: Use "lazy" for images that can be deferred
+- Common issues:
+  - Missing image with "Error loading thumbnail": Check CloudinaryImage component logs
+  - Distorted images: Use preserveAspectRatio or adjust crop settings
+  - Slow loading: Check image dimensions and quality settings
+
+### Image Upload Size Limits
+
+- Standard file size limit across the application is 10MB per image
+- Batch uploads (multiple photos at once) have a 20MB total limit
+- Size limits are enforced in multiple places:
+  1. API route configurations via `sizeLimit: '10mb'` in the `config` object
+  2. Server-side validation using `base64Size > 10 * 1024 * 1024`
+  3. Client-side validation in components using `maxSize: 10 * 1024 * 1024` for dropzone
+  4. UI messaging that informs users of the 10MB limit
+- When implementing new upload features, maintain this 10MB standard for consistency
+
+### Template Thumbnails
+
+- Template thumbnails must maintain a consistent 9/19 aspect ratio across all views
+- Implementation guidelines:
+  1. Use `aspect-[9/19]` in the container div to ensure proper proportions
+  2. Set both `width={360}` and `height={760}` in the CloudinaryImage component
+  3. Always use `preserveAspectRatio={true}` for template thumbnails
+  4. Set appropriate `sizes` attribute for responsive loading (e.g., "(max-width: 640px) 50vw, 33vw")
+- The 9/19 ratio represents a mobile device screen which is appropriate for profile templates
+- When uploading thumbnails, ensure that:
+  1. The template uploader enforces this aspect ratio during cropping
+  2. Template screenshots are captured in this ratio for consistency
+  3. The preview dialog displays thumbnails in this aspect ratio
+- Use the standardized `getTemplateUploadParams` function for all template uploads

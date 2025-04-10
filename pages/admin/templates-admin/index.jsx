@@ -35,20 +35,73 @@ const TemplatesAdmin = () => {
   });
 
   // Delete template mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (templateId) => {
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async templateId => {
       await axios.delete(`/api/templates/${templateId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['templates']);
       toast.success('Template deleted successfully');
     },
-    onError: (error) => {
-      toast.error('Failed to delete template');
+    onError: error => {
+      toast.error(error?.response?.data?.message || 'Failed to delete template');
     },
   });
 
-  const handleUpload = (templateId) => {
+  // Edit Template Name Mutation
+  const editTemplateNameMutation = useMutation({
+    mutationFn: async ({ templateId, newName }) => {
+      await axios.put(`/api/templates/${templateId}`, { name: newName });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['templates']);
+      // Success toast handled in child
+    },
+    onError: error => {
+      toast.error(error?.response?.data?.message || 'Failed to update template name');
+    },
+  });
+
+  // --- New Background Image Mutations ---
+  const editBgImageMutation = useMutation({
+    mutationFn: async ({ imageId, newName }) => {
+      await axios.put(`/api/background-images/${imageId}`, { name: newName });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['backgroundImages']);
+      // Success toast handled in child
+    },
+    onError: error => {
+      toast.error(error.response?.data?.message || 'Failed to update background image name');
+    },
+  });
+
+  const deleteBgImageMutation = useMutation({
+    mutationFn: async imageId => {
+      await axios.delete(`/api/background-images/${imageId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['backgroundImages']);
+      toast.success('Background image deleted successfully');
+    },
+    onError: error => {
+      toast.error(error.response?.data?.message || 'Failed to delete background image');
+    },
+  });
+
+  const handleDeleteBgImage = async imageId => {
+    if (window.confirm('Are you sure you want to delete this background image?')) {
+      try {
+        await deleteBgImageMutation.mutateAsync(imageId);
+      } catch (error) {
+        // Error handled by mutation's onError
+        console.error('Delete confirmation error (should be handled by mutation):', error);
+      }
+    }
+  };
+  // --- End New Background Image Mutations ---
+
+  const handleUpload = templateId => {
     setSelectedTemplateId(templateId);
     setUploadDialogOpen(true);
   };
@@ -60,13 +113,13 @@ const TemplatesAdmin = () => {
   };
 
   return (
-    <>
+    <Layout>
       <Head>
-        <title>Librelinks | Templates Admin</title>
+        <title>Idly.pro | Templates Admin</title>
       </Head>
-      <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-auto">
-          <div className="max-w-[690px] mx-auto my-10">
+          <div className="max-w-[640px] mx-auto my-10">
             <h1 className="text-2xl font-bold mb-6">Templates Admin</h1>
 
             {/* Tab Navigation */}
@@ -97,8 +150,7 @@ const TemplatesAdmin = () => {
             {activeTab === 'templates' && (
               <>
                 <p className="text-gray-600 mb-8">
-                  Create and manage templates that users can apply to their
-                  profiles.
+                  Create and manage templates that users can apply to their profiles.
                 </p>
 
                 {templatesLoading ? (
@@ -107,8 +159,11 @@ const TemplatesAdmin = () => {
                   <>
                     <TemplateList
                       templates={templates}
-                      onDelete={(id) => deleteMutation.mutateAsync(id)}
+                      onDelete={id => deleteTemplateMutation.mutateAsync(id)}
                       onUpload={handleUpload}
+                      onEditName={(templateId, newName) =>
+                        editTemplateNameMutation.mutateAsync({ templateId, newName })
+                      }
                     />
                     <UploadThumbnailDialog
                       templateId={selectedTemplateId}
@@ -125,28 +180,31 @@ const TemplatesAdmin = () => {
             {activeTab === 'backgrounds' && (
               <>
                 <p className="text-gray-600 mb-8">
-                  Upload and manage background images that users can apply to
-                  their profiles. These images will be available for all users
-                  to select in the Customize section.
+                  Upload and manage background images that users can apply to their profiles. These
+                  images will be available for all users to select in the Customize section.
                 </p>
 
                 <BackgroundImageUploader />
 
                 {backgroundsLoading ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-600">
-                      Loading background images...
-                    </p>
+                    <p className="text-gray-600">Loading background images...</p>
                   </div>
                 ) : (
-                  <BackgroundImageList backgroundImages={backgroundImages} />
+                  <BackgroundImageList
+                    backgroundImages={backgroundImages}
+                    onEditName={(imageId, newName) =>
+                      editBgImageMutation.mutateAsync({ imageId, newName })
+                    }
+                    onDelete={handleDeleteBgImage}
+                  />
                 )}
               </>
             )}
           </div>
         </div>
-      </Layout>
-    </>
+      </div>
+    </Layout>
   );
 };
 

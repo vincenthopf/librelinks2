@@ -35,14 +35,23 @@ export default async function handler(req, res) {
 
     // All other methods require admin access
     if (!currentUser.isAdmin) {
-      return res
-        .status(403)
-        .json({ error: 'Only admins can modify templates' });
+      return res.status(403).json({ error: 'Only admins can modify templates' });
     }
 
     if (req.method === 'PUT') {
+      const { name } = req.body; // Only extract name for potential update
+
+      // Check if only the name is being updated
+      if (name && Object.keys(req.body).length === 1) {
+        const updatedTemplate = await db.template.update({
+          where: { id },
+          data: { name },
+        });
+        return res.status(200).json(updatedTemplate);
+      }
+
+      // --- Existing Full Update Logic (keep for now, but might refactor later) ---
       const {
-        name,
         description,
         isPublic,
         links,
@@ -64,7 +73,7 @@ export default async function handler(req, res) {
         frameAnimation,
       } = req.body;
 
-      // First, delete existing links
+      // First, delete existing links (This part seems specific to full updates)
       await db.link.deleteMany({
         where: { templateId: id },
       });
@@ -73,11 +82,11 @@ export default async function handler(req, res) {
       const updatedTemplate = await db.template.update({
         where: { id },
         data: {
-          name,
+          name, // Use the destructured name here as well
           description,
           isPublic,
           links: {
-            create: links,
+            create: links, // Assuming links is an array for creation
           },
           linksLocation,
           themePalette,
@@ -100,6 +109,7 @@ export default async function handler(req, res) {
           links: true,
         },
       });
+      // --- End of Existing Full Update Logic ---
 
       return res.status(200).json(updatedTemplate);
     }

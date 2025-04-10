@@ -1,11 +1,11 @@
 import { db } from '@/lib/db';
 import serverAuth from '@/lib/serverAuth';
-import cloudinary from '@/lib/cloudinary';
+import cloudinary, { getTemplateUploadParams } from '@/lib/cloudinary';
 
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '4mb',
+      sizeLimit: '10mb',
     },
   },
 };
@@ -15,9 +15,7 @@ export default async function handler(req, res) {
     const { currentUser } = await serverAuth(req, res);
 
     if (!currentUser.isAdmin) {
-      return res
-        .status(403)
-        .json({ message: 'Only admins can upload template thumbnails' });
+      return res.status(403).json({ message: 'Only admins can upload template thumbnails' });
     }
 
     if (req.method !== 'POST') {
@@ -42,16 +40,10 @@ export default async function handler(req, res) {
     }
 
     // Upload to Cloudinary
-    const uploadResult = await cloudinary.uploader.upload(file, {
-      folder: 'librelinks/template_thumbnails',
-      public_id: `template_${template.id}_${Date.now()}`,
-      transformation: [
-        { width: 800, height: 800, crop: 'limit', quality: 'auto' },
-        { fetch_format: 'auto' },
-      ],
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-      resource_type: 'image',
-    });
+    const uploadResult = await cloudinary.uploader.upload(
+      file,
+      getTemplateUploadParams(template.id)
+    );
 
     // Update template with new thumbnail URL
     await db.template.update({

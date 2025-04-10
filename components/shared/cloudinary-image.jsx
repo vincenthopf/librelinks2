@@ -28,10 +28,7 @@ export const CloudinaryImage = ({
   if (!src) {
     return (
       <div
-        className={cn(
-          'bg-gray-200 flex items-center justify-center',
-          className
-        )}
+        className={cn('bg-gray-200 flex items-center justify-center', className)}
         style={{ width, height }}
       >
         <span className="text-gray-400 text-sm">@</span>
@@ -42,10 +39,7 @@ export const CloudinaryImage = ({
   if (error) {
     return (
       <div
-        className={cn(
-          'bg-gray-200 flex items-center justify-center',
-          className
-        )}
+        className={cn('bg-gray-200 flex items-center justify-center', className)}
         style={{ width, height }}
       >
         <span className="text-gray-400 text-sm">No image</span>
@@ -55,17 +49,39 @@ export const CloudinaryImage = ({
 
   // Extract public ID from Cloudinary URL or use as is
   let publicId = src;
-  if (src.includes('cloudinary.com')) {
-    // Find the position after /upload/ and v1/
-    const uploadIndex = src.indexOf('/upload/');
-    const versionIndex = src.indexOf('/v1/');
-    if (uploadIndex !== -1 && versionIndex !== -1) {
-      publicId = src.slice(versionIndex + 4); // +4 to skip '/v1/'
+  if (src && src.includes('cloudinary.com')) {
+    try {
+      // More robust parsing of Cloudinary URLs
+      const url = new URL(src);
+      const pathSegments = url.pathname.split('/');
+
+      // Look for upload in the path
+      const uploadIndex = pathSegments.findIndex(segment => segment === 'upload');
+
+      if (uploadIndex !== -1 && uploadIndex < pathSegments.length - 1) {
+        // Everything after /upload/ except the first segment (which is usually v1)
+        // and ignoring any transformation segments
+        let startIndex = uploadIndex + 1;
+
+        // Skip version segment if present (v1, v2, etc.)
+        if (pathSegments[startIndex].match(/^v\d+$/)) {
+          startIndex++;
+        }
+
+        // Join the remaining segments to form the public ID
+        publicId = pathSegments.slice(startIndex).join('/');
+
+        // Remove file extension if present
+        publicId = publicId.replace(/\.(jpg|jpeg|png|gif|webp)$/, '');
+      }
+    } catch (error) {
+      console.error('Error parsing Cloudinary URL:', error, src);
+      // Fall back to the original URL if parsing fails
     }
   }
 
   console.log('Original src:', src);
-  console.log('Using publicId:', publicId);
+  console.log('Extracted publicId:', publicId);
 
   // Calculate container dimensions based on natural aspect ratio if available
   const containerStyle =
@@ -94,10 +110,7 @@ export const CloudinaryImage = ({
     <div className={cn('relative', preserveAspectRatio ? 'w-full' : '')}>
       {isLoading && (
         <div
-          className={cn(
-            'bg-gray-200 animate-pulse',
-            preserveAspectRatio ? 'w-full' : ''
-          )}
+          className={cn('bg-gray-200 animate-pulse', preserveAspectRatio ? 'w-full' : '')}
           style={
             preserveAspectRatio && naturalAspectRatio
               ? containerStyle
@@ -121,12 +134,12 @@ export const CloudinaryImage = ({
           style={imageStyle}
           sizes={sizes}
           priority={priority}
-          onError={(e) => {
+          onError={e => {
             console.error('CldImage error:', e);
             setError(true);
             onError?.();
           }}
-          onLoad={(e) => {
+          onLoad={e => {
             setIsLoading(false);
             // If we care about preserving aspect ratio, capture the natural dimensions
             if (preserveAspectRatio && e.target) {
