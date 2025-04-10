@@ -172,16 +172,17 @@ const PreviewMobile = ({ close }) => {
           style={{ height: '100%' }}
           src={url}
         />
-        <div className="fixed bottom-8 left-0 right-0 flex justify-center">
+        <div className="fixed top-4 right-4 z-[100]">
           <button
             onClick={close}
             style={{
               backgroundColor: 'rgba(0, 0, 0, 0.8)',
               backdropFilter: 'blur(4px)',
             }}
-            className="px-6 py-2 rounded-full text-white border-2 border-white hover:bg-black/50 transition-all duration-200"
+            className="flex items-center justify-center w-10 h-10 rounded-full text-white shadow-lg border-2 border-white/20 hover:bg-black/50 transition-all duration-200"
+            aria-label="Close preview"
           >
-            Close
+            <X size={20} />
           </button>
         </div>
       </section>

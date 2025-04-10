@@ -330,3 +330,5 @@ html {
     @apply bg-background text-foreground;
   }
 }
+
+/* No styles should be here - removed TikTok overrides */

@@ -3,7 +3,6 @@ import { EmbedConfig } from '@/types/embed';
 import StandardLinkContainer from './standard-link-container';
 import TwitterContainer from './twitter-container';
 import YouTubeContainer from './youtube-container';
-import TikTokContainer from './tiktok-container';
 import SpotifyContainer from './spotify-container';
 
 interface ContainerFactoryProps {
@@ -23,7 +22,7 @@ const ContainerFactory: React.FC<ContainerFactoryProps> = ({
   title,
   maxWidth,
   config,
-  className
+  className,
 }) => {
   const commonProps = {
     embedHtml,
@@ -31,7 +30,7 @@ const ContainerFactory: React.FC<ContainerFactoryProps> = ({
     title,
     maxWidth,
     config,
-    className
+    className,
   };
 
   // Helper function to determine if URL matches a pattern
@@ -44,7 +43,7 @@ const ContainerFactory: React.FC<ContainerFactoryProps> = ({
     if (matchesPattern(/youtube\.com|youtu\.be/)) return 'youtube';
     if (matchesPattern(/tiktok\.com/)) return 'tiktok';
     if (matchesPattern(/spotify\.com|open\.spotify\.com/)) return 'spotify';
-    
+
     // Fallback to standard link container
     return 'standard';
   };
@@ -53,13 +52,23 @@ const ContainerFactory: React.FC<ContainerFactoryProps> = ({
   const renderContainer = () => {
     const containerType = getContainerType();
 
+    // Special case for TikTok - render completely raw with no wrappers at all
+    if (containerType === 'tiktok') {
+      if (embedHtml) {
+        return <div dangerouslySetInnerHTML={{ __html: embedHtml }} />;
+      }
+      return (
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          {title}
+        </a>
+      );
+    }
+
     switch (containerType) {
       case 'twitter':
         return <TwitterContainer {...commonProps} />;
       case 'youtube':
         return <YouTubeContainer {...commonProps} />;
-      case 'tiktok':
-        return <TikTokContainer {...commonProps} />;
       case 'spotify':
         return <SpotifyContainer {...commonProps} />;
       default:
@@ -70,4 +79,4 @@ const ContainerFactory: React.FC<ContainerFactoryProps> = ({
   return renderContainer();
 };
 
-export default ContainerFactory; 
+export default ContainerFactory;
