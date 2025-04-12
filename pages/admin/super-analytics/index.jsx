@@ -10,9 +10,11 @@ import PagesComponent from '@/components/analytics/plausible/PagesComponent';
 import LocationsComponent from '@/components/analytics/plausible/LocationsComponent';
 import DevicesComponent from '@/components/analytics/plausible/DevicesComponent';
 import OutboundLinks from '@/components/analytics/plausible/OutboundLinks';
+import SourcesComponent from '@/components/analytics/plausible/SourcesComponent';
 import DetailsModal from '@/components/analytics/plausible/DetailsModal';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import usePlausibleUserAnalytics from '@/hooks/usePlausibleUserAnalytics';
+import { timezones } from '@/lib/timezones';
 
 /**
  * Super Analytics 2.0 Dashboard Page
@@ -22,38 +24,46 @@ import usePlausibleUserAnalytics from '@/hooks/usePlausibleUserAnalytics';
  */
 const SuperAnalyticsPage = () => {
   const { data: currentUser } = useCurrentUser();
-  const [timeRange, setTimeRange] = useState('day');
+  const [timeRange, setTimeRange] = useState('7d');
+  const [timezone, setTimezone] = useState('UTC');
+  const [chartMetric, setChartMetric] = useState('visits');
   const [modalContent, setModalContent] = useState(null);
 
   // Fetch data for each section of the dashboard
   const { data: dashboardData, isLoading: isDashboardLoading } = usePlausibleUserAnalytics(
     'dashboard',
-    timeRange
+    timeRange,
+    { timezone: timezone }
   );
 
   const { data: sourcesData, isLoading: isSourcesLoading } = usePlausibleUserAnalytics(
     'sources',
-    timeRange
+    timeRange,
+    { timezone: timezone }
   );
 
   const { data: pagesData, isLoading: isPagesLoading } = usePlausibleUserAnalytics(
     'pages',
-    timeRange
+    timeRange,
+    { timezone: timezone }
   );
 
   const { data: locationsData, isLoading: isLocationsLoading } = usePlausibleUserAnalytics(
     'locations',
-    timeRange
+    timeRange,
+    { timezone: timezone }
   );
 
   const { data: devicesData, isLoading: isDevicesLoading } = usePlausibleUserAnalytics(
     'devices',
-    timeRange
+    timeRange,
+    { timezone: timezone }
   );
 
   const { data: outboundLinksData, isLoading: isOutboundLinksLoading } = usePlausibleUserAnalytics(
     'outbound-links',
-    timeRange
+    timeRange,
+    { timezone: timezone }
   );
 
   // Time range options for selector
@@ -95,45 +105,98 @@ const SuperAnalyticsPage = () => {
         <div className="w-full lg:w-[100vw] pl-4 pr-4 overflow-auto">
           <div className="max-w-[1200px] mx-auto my-10">
             <div className="mb-8">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                 <h1 className="text-2xl font-bold">Super Analytics 2.0</h1>
 
-                {/* Time range selector */}
-                <div className="relative">
-                  <div className="flex items-center space-x-2">
-                    <select
-                      className="block appearance-none bg-white border rounded-md w-full py-2 px-3 pr-8 leading-tight focus:outline-none focus:shadow-outline"
-                      value={timeRange}
-                      onChange={e => setTimeRange(e.target.value)}
+                {/* Wrap selectors in a grid - Added flex-grow */}
+                <div className="grid grid-cols-2 gap-4 mb-4 flex-grow">
+                  {/* Timezone Selector */}
+                  <div>
+                    <label
+                      htmlFor="timezone-select"
+                      className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      {timeRangeOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                      <svg
-                        className="fill-current h-4 w-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
+                      Time Zone
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="timezone-select"
+                        className="block appearance-none bg-white border rounded-md w-full py-2 px-3 pr-8 leading-tight focus:outline-none focus:shadow-outline"
+                        value={timezone}
+                        onChange={e => setTimezone(e.target.value)}
                       >
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                      </svg>
+                        {timezones.map(tz => (
+                          <option key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg
+                          className="fill-current h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Time Range Selector */}
+                  <div>
+                    <label
+                      htmlFor="timerange-select"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Time Range
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="timerange-select"
+                        className="block appearance-none bg-white border rounded-md w-full py-2 px-3 pr-8 leading-tight focus:outline-none focus:shadow-outline"
+                        value={timeRange}
+                        onChange={e => setTimeRange(e.target.value)}
+                      >
+                        {timeRangeOptions.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg
+                          className="fill-current h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Top stats section */}
-              <TopStats metrics={dashboardData?.metrics} isLoading={isDashboardLoading} />
+              <TopStats
+                metrics={dashboardData?.metrics}
+                isLoading={isDashboardLoading}
+                selectedMetric={chartMetric}
+                onMetricSelect={setChartMetric}
+              />
 
               {/* Visitors graph */}
               <VisitorsGraph
                 timeseriesData={dashboardData?.timeseries}
                 isLoading={isDashboardLoading}
                 timeRange={timeRange}
+                timezone={timezone}
+                metricToPlot={chartMetric}
               />
+
+              {/* Render the new SourcesComponent */}
+              <SourcesComponent sourcesData={sourcesData} isLoading={isSourcesLoading} />
 
               {/* Outbound Links section */}
               <OutboundLinks

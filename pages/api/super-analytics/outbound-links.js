@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { timeRange = 'day' } = req.query;
+    const { timeRange = 'day', timezone = 'UTC' } = req.query;
     const userId = session.user.id;
 
     // console.log(`Fetching outbound links data for user ID: ${userId}, time range: ${timeRange}`);
@@ -45,8 +45,8 @@ export default async function handler(req, res) {
     const pathToFilter = `/${user.handle}`;
     // console.log(`Filtering Plausible data by path: ${pathToFilter}`);
 
-    // Format date range for v2 API
-    const date_range = formatTimeRangeV2(timeRange);
+    // Format date range for v2 API, passing timezone
+    const date_range = formatTimeRangeV2(timeRange, timezone);
 
     // First, fetch the user's links from the database
     const userLinks = await prisma.link.findMany({
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       normalizedUrlMap[normalizedUrl] = link;
     });
 
-    // Make the API request to Plausible v2 API - include both visitors and events metrics
+    // Make the API request to Plausible v2 API
     const response = await queryPlausibleV2({
       site_id: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
       metrics: ['visitors', 'events'],
@@ -216,31 +216,5 @@ function normalizeUrl(url) {
     return normalized.toLowerCase();
   } catch (e) {
     return url;
-  }
-}
-
-/**
- * Format time range for Plausible API
- * @param {string} timeRange - Time range parameter from query
- * @returns {Object} Formatted period and date for Plausible API
- */
-function formatTimeRange(timeRange) {
-  const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
-
-  switch (timeRange) {
-    case 'day':
-      return { period: 'day', date: today };
-    case '7d':
-      return { period: '7d', date: today };
-    case '30d':
-      return { period: '30d', date: today };
-    case 'month':
-      return { period: 'month', date: today };
-    case '6mo':
-      return { period: '6mo', date: today };
-    case '12mo':
-      return { period: '12mo', date: today };
-    default:
-      return { period: 'day', date: today };
   }
 }

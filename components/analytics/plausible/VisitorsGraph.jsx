@@ -1,5 +1,8 @@
 import React, { useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
+import dayjs from 'dayjs'; // Import dayjs
+import utc from 'dayjs/plugin/utc'; // Import UTC plugin
+import timezonePlugin from 'dayjs/plugin/timezone'; // Import timezone plugin
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,6 +14,9 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+
+dayjs.extend(utc); // Extend dayjs with UTC plugin
+dayjs.extend(timezonePlugin); // Extend with timezone plugin
 
 // Register the chart.js components
 ChartJS.register(
@@ -32,32 +38,63 @@ ChartJS.defaults.elements.point.borderWidth = 2;
 /**
  * Simplified VisitorsGraph component showing only visits line
  */
-const VisitorsGraph = ({ timeseriesData = [], isLoading = false, timeRange = 'day' }) => {
+const VisitorsGraph = ({
+  timeseriesData = [],
+  isLoading = false,
+  timeRange = 'day',
+  timezone = 'UTC',
+  metricToPlot = 'visits',
+}) => {
   // Debug logging
   useEffect(() => {
     console.log('VisitorsGraph data:', timeseriesData);
     console.log('VisitorsGraph timeRange:', timeRange);
-  }, [timeseriesData, timeRange]);
+    console.log('VisitorsGraph timezone:', timezone);
+    console.log('VisitorsGraph metricToPlot:', metricToPlot);
+  }, [timeseriesData, timeRange, timezone, metricToPlot]);
 
   // Loading state
   if (isLoading) {
     return <GraphSkeleton />;
   }
 
-  // Process the timeseries data based on time range
-  const processedData = processTimeseriesData(timeseriesData, timeRange);
+  // Process the timeseries data based on time range and timezone
+  const processedData = processTimeseriesData(timeseriesData, timeRange, timezone);
   console.log('Processed data for chart:', processedData);
 
-  // Extract data for chart
-  const { labels, visitCounts } = processedData;
+  // Extract data for chart based on metricToPlot
+  const { labels, dataArrays } = processedData; // Expect dataArrays object now
+  const dataToPlot = dataArrays[metricToPlot] || dataArrays['visits'] || []; // Fallback to visits
+
+  // Dynamically generate label based on metricToPlot
+  const getLabelForMetric = metric => {
+    switch (metric) {
+      case 'visitors':
+        return 'Unique Visitors';
+      case 'visits':
+        return 'Total Visits';
+      case 'events':
+        return 'Total Clicks';
+      case 'pageviews':
+        return 'Total Pageviews';
+      case 'time_on_page':
+        return 'Time on Page (Avg Sec)'; // Assuming processed data is in seconds
+      case 'scroll_depth':
+        return 'Scroll Depth (%)'; // Assuming processed data is percentage
+      default:
+        return 'Total Visits';
+    }
+  };
+  const chartLabel = getLabelForMetric(metricToPlot);
+  const chartTitle = `${chartLabel} Over Time`; // Create dynamic title
 
   // Simplest possible chart configuration
   const chartConfig = {
     labels: labels,
     datasets: [
       {
-        label: 'Total Visits',
-        data: visitCounts,
+        label: chartLabel, // Use dynamic label
+        data: dataToPlot, // Use selected data array
         fill: false,
         backgroundColor: 'rgb(59, 130, 246)',
         borderColor: 'rgb(59, 130, 246)',
@@ -113,7 +150,7 @@ const VisitorsGraph = ({ timeseriesData = [], isLoading = false, timeRange = 'da
           precision: 0,
           // Ensure at least some y-axis range to make small values visible
           suggestedMin: 0,
-          suggestedMax: Math.max(...visitCounts, 5), // At least 5 for visibility
+          suggestedMax: Math.max(...dataToPlot, 5), // Use dataToPlot for suggestedMax
         },
       },
     },
@@ -121,7 +158,7 @@ const VisitorsGraph = ({ timeseriesData = [], isLoading = false, timeRange = 'da
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-8">
-      <h2 className="text-lg font-medium mb-4">Visits Over Time</h2>
+      <h2 className="text-lg font-medium mb-4">{chartTitle}</h2>
       <div className="h-64">
         <Line data={chartConfig} options={options} />
       </div>
@@ -137,190 +174,348 @@ const VisitorsGraph = ({ timeseriesData = [], isLoading = false, timeRange = 'da
 };
 
 /**
- * Process timeseries data based on time range
+ * Process timeseries data based on time range using dayjs
  * @param {Array} data - Raw timeseries data
  * @param {string} timeRange - Current time range (day, 7d, 30d, etc.)
+ * @param {string} timezone - The target timezone for display
  * @returns {Object} Processed data with labels and visitCounts
  */
-function processTimeseriesData(data, timeRange) {
-  // Generate mock data if no real data is available
+function processTimeseriesData(data, timeRange, timezone) {
   if (!Array.isArray(data) || data.length === 0) {
-    return generateMockData(timeRange);
+    // Adjust mock data generation if needed to include other metrics
+    return generateMockData(timeRange, timezone);
   }
 
-  // Parse dates and sort chronologically
-  const parsedData = data.map(item => {
-    let dateObj;
-    let visits = 0;
+  const parsedData = data
+    .map(item => {
+      let dateObj = null;
+      // Initialize all potential metrics
+      let metrics = {
+        visitors: 0,
+        visits: 0,
+        pageviews: 0,
+        time_on_page: 0,
+        scroll_depth: 0,
+        events: 0,
+      };
 
-    // Parse date
-    try {
-      if (typeof item.date === 'string') {
-        // Handle ISO string or YYYY-MM-DD format
-        dateObj = new Date(item.date);
-      } else if (item.date instanceof Date) {
-        dateObj = item.date;
-      } else {
-        // Default to current date if unparseable
-        console.warn('Unparseable date:', item.date);
-        dateObj = new Date();
+      try {
+        if (typeof item.date === 'string') {
+          // Use dayjs.utc() to parse, assuming YYYY-MM-DD or ISO format
+          dateObj = dayjs.utc(item.date);
+        } else if (item.date instanceof Date && !isNaN(item.date.getTime())) {
+          // Convert existing Date objects to dayjs UTC objects
+          dateObj = dayjs.utc(item.date);
+        } else {
+          console.warn('Unparseable or invalid date:', item.date);
+        }
+
+        // Validate if dateObj is valid after parsing
+        if (!dateObj || !dateObj.isValid()) {
+          console.warn('Invalid date after parsing with dayjs:', item.date);
+          dateObj = null; // Mark as invalid
+        }
+      } catch (e) {
+        console.error('Error parsing date with dayjs:', e);
+        dateObj = null;
       }
 
-      // Validate if date is valid
-      if (isNaN(dateObj.getTime())) {
-        console.warn('Invalid date after parsing:', item.date);
-        dateObj = new Date(); // Use current date as fallback
+      // If date is invalid, skip this item
+      if (!dateObj) {
+        return null;
       }
-    } catch (e) {
-      console.error('Error parsing date:', e);
-      dateObj = new Date(); // Use current date as fallback
-    }
 
-    // Parse visits
-    if (typeof item.visits === 'object' && item.visits !== null) {
-      visits = item.visits.value || 0;
-    } else {
-      visits = typeof item.visits === 'number' ? item.visits : 0;
-    }
+      // Parse all available metrics safely
+      metrics.visitors =
+        typeof item.visitors === 'number' ? item.visitors : (item.visitors?.value ?? 0);
+      metrics.visits = typeof item.visits === 'number' ? item.visits : (item.visits?.value ?? 0);
+      metrics.pageviews =
+        typeof item.pageviews === 'number' ? item.pageviews : (item.pageviews?.value ?? 0);
+      metrics.time_on_page =
+        typeof item.time_on_page === 'number' ? item.time_on_page : (item.time_on_page?.value ?? 0);
+      metrics.scroll_depth =
+        typeof item.scroll_depth === 'number' ? item.scroll_depth : (item.scroll_depth?.value ?? 0);
+      metrics.events = typeof item.events === 'number' ? item.events : (item.events?.value ?? 0);
 
-    return { date: dateObj, visits };
-  });
+      return { date: dateObj, metrics }; // Store metrics object
+    })
+    .filter(item => item !== null); // Filter out items with invalid dates
 
-  // Sort chronologically
-  parsedData.sort((a, b) => a.date - b.date);
+  // Sort chronologically using dayjs objects
+  parsedData.sort((a, b) => a.date.valueOf() - b.date.valueOf());
 
-  // For 'day' view, aggregate by hour
+  let aggregationFunction;
+  let aggregationTimeframe;
+
   if (timeRange === 'day') {
-    const hourlyData = aggregateByHour(parsedData);
-
-    // Format for display
-    const labels = hourlyData.map(item => formatDateForDisplay(item.date, timeRange));
-
-    const visitCounts = hourlyData.map(item => item.visits);
-
-    return { labels, visitCounts };
+    aggregationFunction = aggregateByHour;
+    aggregationTimeframe = 'hour';
+  } else if (timeRange === '6mo' || timeRange === '12mo') {
+    aggregationFunction = aggregateByMonth;
+    aggregationTimeframe = 'month';
+  } else {
+    aggregationFunction = aggregateByDay;
+    aggregationTimeframe = 'day';
   }
-  // For multiple day views, aggregate by day
-  else {
-    const dailyData = aggregateByDay(parsedData);
 
-    // Format for display
-    const labels = dailyData.map(item => formatDateForDisplay(item.date, timeRange));
+  // Aggregate the data (function now needs to handle the metrics object)
+  const aggregatedData = aggregationFunction(parsedData, timeRange, timezone);
 
-    const visitCounts = dailyData.map(item => item.visits);
+  // Format for display
+  const labels = aggregatedData.map(item => formatDateForDisplay(item.date, timeRange, timezone));
 
-    return { labels, visitCounts };
-  }
+  // Extract separate arrays for each metric
+  const dataArrays = {
+    visitors: aggregatedData.map(item => item.metrics.visitors),
+    visits: aggregatedData.map(item => item.metrics.visits),
+    pageviews: aggregatedData.map(item => item.metrics.pageviews),
+    time_on_page: aggregatedData.map(item => item.metrics.time_on_page),
+    scroll_depth: aggregatedData.map(item => item.metrics.scroll_depth),
+    events: aggregatedData.map(item => item.metrics.events),
+  };
+
+  // Return labels and the object containing all metric arrays
+  return { labels, dataArrays };
 }
 
 /**
- * Aggregate data by hour
- * @param {Array} data - Parsed data array
- * @returns {Array} Data aggregated by hour
+ * Aggregate data by hour (NOW accepts timezone AND metrics object)
+ * @param {Array<{date: dayjs.Dayjs, metrics: object}>} data - Parsed data array with dayjs UTC objects and metrics
+ * @param {string} timeRange - The selected time range string (only 'day' uses this)
+ * @param {string} timezone - The target timezone
+ * @returns {Array<{date: dayjs.Dayjs, metrics: object}>} Data aggregated by hour
  */
-function aggregateByHour(data) {
+function aggregateByHour(data, timeRange, timezone) {
   const hourMap = new Map();
+  const nowInTz = dayjs().tz(timezone);
+  const startOfTodayInTz = nowInTz.startOf('day');
 
-  // Create a full 24-hour series for today
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Populate each hour with 0 visits
+  // Initialize map with zero metrics for each hour
   for (let i = 0; i < 24; i++) {
-    const hourDate = new Date(today);
-    hourDate.setHours(i);
-    const hourKey = hourDate.toISOString().substring(0, 13); // YYYY-MM-DDTHH
-    hourMap.set(hourKey, { date: new Date(hourDate), visits: 0 });
+    const hourDateInTz = startOfTodayInTz.add(i, 'hour');
+    const hourKey = hourDateInTz.utc().format('YYYY-MM-DDTHH');
+    hourMap.set(hourKey, {
+      date: hourDateInTz, // Store dayjs object in target TZ
+      metrics: {
+        visitors: 0,
+        visits: 0,
+        pageviews: 0,
+        time_on_page: 0,
+        scroll_depth: 0,
+        events: 0,
+        count: 0,
+      },
+    });
   }
 
   // Add actual data points
   data.forEach(item => {
-    const hourDate = new Date(item.date);
-    hourDate.setMinutes(0, 0, 0);
-    const hourKey = hourDate.toISOString().substring(0, 13);
-
+    const hourKey = item.date.utc().format('YYYY-MM-DDTHH');
     if (hourMap.has(hourKey)) {
       const existing = hourMap.get(hourKey);
-      hourMap.set(hourKey, {
-        date: hourDate,
-        visits: existing.visits + item.visits,
-      });
-    } else {
-      hourMap.set(hourKey, { date: hourDate, visits: item.visits });
+      existing.metrics.visitors += item.metrics.visitors;
+      existing.metrics.visits += item.metrics.visits;
+      existing.metrics.pageviews += item.metrics.pageviews;
+      existing.metrics.events += item.metrics.events;
+      existing.metrics.time_on_page += item.metrics.time_on_page;
+      existing.metrics.scroll_depth += item.metrics.scroll_depth;
+      existing.metrics.count += 1;
     }
   });
 
-  // Convert map back to array and sort
-  return Array.from(hourMap.values()).sort((a, b) => a.date - b.date);
+  // Convert map back to array, calculate averages, and sort
+  return Array.from(hourMap.values())
+    .map(item => {
+      // Calculate averages where count > 0
+      if (item.metrics.count > 0) {
+        item.metrics.time_on_page = item.metrics.time_on_page / item.metrics.count;
+        item.metrics.scroll_depth = item.metrics.scroll_depth / item.metrics.count;
+      }
+      delete item.metrics.count; // Remove helper count property
+      return item;
+    })
+    .sort((a, b) => a.date.valueOf() - b.date.valueOf());
 }
 
 /**
- * Aggregate data by day
- * @param {Array} data - Parsed data array
- * @param {string} timeRange - Current time range
- * @returns {Array} Data aggregated by day
+ * Aggregate data by day (NOW accepts timezone AND metrics object)
+ * @param {Array<{date: dayjs.Dayjs, metrics: object}>} data - Parsed data array with dayjs UTC objects and metrics
+ * @param {string} timeRange - The selected time range string
+ * @param {string} timezone - The target timezone
+ * @returns {Array<{date: dayjs.Dayjs, metrics: object}>} Data aggregated by day
  */
-function aggregateByDay(data) {
+function aggregateByDay(data, timeRange, timezone) {
   const dayMap = new Map();
 
-  // Create a series for the past N days based on time range
-  const numDays = getNumDaysFromTimeRange(data);
-  const endDate = new Date();
-  endDate.setHours(23, 59, 59, 999);
+  // Calculate date range specifically for 'month' or use existing logic
+  let startDate, endDate, numDays;
+  const nowInTz = dayjs().tz(timezone);
 
-  // Populate each day with 0 visits
+  if (timeRange === 'month') {
+    startDate = nowInTz.startOf('month');
+    endDate = nowInTz.startOf('day'); // Use start of today as the end date
+    numDays = endDate.diff(startDate, 'day') + 1; // Number of days from start of month until today
+    console.log(
+      `[aggregateByDay] Month Range: Start=${startDate.format()}, End=${endDate.format()}, Days=${numDays}`
+    );
+  } else {
+    // Existing logic for 7d, 30d, etc.
+    numDays = getNumDaysFromTimeRange(timeRange);
+    endDate = nowInTz.startOf('day');
+    startDate = endDate.subtract(numDays - 1, 'day');
+    console.log(
+      `[aggregateByDay] Other Range (${timeRange}): Start=${startDate.format()}, End=${endDate.format()}, Days=${numDays}`
+    );
+  }
+
+  // Initialize map for the calculated range
   for (let i = 0; i < numDays; i++) {
-    const date = new Date(endDate);
-    date.setDate(date.getDate() - (numDays - 1) + i);
-    date.setHours(0, 0, 0, 0);
-    const dayKey = date.toISOString().substring(0, 10); // YYYY-MM-DD
-    dayMap.set(dayKey, { date: new Date(date), visits: 0 });
+    const currentDay = startDate.add(i, 'day');
+    const dayKey = currentDay.utc().format('YYYY-MM-DD');
+    if (!dayMap.has(dayKey)) {
+      dayMap.set(dayKey, {
+        date: currentDay,
+        metrics: {
+          visitors: 0,
+          visits: 0,
+          pageviews: 0,
+          time_on_page: 0,
+          scroll_depth: 0,
+          events: 0,
+          count: 0,
+        },
+      });
+    }
   }
 
   // Add actual data points
   data.forEach(item => {
-    const dayDate = new Date(item.date);
-    dayDate.setHours(0, 0, 0, 0);
-    const dayKey = dayDate.toISOString().substring(0, 10);
-
+    const dayKey = item.date.utc().format('YYYY-MM-DD'); // Use UTC key
     if (dayMap.has(dayKey)) {
       const existing = dayMap.get(dayKey);
-      dayMap.set(dayKey, {
-        date: dayDate,
-        visits: existing.visits + item.visits,
-      });
-    } else {
-      dayMap.set(dayKey, { date: dayDate, visits: item.visits });
+      existing.metrics.visitors += item.metrics.visitors;
+      existing.metrics.visits += item.metrics.visits;
+      existing.metrics.pageviews += item.metrics.pageviews;
+      existing.metrics.events += item.metrics.events;
+      existing.metrics.time_on_page += item.metrics.time_on_page;
+      existing.metrics.scroll_depth += item.metrics.scroll_depth;
+      existing.metrics.count += 1;
     }
   });
 
-  // Convert map back to array and sort
-  return Array.from(dayMap.values()).sort((a, b) => a.date - b.date);
+  // Calculate averages and sort
+  return Array.from(dayMap.values())
+    .map(item => {
+      if (item.metrics.count > 0) {
+        item.metrics.time_on_page = item.metrics.time_on_page / item.metrics.count;
+        item.metrics.scroll_depth = item.metrics.scroll_depth / item.metrics.count;
+      }
+      delete item.metrics.count;
+      return item;
+    })
+    .sort((a, b) => a.date.valueOf() - b.date.valueOf());
 }
 
 /**
- * Determine number of days to display based on time range and data
+ * Aggregate data by month (NOW accepts timezone AND metrics object)
+ * @param {Array<{date: dayjs.Dayjs, metrics: object}>} data - Parsed data array with dayjs UTC objects and metrics
+ * @param {string} timeRange - The selected time range string
+ * @param {string} timezone - The target timezone
+ * @returns {Array<{date: dayjs.Dayjs, metrics: object}>} Data aggregated by month
  */
-function getNumDaysFromTimeRange(data) {
-  // If we have actual data with a date range, use that
-  if (data.length > 1) {
-    const minDate = new Date(Math.min(...data.map(d => d.date.getTime())));
-    const maxDate = new Date(Math.max(...data.map(d => d.date.getTime())));
-    const diffTime = Math.abs(maxDate - minDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(diffDays, 1); // At least 1 day
+function aggregateByMonth(data, timeRange, timezone) {
+  const monthMap = new Map();
+  const numMonths = timeRange === '6mo' ? 6 : 12;
+  const nowInTz = dayjs().tz(timezone);
+  const endMonth = nowInTz.startOf('month');
+  const startMonth = endMonth.subtract(numMonths - 1, 'month');
+
+  // Initialize map
+  for (let i = 0; i < numMonths; i++) {
+    const currentMonth = startMonth.add(i, 'month');
+    const monthKey = currentMonth.utc().format('YYYY-MM');
+    if (!monthMap.has(monthKey)) {
+      monthMap.set(monthKey, {
+        date: currentMonth,
+        metrics: {
+          visitors: 0,
+          visits: 0,
+          pageviews: 0,
+          time_on_page: 0,
+          scroll_depth: 0,
+          events: 0,
+          count: 0,
+        },
+      });
+    }
   }
 
-  // Otherwise use default values based on typical ranges
-  return 7; // Default to 7 days if we can't determine
+  // Add actual data points
+  data.forEach(item => {
+    const monthKey = item.date.utc().format('YYYY-MM'); // Use UTC key
+    if (monthMap.has(monthKey)) {
+      const existing = monthMap.get(monthKey);
+      existing.metrics.visitors += item.metrics.visitors;
+      existing.metrics.visits += item.metrics.visits;
+      existing.metrics.pageviews += item.metrics.pageviews;
+      existing.metrics.events += item.metrics.events;
+      existing.metrics.time_on_page += item.metrics.time_on_page;
+      existing.metrics.scroll_depth += item.metrics.scroll_depth;
+      existing.metrics.count += 1;
+    }
+  });
+
+  // Calculate averages and sort
+  return Array.from(monthMap.values())
+    .map(item => {
+      if (item.metrics.count > 0) {
+        item.metrics.time_on_page = item.metrics.time_on_page / item.metrics.count;
+        item.metrics.scroll_depth = item.metrics.scroll_depth / item.metrics.count;
+      }
+      delete item.metrics.count;
+      return item;
+    })
+    .sort((a, b) => a.date.valueOf() - b.date.valueOf());
+}
+
+/**
+ * Determine number of days to display based on the time range string
+ * @param {string} timeRange - The time range string (e.g., '7d', '30d')
+ */
+function getNumDaysFromTimeRange(timeRange) {
+  switch (timeRange) {
+    case '7d':
+      return 7;
+    case '30d':
+      return 30;
+    case 'month':
+      // Get days in the current month
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    case '6mo':
+      // Approximate 6 months - could be more precise if needed
+      return 180;
+    case '12mo':
+      // Approximate 12 months - could be more precise if needed
+      return 365;
+    case 'day': // Should not be called for 'day', but handle defensively
+      return 1;
+    default:
+      // Fallback if timeRange is unrecognized or data is missing
+      console.warn(
+        `Unrecognized timeRange "${timeRange}" in getNumDaysFromTimeRange, defaulting to 7.`
+      );
+      return 7;
+  }
 }
 
 /**
  * Generate mock data when no real data is available
  * @param {string} timeRange - Current time range
+ * @param {string} timezone - The target timezone for display
  * @returns {Object} Mock data with labels and visitCounts
  */
-function generateMockData(timeRange) {
+function generateMockData(timeRange, timezone) {
   const now = new Date();
   let mockData = [];
 
@@ -369,7 +564,7 @@ function generateMockData(timeRange) {
   mockData.sort((a, b) => a.date - b.date);
 
   // Format for display
-  const labels = mockData.map(item => formatDateForDisplay(item.date, timeRange));
+  const labels = mockData.map(item => formatDateForDisplay(item.date, timeRange, timezone));
 
   const visitCounts = mockData.map(item => item.visits);
 
@@ -377,57 +572,46 @@ function generateMockData(timeRange) {
 }
 
 /**
- * Format a date object based on the current time range
- * @param {Date} date - Date object to format
+ * Format a dayjs object based on the current time range and timezone
+ * @param {dayjs.Dayjs} date - dayjs object to format (representing start of day in target timezone)
  * @param {string} timeRange - Current time range (day, 7d, 30d, etc.)
+ * @param {string} timezone - The target timezone for display formatting
  * @returns {string} Formatted date string
  */
-function formatDateForDisplay(date, timeRange) {
-  // Fallback if invalid date
-  if (!date || isNaN(date.getTime())) {
+function formatDateForDisplay(date, timeRange, timezone) {
+  // Fallback if invalid date (date here is a dayjs object representing start of period in target TZ)
+  if (!date || !date.isValid()) {
     return 'Unknown';
   }
 
   try {
+    // Format the date according to the target timezone
     switch (timeRange) {
       case 'day':
-        // For day view, show hours (12-hour format with AM/PM)
-        return date.toLocaleTimeString([], {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-        });
+        // Format time in the target timezone
+        // Using dayjs format for better consistency across browsers
+        return date.tz(timezone).format('h A'); // e.g., 3 PM
 
       case '7d':
       case '30d':
-        // For week/month view, show abbreviated weekday name
-        return date.toLocaleDateString([], {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-        });
+        // Format as 'MMM D' in the target timezone (Removed day of week 'ddd, ')
+        return date.tz(timezone).format('MMM D');
 
       case 'month':
-        // For monthly view, show day of month
-        return date.toLocaleDateString([], {
-          month: 'short',
-          day: 'numeric',
-        });
+        // Format as 'MMM D' in the target timezone
+        return date.tz(timezone).format('MMM D');
 
       case '6mo':
       case '12mo':
-        // For longer ranges, show month and year
-        return date.toLocaleDateString([], {
-          month: 'short',
-          year: 'numeric',
-        });
+        // Format as 'MMM YYYY' in the target timezone
+        return date.tz(timezone).format('MMM YYYY');
 
       default:
-        // Default format
-        return date.toLocaleDateString();
+        // Default format YYYY-MM-DD in the target timezone
+        return date.tz(timezone).format('YYYY-MM-DD');
     }
   } catch (e) {
-    console.error('Error formatting date:', e);
+    console.error('Error formatting dayjs date:', e);
     return 'Unknown';
   }
 }

@@ -8,6 +8,7 @@ import '@/styles/globals.css';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import { ProxyFlock } from '@/components/analytics/ProxyFlock';
+import 'flag-icons/css/flag-icons.min.css';
 
 // Create a client for React Query
 const queryClient = new QueryClient();

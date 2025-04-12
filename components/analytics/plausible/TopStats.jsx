@@ -1,118 +1,132 @@
 import React from 'react';
 
 /**
- * TopStats component for displaying the main metrics at the top of the dashboard
- * Matches the Plausible design for metrics display
- *
- * Note: Some metrics like bounce_rate, visit_duration, and views_per_visit have been removed
- * as they cannot be properly filtered by user ID in the Plausible API or are not needed.
- *
- * @param {Object} props - Component props
- * @param {Object} props.metrics - Metrics data from the API
- * @param {boolean} props.isLoading - Whether the data is still loading
+ * Helper function to format time in seconds to MM:SS or HH:MM:SS
  */
-const TopStats = ({ metrics, isLoading = false }) => {
-  // Define the metrics to display
-  const statsData = [
+const formatTime = seconds => {
+  if (seconds === null || seconds === undefined || seconds < 0) {
+    return '-'; // Return dash for invalid input
+  }
+  if (seconds === 0) {
+    return '0s';
+  }
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+
+  let timeString = '';
+  if (hours > 0) {
+    timeString += `${hours}h `;
+  }
+  if (minutes > 0 || hours > 0) {
+    // Pad minutes only if hours are present or minutes > 0
+    const paddedMinutes = hours > 0 && minutes < 10 ? `0${minutes}` : minutes;
+    timeString += `${paddedMinutes}m `;
+  }
+  // Always show seconds if total duration < 1 hour, or if there are remaining seconds
+  if (hours === 0) {
+    const paddedSeconds =
+      minutes > 0 && remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds;
+    timeString += `${paddedSeconds}s`;
+  }
+
+  return timeString.trim(); // Trim trailing space if only H and M shown
+};
+
+/**
+ * Displays the top statistics like visitors, visits, pageviews etc.
+ * @param {Object} metrics - The metrics object from the API
+ * @param {boolean} isLoading - Loading state
+ * @param {string} selectedMetric - The currently selected metric
+ * @param {function} onMetricSelect - Callback function to select a metric
+ */
+const TopStats = ({ metrics, isLoading, selectedMetric, onMetricSelect }) => {
+  // Define stats with keys for selection
+  const stats = [
+    { key: 'visitors', label: 'Unique Visitors', value: metrics?.visitors ?? 0 },
+    { key: 'visits', label: 'Total Visits', value: metrics?.visits ?? 0 },
+    { key: 'events', label: 'Total Clicks', value: metrics?.events ?? 0 },
+    { key: 'pageviews', label: 'Total Pageviews', value: metrics?.pageviews ?? 0 },
     {
-      title: 'UNIQUE VISITORS',
-      value: metrics?.visitors || 0,
-      previousValue: metrics?.previous_visitors || 0,
-      formatter: formatNumber,
-      isInverted: false, // Higher is better
+      key: 'time_on_page',
+      label: 'Time on Page',
+      value: formatTime(metrics?.time_on_page),
+      isTime: true,
     },
     {
-      title: 'TOTAL VISITS',
-      value: metrics?.visits || 0,
-      previousValue: metrics?.previous_visits || 0,
-      formatter: formatNumber,
-      isInverted: false, // Higher is better
+      key: 'scroll_depth',
+      label: 'Scroll Depth',
+      value: metrics?.scroll_depth ? `${metrics.scroll_depth}%` : '-',
+      isPercentage: true,
     },
-    {
-      title: 'TOTAL PAGEVIEWS',
-      value: metrics?.pageviews || 0,
-      previousValue: metrics?.previous_pageviews || 0,
-      formatter: formatNumber,
-      isInverted: false, // Higher is better
-    },
+    // Add Bounce Rate later if needed { label: 'Bounce Rate', value: 'TBD' },
   ];
 
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 gap-3 md:gap-6 my-4 mx-auto">
-      {isLoading
-        ? statsData.map((_, i) => <MetricSkeleton key={i} />)
-        : statsData.map(metric => (
-            <MetricCard
-              key={metric.title}
-              title={metric.title}
-              value={metric.value}
-              previousValue={metric.previousValue}
-              formatter={metric.formatter}
-              isInverted={metric.isInverted}
-            />
-          ))}
-    </div>
-  );
-};
+  // Metrics that can be plotted on the main chart
+  const plottableMetrics = [
+    'visitors',
+    'visits',
+    'events',
+    'pageviews',
+    'time_on_page',
+    'scroll_depth',
+  ];
 
-/**
- * Individual metric card component
- */
-const MetricCard = ({ title, value, previousValue, formatter, isInverted }) => {
-  // Calculate change percentage
-  const change = previousValue ? ((value - previousValue) / previousValue) * 100 : 0;
-  const isPositive = isInverted ? change < 0 : change > 0;
-
-  return (
-    <div className="bg-white rounded-lg p-4 shadow-sm">
-      <h2 className="text-xs uppercase text-gray-500 font-medium mb-2">{title}</h2>
-      <div className="flex items-end">
-        <span className="text-2xl font-bold">{formatter(value)}</span>
-        {previousValue > 0 && (
-          <span className={`ml-2 text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-            {isPositive ? '↑' : '↓'} {Math.abs(change).toFixed(0)}%
-          </span>
-        )}
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {/* Generate 6 skeletons */}
+        {[...Array(6)].map((_, index) => (
+          <StatCardSkeleton key={index} />
+        ))}
       </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      {stats.map(stat => (
+        <StatCard
+          key={stat.key || stat.label} // Use key if available
+          label={stat.label}
+          value={stat.value}
+          metricKey={stat.key}
+          isPlottable={plottableMetrics.includes(stat.key)}
+          isSelected={selectedMetric === stat.key}
+          onSelect={onMetricSelect}
+        />
+      ))}
     </div>
   );
 };
 
-/**
- * Loading skeleton for metric cards
- */
-const MetricSkeleton = () => (
-  <div className="bg-white rounded-lg p-4 shadow-sm animate-pulse">
-    <div className="h-4 bg-gray-200 rounded w-20 mb-2"></div>
-    <div className="h-8 bg-gray-200 rounded w-16"></div>
+// Update StatCard to handle selection and highlighting
+const StatCard = ({ label, value, metricKey, isPlottable, isSelected, onSelect }) => {
+  const cardClasses = `bg-white p-4 rounded-lg shadow-sm text-center transition-all duration-150 ease-in-out ${
+    isPlottable ? 'cursor-pointer hover:shadow-md' : ''
+  } ${isSelected ? 'ring-2 ring-blue-500 shadow-md' : ''}`;
+
+  const handleClick = () => {
+    if (isPlottable && onSelect && metricKey) {
+      onSelect(metricKey);
+    }
+  };
+
+  return (
+    <div className={cardClasses} onClick={handleClick}>
+      <div className="text-sm text-gray-500 mb-1">{label}</div>
+      <div className="text-l font-bold">{value}</div>
+    </div>
+  );
+};
+
+// StatCardSkeleton remains the same
+const StatCardSkeleton = () => (
+  <div className="bg-white p-4 rounded-lg shadow-sm animate-pulse">
+    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+    <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto"></div>
   </div>
 );
-
-// Formatter functions
-const formatNumber = value => {
-  return new Intl.NumberFormat().format(Math.round(value));
-};
-
-const formatDecimal = value => {
-  return value.toFixed(2);
-};
-
-const formatPercentage = value => {
-  return `${Math.round(value)}%`;
-};
-
-const formatDuration = seconds => {
-  if (!seconds) return '0s';
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60);
-
-  if (minutes === 0) {
-    return `${remainingSeconds}s`;
-  } else if (remainingSeconds === 0) {
-    return `${minutes}m`;
-  } else {
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-};
 
 export default TopStats;

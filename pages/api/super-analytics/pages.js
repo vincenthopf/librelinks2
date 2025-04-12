@@ -31,11 +31,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { timeRange = 'day', type = 'pages' } = req.query;
+    const { timeRange = 'day', type = 'pages', timezone = 'UTC' } = req.query;
     const userId = session.user.id;
 
     console.log(
-      `Fetching pages data for user ID: ${userId}, time range: ${timeRange}, type: ${type}`
+      `Fetching pages data for user ID: ${userId}, time range: ${timeRange}, type: ${type}, timezone: ${timezone}`
     );
 
     // Initialize Prisma client
@@ -56,8 +56,8 @@ export default async function handler(req, res) {
     const pathToFilter = `/${user.handle}`;
     // console.log(`Filtering Plausible data by path: ${pathToFilter}`);
 
-    // Format date range for v2 API
-    const date_range = formatTimeRangeV2(timeRange);
+    // Format date range for v2 API, passing timezone
+    const date_range = formatTimeRangeV2(timeRange, timezone);
 
     // Determine which dimension to use based on the type
     let dimension;
@@ -251,85 +251,5 @@ export default async function handler(req, res) {
       details: error.response?.data || error.message,
       info: 'To troubleshoot, check your Plausible API key and domain settings',
     });
-  }
-}
-
-/**
- * Format time range for Plausible API
- * @param {string} timeRange - Time range parameter from query
- * @returns {Object} Formatted period and date for Plausible API
- */
-function formatTimeRange(timeRange) {
-  const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
-
-  switch (timeRange) {
-    case 'day':
-      return { period: 'day', date: today };
-    case '7d':
-      return { period: '7d', date: today };
-    case '30d':
-      return { period: '30d', date: today };
-    case 'month':
-      return { period: 'month', date: today };
-    case '6mo':
-      return { period: '6mo', date: today };
-    case '12mo':
-      return { period: '12mo', date: today };
-    default:
-      return { period: 'day', date: today };
-  }
-}
-
-/**
- * Get mock pages data for development/testing
- * @returns {Object} Mock pages data
- */
-function getMockPagesData(type) {
-  if (type === 'pages') {
-    return {
-      top_pages: [
-        { page: '/dashboard', visitors: 652, pageviews: 891 },
-        { page: '/sites', visitors: 321, pageviews: 487 },
-        { page: '/', visitors: 289, pageviews: 378 },
-        { page: '/profile', visitors: 187, pageviews: 243 },
-        { page: '/settings', visitors: 154, pageviews: 201 },
-        { page: '/analytics', visitors: 132, pageviews: 178 },
-      ],
-      entry_pages: [
-        { page: '/dashboard', entries: 386 },
-        { page: '/', entries: 243 },
-        { page: '/sites', entries: 112 },
-        { page: '/login', entries: 87 },
-        { page: '/register', entries: 54 },
-        { page: '/pricing', entries: 29 },
-      ],
-      exit_pages: [
-        { page: '/dashboard', exits: 321 },
-        { page: '/sites', exits: 189 },
-        { page: '/', exits: 147 },
-        { page: '/settings', exits: 76 },
-        { page: '/profile', exits: 64 },
-        { page: '/logout', exits: 43 },
-      ],
-    };
-  } else if (type === 'exit_pages') {
-    return {
-      top_pages: [],
-      entry_pages: [],
-      exit_pages: [
-        { page: '/dashboard', exits: 321 },
-        { page: '/sites', exits: 189 },
-        { page: '/', exits: 147 },
-        { page: '/settings', exits: 76 },
-        { page: '/profile', exits: 64 },
-        { page: '/logout', exits: 43 },
-      ],
-    };
-  } else {
-    return {
-      top_pages: [],
-      entry_pages: [],
-      exit_pages: [],
-    };
   }
 }

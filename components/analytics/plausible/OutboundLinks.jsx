@@ -16,12 +16,18 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
 
   const links = outboundLinksData.outboundLinks || [];
 
+  // Sort links by number of clicks (events) in descending order
+  const sortedLinks = [...links].sort((a, b) => b.events - a.events);
+
+  // Find maximum clicks to calculate relative percentages for bars
+  const maxClicks = sortedLinks.length > 0 ? sortedLinks[0].events : 0;
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-8">
       <h2 className="text-lg font-medium mb-4">Outbound Links</h2>
 
       {/* Data table */}
-      {links.length > 0 ? (
+      {sortedLinks.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -29,7 +35,7 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
                 <th className="pb-2 pr-1 sm:pr-2">Link</th>
                 <th className="pb-2 px-1 sm:px-2 text-right whitespace-nowrap">
                   <span className="hidden sm:inline">Unique Visitors</span>
-                  <span className="sm:hidden">Unique</span>
+                  <span className="sm:hidden">Visitors</span>
                 </th>
                 <th className="pb-2 pl-1 sm:pl-2 text-right">
                   <span>Clicks</span>
@@ -37,26 +43,39 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
               </tr>
             </thead>
             <tbody>
-              {links.map((link, index) => (
-                <tr key={index} className="border-b last:border-0">
-                  <td className="py-2 pr-1 sm:pr-2 font-medium truncate max-w-[150px] sm:max-w-xs">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                      title={link.url}
+              {sortedLinks.map((link, index) => {
+                // Calculate percentage for the bar width based on clicks relative to max
+                const percentage = maxClicks > 0 ? Math.round((link.events / maxClicks) * 100) : 0;
+
+                // Bar style with light green background gradient
+                const barStyle = {
+                  background: `linear-gradient(to right, rgba(134, 239, 172, 0.3) ${percentage}%, transparent ${percentage}%)`,
+                };
+
+                return (
+                  <tr key={index} className="border-b last:border-0">
+                    <td
+                      className="py-2 pr-1 sm:pr-2 font-medium truncate max-w-[150px] sm:max-w-xs"
+                      style={barStyle}
                     >
-                      {link.title || formatUrl(link.url)}
-                    </a>
-                    {link.title && (
-                      <div className="text-xs text-gray-500 truncate">{formatUrl(link.url)}</div>
-                    )}
-                  </td>
-                  <td className="py-2 px-1 sm:px-2 text-right">{link.visitors}</td>
-                  <td className="py-2 pl-1 sm:pl-2 text-right">{link.events}</td>
-                </tr>
-              ))}
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                        title={link.url}
+                      >
+                        {link.title || formatUrl(link.url)}
+                      </a>
+                      {link.title && (
+                        <div className="text-xs text-gray-500 truncate">{formatUrl(link.url)}</div>
+                      )}
+                    </td>
+                    <td className="py-2 px-1 sm:px-2 text-right">{link.visitors}</td>
+                    <td className="py-2 pl-1 sm:pl-2 text-right">{link.events}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

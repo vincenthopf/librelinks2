@@ -14,16 +14,17 @@ import { useSession } from 'next-auth/react';
 const usePlausibleUserAnalytics = (type = 'dashboard', timeRange = 'day', options = {}) => {
   const { data: session } = useSession();
   const userId = session?.user?.id;
+  const timezone = options?.timezone || 'UTC';
 
   // Normalize time range to ensure consistency across all API endpoints
   const normalizedTimeRange = normalizeTimeRange(timeRange);
 
   return useQuery({
-    queryKey: ['plausible-analytics', userId, type, normalizedTimeRange, options],
+    queryKey: ['plausible-analytics', userId, type, normalizedTimeRange, timezone, options],
     queryFn: async () => {
       // Construct the API endpoint based on the type
       let endpoint;
-      const params = { timeRange: normalizedTimeRange };
+      const params = { timeRange: normalizedTimeRange, timezone: timezone };
 
       switch (type) {
         case 'dashboard':
