@@ -2,42 +2,23 @@ import React, { useState } from 'react';
 
 /**
  * LocationsComponent for displaying geographic data
- * Matches the Plausible design for locations display with tabs
+ * Matches the Plausible design for locations display
  *
  * @param {Object} props - Component props
  * @param {Object} props.locationsData - Locations data from the API
  * @param {boolean} props.isLoading - Whether the data is still loading
  */
 const LocationsComponent = ({ locationsData, isLoading = false }) => {
-  const [activeTab, setActiveTab] = useState('countries');
+  // Active tab is now fixed to countries
+  const activeTab = 'countries';
 
   // If no data is provided or still loading, show loading state
   if (isLoading || !locationsData) {
     return <LocationsSkeleton />;
   }
 
-  // Available tabs and their corresponding data
-  const tabs = [
-    { id: 'countries', label: 'Countries' },
-    { id: 'regions', label: 'Regions' },
-    { id: 'cities', label: 'Cities' },
-  ];
-
-  // Get the data for the active tab
-  const getActiveData = () => {
-    switch (activeTab) {
-      case 'countries':
-        return locationsData.countries || [];
-      case 'regions':
-        return locationsData.regions || [];
-      case 'cities':
-        return locationsData.cities || [];
-      default:
-        return [];
-    }
-  };
-
-  const activeData = getActiveData();
+  // Get the data for countries
+  const activeData = locationsData.countries || [];
 
   // Helper to get country flag emoji
   const getCountryFlag = countryCode => {
@@ -53,22 +34,7 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
     <div className="bg-white p-4 rounded-lg shadow-sm mb-8">
       <h2 className="text-lg font-medium mb-4">Locations</h2>
 
-      {/* Tabs */}
-      <div className="flex border-b mb-4">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            className={`py-2 px-4 mr-2 focus:outline-none ${
-              activeTab === tab.id
-                ? 'border-b-2 border-blue-500 text-blue-500 font-medium'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Removed tabs section */}
 
       {/* Data table */}
       {activeData.length > 0 ? (
@@ -76,10 +42,8 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase text-gray-500 border-b">
-                <th className="pb-2">
-                  {tabs.find(tab => tab.id === activeTab)?.label || 'Location'}
-                </th>
-                <th className="pb-2 text-right">Visitors</th>
+                <th className="pb-2">COUNTRIES</th>
+                <th className="pb-2 text-right">VISITORS</th>
                 <th className="pb-2 w-1/3">
                   <div className="w-full h-4"></div>
                 </th>
@@ -89,7 +53,7 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
               {activeData.map((item, index) => (
                 <tr key={index} className="border-b last:border-0">
                   <td className="py-2 font-medium">
-                    {activeTab === 'countries' && item.country_code && (
+                    {item.country_code && (
                       <span className="mr-2" aria-hidden="true">
                         {getCountryFlag(item.country_code)}
                       </span>
@@ -125,11 +89,7 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
 const LocationsSkeleton = () => (
   <div className="bg-white p-4 rounded-lg shadow-sm mb-8 animate-pulse">
     <div className="h-8 bg-gray-200 rounded w-40 mb-4"></div>
-    <div className="flex border-b mb-4">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-8 bg-gray-200 rounded w-20 mr-2"></div>
-      ))}
-    </div>
+    {/* Removed tabs skeleton */}
     {[...Array(5)].map((_, i) => (
       <div key={i} className="flex justify-between items-center py-2 border-b last:border-0">
         <div className="h-4 bg-gray-200 rounded w-28"></div>

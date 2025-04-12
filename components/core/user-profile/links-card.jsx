@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import RichMediaPreview from './rich-media-preview';
 import { GOOGLE_FAVICON_URL } from '@/utils/constants';
@@ -12,6 +12,7 @@ const LinkCard = props => {
   const isHorizontalOnly = props.buttonStyle.includes('horizontal-only');
   const isBottomOnly = props.buttonStyle.includes('bottom-only');
   const faviconSize = props.faviconSize || 32;
+  const richMediaContainerRef = useRef(null);
 
   // Update showPreview state when alwaysExpandEmbed prop changes
   useEffect(() => {
@@ -19,6 +20,20 @@ const LinkCard = props => {
     // Always set the state explicitly based on the prop value
     setShowPreview(!!props.alwaysExpandEmbed);
   }, [props.alwaysExpandEmbed, props.id]);
+
+  // --- REMOVE Capture Phase Listener Effect ---
+  // useEffect(() => { ... capture listener code ... }, [props.registerClicks, props.url]);
+
+  // --- REMOVE Blur Listener Effect ---
+  // useEffect(() => {
+  //   const handleBlur = () => {
+  //     // ... blur listener code ...
+  //   };
+  //   window.addEventListener('blur', handleBlur);
+  //   return () => {
+  //     window.removeEventListener('blur', handleBlur);
+  //   };
+  // }, [props.url, props.registerClicks]);
 
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,
@@ -57,15 +72,30 @@ const LinkCard = props => {
     iframelyData.embedHtml || (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
 
   return (
-    <div className="w-full transition-all duration-300">
+    <div
+      className="w-full transition-all duration-300"
+      onClick={props.registerClicks}
+      style={{ cursor: 'pointer' }}
+    >
       <div className="relative">
         <a
           href={props.url}
-          onClick={props.registerClicks}
           target="_blank"
           rel="noopener noreferrer"
           className={`block w-full ${props.buttonStyle} p-4 transition-all duration-300`}
           style={style}
+          onClick={e => {
+            e.stopPropagation();
+            console.log(
+              '[Anchor Click] Stopping propagation and calling registerClicks for:',
+              props.url
+            );
+            if (typeof props.registerClicks === 'function') {
+              props.registerClicks();
+            } else {
+              console.warn('[Anchor Click] registerClicks is not a function');
+            }
+          }}
         >
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3 flex-grow pr-8">
@@ -119,6 +149,7 @@ const LinkCard = props => {
       </div>
 
       <div
+        ref={richMediaContainerRef}
         className={`transition-all duration-300 rounded-lg overflow-hidden ${
           showPreview ? 'opacity-100 mt-2' : 'opacity-0 h-0'
         }`}
@@ -127,6 +158,14 @@ const LinkCard = props => {
           visibility: showPreview ? 'visible' : 'hidden',
           marginBottom: showPreview ? '8px' : '0',
           background: 'transparent',
+        }}
+        onPointerEnter={() => {
+          console.log('[Pointer Enter] Embed container entered, registering click for:', props.url);
+          if (typeof props.registerClicks === 'function') {
+            props.registerClicks();
+          } else {
+            console.warn('[Pointer Enter] registerClicks is not a function');
+          }
         }}
       >
         {showPreview && <RichMediaPreview link={iframelyData} />}

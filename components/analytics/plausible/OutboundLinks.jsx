@@ -26,15 +26,20 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase text-gray-500 border-b">
-                <th className="pb-2">Link</th>
-                <th className="pb-2 text-right">Visitors</th>
-                <th className="pb-2 text-right">Clicks</th>
+                <th className="pb-2 pr-1 sm:pr-2">Link</th>
+                <th className="pb-2 px-1 sm:px-2 text-right whitespace-nowrap">
+                  <span className="hidden sm:inline">Unique Visitors</span>
+                  <span className="sm:hidden">Unique</span>
+                </th>
+                <th className="pb-2 pl-1 sm:pl-2 text-right">
+                  <span>Clicks</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {links.map((link, index) => (
                 <tr key={index} className="border-b last:border-0">
-                  <td className="py-2 font-medium truncate max-w-xs">
+                  <td className="py-2 pr-1 sm:pr-2 font-medium truncate max-w-[150px] sm:max-w-xs">
                     <a
                       href={link.url}
                       target="_blank"
@@ -48,8 +53,8 @@ const OutboundLinks = ({ outboundLinksData, isLoading = false }) => {
                       <div className="text-xs text-gray-500 truncate">{formatUrl(link.url)}</div>
                     )}
                   </td>
-                  <td className="py-2 text-right">{link.visitors}</td>
-                  <td className="py-2 text-right">{link.events}</td>
+                  <td className="py-2 px-1 sm:px-2 text-right">{link.visitors}</td>
+                  <td className="py-2 pl-1 sm:pl-2 text-right">{link.events}</td>
                 </tr>
               ))}
             </tbody>

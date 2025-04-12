@@ -26,6 +26,9 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 
+// Object to store last click timestamp for each link ID
+const lastClickTimestamps = {};
+
 const ProfilePage = () => {
   const { query } = useRouter();
   const { handle, photoBookLayout: queryLayout } = query;
@@ -141,138 +144,32 @@ const ProfilePage = () => {
 
   const handleRegisterClick = async (linkId, linkUrl, linkTitle) => {
     try {
-      console.log(`Handling click for link: ${linkTitle} (${linkUrl})`);
+      const now = Date.now();
+      const lastClickTime = lastClickTimestamps[linkId] || 0;
+      const debounceTime = 500; // milliseconds
 
-      // First, increment the click count in the database
-      console.log(`Incrementing click count for link ID: ${linkId}`);
-      try {
-        await fetch(`/api/links/${linkId}/click`, {
-          method: 'POST',
-        });
-        console.log('Database click count incremented successfully');
-      } catch (dbError) {
-        console.error('Error incrementing database click count:', dbError);
+      // If called again for the same link within the debounce time, ignore it
+      if (now - lastClickTime < debounceTime) {
+        console.log(`Debounced click for link: ${linkId}`);
+        return;
       }
 
-      // Track the click event in Tinybird
-      if (typeof window !== 'undefined') {
-        // Prepare the event data - format specifically for Tinybird events tracking
-        const clickData = {
-          timestamp: new Date().toISOString(),
-          handle: handle,
-          url: linkUrl,
-          title: linkTitle,
-          link_id: linkId,
-          event_name: 'click',
-        };
+      // Update the timestamp for this link ID
+      lastClickTimestamps[linkId] = now;
 
-        console.log('Click event data:', clickData);
+      console.log(`Handling click for link: ${linkTitle} (${linkUrl}) - ID: ${linkId}`);
 
-        let trackingSuccess = false;
-
-        // Try to use window.flock if available (direct Tinybird script)
-        if (window.flock) {
-          console.log('Using window.flock to track event');
-          try {
-            // Use the push method for compatibility with Tinybird's API
-            window.flock.push(clickData);
-            trackingSuccess = true;
-            console.log('Successfully tracked event with window.flock');
-          } catch (flockError) {
-            console.error('Error tracking with window.flock:', flockError);
-            trackingSuccess = false;
-          }
-        }
-
-        // If direct tracking failed or flock isn't available, use our proxy
-        if (!trackingSuccess) {
-          console.log('Using ProxyFlock trackEvent as fallback');
-          try {
-            trackingSuccess = await trackEvent('click', clickData);
-            console.log('ProxyFlock tracking result:', trackingSuccess);
-          } catch (proxyError) {
-            console.error('Error tracking with ProxyFlock:', proxyError);
-            trackingSuccess = false;
-          }
-        }
-
-        // If both methods failed, try direct Tinybird API call
-        if (!trackingSuccess) {
-          console.log('All tracking methods failed, attempting direct Tinybird API call');
-
-          try {
-            // Get the token from a meta tag or environment variable
-            const token =
-              document.querySelector('meta[name="tinybird-token"]')?.getAttribute('content') ||
-              process.env.NEXT_PUBLIC_ANALYTICS_TOKEN;
-
-            if (token) {
-              // Try the events endpoint directly
-              try {
-                const apiBaseUrl = 'https://api.us-east.tinybird.co';
-                const clicksResponse = await fetch(
-                  `${apiBaseUrl}/v0/events?name=click&token=${token}`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(clickData),
-                  }
-                );
-
-                console.log('Direct Tinybird events response:', clicksResponse.status);
-                if (clicksResponse.ok) {
-                  console.log('Successfully tracked event directly with Tinybird events endpoint');
-                  trackingSuccess = true;
-                } else {
-                  console.error('Failed to track event with events endpoint');
-                  const responseText = await clicksResponse.text();
-                  console.error('Error details:', responseText);
-
-                  // Try the datasource endpoint as fallback
-                  const datasourceResponse = await fetch(
-                    `${apiBaseUrl}/v0/datasources/events?token=${token}`,
-                    {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify(clickData),
-                    }
-                  );
-
-                  console.log('Direct Tinybird datasource response:', datasourceResponse.status);
-                  if (datasourceResponse.ok) {
-                    console.log('Successfully tracked event directly with Tinybird datasource');
-                    trackingSuccess = true;
-                  } else {
-                    console.error('Failed to track event with datasource endpoint');
-                    const dsResponseText = await datasourceResponse.text();
-                    console.error('Error details:', dsResponseText);
-                  }
-                }
-              } catch (directError) {
-                console.error('Error making direct Tinybird API call:', directError);
-              }
-            } else {
-              console.error('No Tinybird token available for direct API call');
-            }
-          } catch (directError) {
-            console.error('Error making direct Tinybird API call:', directError);
-          }
-        }
-
-        // Log final tracking status
-        console.log('Final tracking status:', trackingSuccess ? 'Success' : 'Failed');
+      // --- Manually Track with Plausible ---
+      if (typeof window !== 'undefined' && window.plausible) {
+        console.log('Tracking click with Plausible:', linkUrl);
+        window.plausible('Outbound Link: Click', { props: { url: linkUrl } });
+      } else {
+        console.warn('Plausible not available. Skipping Plausible tracking.');
       }
-
-      // Open the link in a new tab
-      window.open(linkUrl, '_blank');
     } catch (error) {
-      console.error('Error handling link click:', error);
-      // Still open the link even if tracking fails
-      window.open(linkUrl, '_blank');
+      console.error('Error in handleRegisterClick:', error);
+      // Optionally show a toast message or handle the error appropriately
+      // toast.error('Could not process link click.');
     }
   };
 
