@@ -82,56 +82,99 @@ export default async function handler(req, res) {
 
     // Validate background image if provided
     if (backgroundImage !== undefined && backgroundImage !== null && backgroundImage !== '') {
-      // If it's not null or empty, verify it exists in the database
+      // If it's not null or empty, verify it exists in the database OR in the user's custom list
       if (backgroundImage !== 'none') {
-        const bgImage = await db.backgroundImage.findFirst({
+        // 1. Check the public/admin BackgroundImage table
+        const publicBgImage = await db.backgroundImage.findFirst({
           where: {
             imageUrl: backgroundImage,
-            OR: [{ isPublic: true }, { userId: session.user.id }],
+            isPublic: true, // Only check public ones here
           },
+          select: { id: true }, // Select minimal data
         });
 
-        if (!bgImage) {
+        // 2. If not found publicly, check the user's customBackgroundImages array
+        let userHasCustomImage = false;
+        if (!publicBgImage) {
+          const userWithCustomImages = await db.user.findUnique({
+            where: { email: session.user.email },
+            select: { customBackgroundImages: true },
+          });
+          userHasCustomImage =
+            userWithCustomImages?.customBackgroundImages?.includes(backgroundImage) ?? false;
+        }
+
+        // 3. If not found in public images AND not in the user's custom list, reject
+        if (!publicBgImage && !userHasCustomImage) {
+          console.warn(
+            `Invalid background image selection attempt by ${session.user.email}: ${backgroundImage}`
+          );
           res.status(400).json({ message: 'Invalid background image selection' });
           return;
         }
       }
     }
 
-    const user = await db.user.update({
-      where: {
-        email: session.user.email,
-      },
-      data: {
-        // Font sizes
-        profileNameFontSize,
-        bioFontSize,
-        linkTitleFontSize,
-        // Font families
-        profileNameFontFamily,
-        bioFontFamily,
-        linkTitleFontFamily,
-        // Image sizes
-        socialIconSize,
-        faviconSize,
-        // Background image - set to null if 'none' is selected
-        backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
-        // Button styles
-        buttonStyle,
-        textCardButtonStyle,
-        // Spacing fields
-        bioToSocialPadding,
-        pageHorizontalMargin,
-        // Other customization fields
-        ...otherFields,
-      },
-    });
+    console.log(
+      `[Customize API] Attempting to update user ${session.user.email} with background:`,
+      backgroundImage
+    );
 
-    res.status(200).json(user);
-    return;
+    try {
+      const user = await db.user.update({
+        where: {
+          email: session.user.email,
+        },
+        data: {
+          // Font sizes
+          profileNameFontSize,
+          bioFontSize,
+          linkTitleFontSize,
+          // Font families
+          profileNameFontFamily,
+          bioFontFamily,
+          linkTitleFontFamily,
+          // Image sizes
+          socialIconSize,
+          faviconSize,
+          // Background image - set to null if 'none' is selected
+          backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
+          // Button styles
+          buttonStyle,
+          textCardButtonStyle,
+          // Spacing fields
+          bioToSocialPadding,
+          pageHorizontalMargin,
+          // Other customization fields
+          ...otherFields,
+        },
+        // Select the updated field to confirm
+        select: { id: true, email: true, backgroundImage: true },
+      });
+
+      console.log(
+        `[Customize API] Successfully updated user ${user.email}. New background:`,
+        user.backgroundImage
+      );
+      res.status(200).json(user);
+      return;
+    } catch (updateError) {
+      console.error(
+        `[Customize API] Error during db.user.update for ${session.user.email}:`,
+        updateError
+      );
+      // Return a specific error for update failure
+      res.status(500).json({ message: 'Database update failed', error: updateError.message });
+      return;
+    }
   } catch (error) {
-    console.error('Error in customize API:', error);
-    res.status(500).json({ message: 'Internal server error' });
-    return;
+    // General error handler for session issues, validation errors handled above
+    console.error('[Customize API] General error:', error);
+    // Ensure validation errors return 400, other errors return 500
+    if (!res.headersSent) {
+      // Avoid setting headers if already sent (e.g., by validation)
+      res.status(500).json({ message: 'Internal server error' });
+    }
+    return; // Ensure function exits
   }
 }

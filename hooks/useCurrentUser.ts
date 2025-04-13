@@ -8,6 +8,7 @@ interface BaseUser {
   handle: string | null;
   image: string | null;
   backgroundImage: string | null;
+  customBackgroundImages?: string[];
 }
 
 function useCurrentUser<T extends BaseUser = BaseUser>(

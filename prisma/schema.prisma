@@ -68,6 +68,10 @@ model User {
   images               UserImage[]
   backgroundImages     BackgroundImage[]
   photoBookImages      PhotoBookImage[] // Relation to photo book images
+  customBackgroundImages String[]             @default([]) // Added field for user-uploaded background images
+  sharePrefix         String?                @unique
+  showBranding        Boolean                @default(true)
+  verified            Boolean                @default(false)
 
   // Store the expansion state for connected links
   linkExpansionStates  Json?
@@ -159,7 +163,7 @@ model Template {
   profileHandle        String? // Mirrored from User.handle
   profileBio           String? // Mirrored from User.bio
   profileImageUrl      String? // Mirrored from User.image
-  
+
   // --- Styling & Layout Settings ---
   linksLocation        String? @default("top")
   themePalette         Json?   @default("{\"name\": \"Light\", \"palette\": [\"#FFFFFF\", \"#F2F2F2\", \"#1F2937\", \"#6170F8\"]}")

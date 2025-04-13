@@ -330,3 +330,25 @@
   - Implement key algorithms as services that can be moved to private packages
   - Document public API interfaces while keeping implementation details private
   - Reference protected modules via imports rather than including critical code inline
+
+## Project Notes & Lessons Learned
+
+- **Database:** Uses MongoDB.
+- **ORM:** Uses Prisma.
+- **Authentication:** Uses NextAuth.js.
+- **Cloud Storage:** Uses Cloudinary for image uploads (profile pictures, background images, etc.). Configured in `lib/cloudinary.js`.
+- **UI Components:** Uses Shadcn UI (`components/ui`).
+- **State Management/Data Fetching:** Uses `@tanstack/react-query` extensively for server state management.
+- **Prisma & MongoDB Migrations:** Prisma's `migrate dev` command is **not** supported for MongoDB. Schema changes in `prisma.prisma` define the shape of data for Prisma Client but do not automatically trigger database-level migrations like in SQL databases. The application logic should handle data consistency if schema changes require data transformation.
+
+## API Routes and TypeScript
+
+When encountering TypeScript issues with App Router API routes (route.ts files), consider using Pages Router API endpoints instead. The pages/api approach has less strict typing requirements and can be easier to work with in some cases.
+
+Example of conversion:
+
+1. Create a standard API handler in `/pages/api/your-endpoint.ts`
+2. Use the Pages API format with `export default function handler(req, res)`
+3. Remove the App Router version if it exists to avoid conflicts
+
+This approach was successfully used for the background-images API endpoint that had persistent TypeScript errors with the db import.

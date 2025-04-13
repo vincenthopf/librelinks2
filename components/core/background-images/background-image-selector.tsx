@@ -14,17 +14,21 @@ import {
   isValidBackgroundImage,
   isValidImageUrl,
 } from './types';
+import UserBackgroundImageUploader from './user-background-image-uploader.jsx';
+import { cn } from '@/lib/utils';
 
 // Query keys
 const QUERY_KEYS = {
   backgroundImages: 'backgroundImages',
   currentUser: 'currentUser',
+  userBackgroundImages: 'userBackgroundImages',
 } as const;
 
 // Cache time configurations
 const CACHE_TIME = {
   backgroundImages: 5 * 60 * 1000, // 5 minutes
   currentUser: 2 * 60 * 1000, // 2 minutes
+  userBackgroundImages: 1 * 60 * 1000, // Cache user images for 1 minute
 } as const;
 
 // Loading state component
@@ -35,6 +39,71 @@ const LoadingState: React.FC<LoadingStateProps> = ({ message }) => (
   </div>
 );
 
+// Extend User interface to include customBackgroundImages
+interface User extends BaseUser {
+  backgroundImage: string | null;
+}
+
+// Props for the new User Background Image Grid
+interface UserBackgroundImageGridProps {
+  customImages: string[];
+  selectedImage: string | null;
+  isUpdating: boolean;
+  onImageSelect: (imageUrl: string) => Promise<void>;
+  // Optional: Add delete functionality later
+  // onDelete: (imageUrl: string) => Promise<void>;
+}
+
+// Grid component for displaying User's Custom Background Images
+const UserBackgroundImageGrid: React.FC<UserBackgroundImageGridProps> = ({
+  customImages,
+  selectedImage,
+  isUpdating,
+  onImageSelect,
+}) => {
+  if (!customImages || customImages.length === 0) {
+    return (
+      <p className="text-sm text-gray-500 my-4">
+        You haven&apos;t uploaded any custom backgrounds yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-4">
+      {customImages.map((imageUrl, index) => (
+        <div
+          key={imageUrl}
+          className={cn(
+            'rounded-lg overflow-hidden cursor-pointer relative border-2 h-32',
+            selectedImage === imageUrl
+              ? 'border-blue-500'
+              : 'border-gray-200 hover:border-gray-300',
+            isUpdating ? 'opacity-50 cursor-not-allowed' : ''
+          )}
+          onClick={!isUpdating ? () => onImageSelect(imageUrl) : undefined}
+        >
+          {/* Simple Image display */}
+          <img
+            src={imageUrl}
+            alt={`Custom Background ${index + 1}`}
+            className="w-full h-full object-cover"
+            loading="lazy" // Lazy load custom images
+          />
+          {/* Checkmark if selected */}
+          {selectedImage === imageUrl && (
+            <span className="absolute top-2 right-2 z-10 text-white bg-black bg-opacity-50 rounded-full p-1">
+              <CheckMark size={16} />
+            </span>
+          )}
+          {/* Optional: Add delete button later */}
+          {/* {isUpdating && selectedImage === imageUrl && (...)} */}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Separate component for the image grid to wrap in error boundary
 const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
   backgroundImages,
@@ -43,26 +112,24 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
   onImageSelect,
   onRemoveBackground,
 }) => {
-  const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>({});
 
   // Initialize loading state for all images when component mounts or backgroundImages changes
   useEffect(() => {
     const initialLoadingState: Record<string, boolean> = {};
-    backgroundImages.forEach((image) => {
+    backgroundImages.forEach(image => {
       initialLoadingState[image.id] = true;
     });
     setLoadingImages(initialLoadingState);
   }, [backgroundImages]);
 
   const handleImageLoad = (imageId: string) => {
-    setLoadingImages((prev) => ({ ...prev, [imageId]: false }));
+    setLoadingImages(prev => ({ ...prev, [imageId]: false }));
   };
 
   // We'll keep this function for potential future use but won't call it on hover
   const handleImageLoadStart = (imageId: string) => {
-    setLoadingImages((prev) => ({ ...prev, [imageId]: true }));
+    setLoadingImages(prev => ({ ...prev, [imageId]: true }));
   };
 
   return (
@@ -80,7 +147,7 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
         </div>
         {!selectedImage && (
           <span className="absolute top-2 right-2 z-10">
-            <CheckMark />
+            <CheckMark size={16} />
           </span>
         )}
         {isUpdating && (
@@ -90,18 +157,14 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
         )}
       </div>
 
-      {/* Background image options */}
-      {backgroundImages.map((image) => (
+      {/* Public Background image options */}
+      {backgroundImages.map(image => (
         <div
           key={image.id}
           className={`rounded-lg overflow-hidden cursor-pointer relative border-2 h-32 ${
-            selectedImage === image.imageUrl
-              ? 'border-blue-500'
-              : 'border-gray-200'
+            selectedImage === image.imageUrl ? 'border-blue-500' : 'border-gray-200'
           } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-          onClick={
-            !isUpdating ? () => onImageSelect(image.imageUrl) : undefined
-          }
+          onClick={!isUpdating ? () => onImageSelect(image.imageUrl) : undefined}
         >
           {loadingImages[image.id] && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -115,7 +178,7 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
             loading="eager"
             decoding="async"
             onLoad={() => handleImageLoad(image.id)}
-            onError={(e) => {
+            onError={e => {
               handleImageLoad(image.id);
               const target = e.target as HTMLImageElement;
               target.onerror = null;
@@ -128,7 +191,7 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
           </div>
           {selectedImage === image.imageUrl && (
             <span className="absolute top-2 right-2 z-10 text-white">
-              <CheckMark />
+              <CheckMark size={16} />
             </span>
           )}
           {isUpdating && selectedImage === image.imageUrl && (
@@ -146,10 +209,6 @@ interface BaseUser {
   // Add any necessary properties for the base user interface
 }
 
-interface User extends BaseUser {
-  backgroundImage: string | null;
-}
-
 interface MutationContext {
   previousUser: User | undefined;
 }
@@ -159,21 +218,16 @@ const BackgroundImageSelector: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Fetch user data with optimized caching
   const {
     data: currentUser,
     isLoading: isUserLoading,
     error: userError,
-  } = useCurrentUser({
-    cacheTime: CACHE_TIME.currentUser,
-    staleTime: CACHE_TIME.currentUser / 2,
-  });
+  } = useCurrentUser({ cacheTime: CACHE_TIME.currentUser });
 
-  // Fetch background images with optimized caching and error handling
   const {
-    data: backgroundImages,
-    isLoading: isImagesLoading,
-    error: imagesError,
+    data: publicBackgroundImages,
+    isLoading: isPublicImagesLoading,
+    error: publicImagesError,
   } = useQuery<BackgroundImage[]>({
     queryKey: [QUERY_KEYS.backgroundImages],
     queryFn: async () => {
@@ -194,46 +248,65 @@ const BackgroundImageSelector: React.FC = () => {
         return validImages;
       } catch (error) {
         console.error('Error fetching background images:', error);
-        throw new Error(
-          'Failed to load background images. Please try again later.'
-        );
+        throw new Error('Failed to load background images. Please try again later.');
       }
     },
     retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     cacheTime: CACHE_TIME.backgroundImages,
-    staleTime: CACHE_TIME.backgroundImages / 2,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
 
-  // Initialize and sync selected image with user data
-  useEffect(() => {
-    if (!isUserLoading && currentUser) {
+  const {
+    data: customImages = [],
+    isLoading: isCustomImagesLoading,
+    error: customImagesError,
+  } = useQuery<string[]>({
+    queryKey: [QUERY_KEYS.userBackgroundImages],
+    queryFn: async () => {
       try {
-        const imageUrl = currentUser.backgroundImage;
-        if (imageUrl && isValidImageUrl(imageUrl)) {
-          setSelectedImage(imageUrl);
-        } else {
-          setSelectedImage(null);
+        const { data } = await axios.get('/api/user/background-images');
+        // Basic validation: Ensure it's an array of strings
+        if (!Array.isArray(data) || !data.every(item => typeof item === 'string')) {
+          console.error('Invalid format received for user background images:', data);
+          throw new Error('Invalid response format for user background images');
         }
+        return data;
       } catch (error) {
-        console.error('Error syncing background image state:', error);
-        toast.error('Failed to sync background image selection');
+        console.error("Error fetching user's background images:", error);
+        // Provide a user-friendly error message
+        throw new Error('Failed to load your custom background images. Please try again later.');
       }
-    }
-  }, [currentUser, isUserLoading]);
+    },
+    cacheTime: CACHE_TIME.userBackgroundImages,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 
-  const mutateBackground = useMutation<void, Error, string, MutationContext>({
+  // Initialize and sync local selectedImage state with persisted value
+  useEffect(() => {
+    console.log('[Effect] Running. Loading:', isUserLoading, 'User:', currentUser);
+    // if (currentUser !== undefined) { // Original condition
+    if (!isUserLoading && currentUser) {
+      // More robust check
+      const dbValue = currentUser.backgroundImage || null;
+      console.log('[Effect] Setting selectedImage from DB value:', dbValue);
+      setSelectedImage(dbValue);
+    } else if (!isUserLoading && !currentUser) {
+      console.log('[Effect] Loading finished, no user found. Setting selectedImage to null.');
+      setSelectedImage(null);
+    }
+  }, [currentUser, isUserLoading]); // Keep dependencies broad for logging
+
+  const mutateBackground = useMutation<void, Error, string>({
     mutationFn: async (imageUrl: string) => {
       setIsUpdating(true);
       try {
         if (imageUrl !== 'none' && !isValidImageUrl(imageUrl)) {
           throw new Error('Invalid image URL');
         }
-        await axios.patch('/api/customize', {
-          backgroundImage: imageUrl,
-        });
+        await axios.patch('/api/customize', { backgroundImage: imageUrl });
       } catch (error) {
         console.error('Error updating background:', error);
         throw error;
@@ -242,146 +315,175 @@ const BackgroundImageSelector: React.FC = () => {
       }
     },
     onSuccess: () => {
-      // Invalidate both queries to ensure fresh data
       queryClient.invalidateQueries([QUERY_KEYS.currentUser]);
-      queryClient.invalidateQueries([QUERY_KEYS.backgroundImages]);
+      queryClient.invalidateQueries([QUERY_KEYS.userBackgroundImages]);
       signalIframe();
     },
-    onError: (error) => {
-      console.error('Error updating background:', error);
-      toast.error('Failed to update background image. Please try again.');
-      setSelectedImage(currentUser?.backgroundImage || null);
-    },
-    // Optimistic update
-    onMutate: async (newImageUrl) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries([QUERY_KEYS.currentUser]);
-
-      // Snapshot the previous value
-      const previousUser = queryClient.getQueryData<User>([
-        QUERY_KEYS.currentUser,
-      ]);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData<User>([QUERY_KEYS.currentUser], (old) => ({
-        ...old!,
-        backgroundImage: newImageUrl === 'none' ? null : newImageUrl,
-      }));
-
-      // Return a context object with the snapshotted value
-      return { previousUser };
-    },
-    // If the mutation fails, use the context returned from onMutate to roll back
-    onSettled: (data, error, variables, context) => {
-      if (error && context) {
-        queryClient.setQueryData(
-          [QUERY_KEYS.currentUser],
-          context.previousUser
-        );
-      }
-      // Always refetch after error or success to make sure our optimistic update is correct
-      queryClient.invalidateQueries([QUERY_KEYS.currentUser]);
+    onError: error => {
+      console.error('Error updating background mutation:', error);
     },
   });
 
   const handleImageSelect = async (imageUrl: string) => {
     if (isUpdating) return;
-
-    await toast.promise(mutateBackground.mutateAsync(imageUrl), {
-      loading: 'Updating background image...',
-      success: 'Background image updated successfully',
-      error: 'Failed to update background image',
-    });
+    console.log('[Select] Clicked:', imageUrl);
+    // 1. Set local state immediately
+    console.log('[Select] Setting local state to:', imageUrl);
     setSelectedImage(imageUrl);
+    // 2. Call mutation
+    try {
+      console.log('[Select] Calling mutateAsync with:', imageUrl);
+      await toast.promise(mutateBackground.mutateAsync(imageUrl), {
+        loading: 'Updating background image...',
+        success: 'Background image updated successfully',
+        error: 'Failed to update background image',
+      });
+      console.log('[Select] Mutate async finished successfully for:', imageUrl);
+    } catch (error) {
+      console.error('[Select] Mutation failed:', error);
+      // If mutation fails, useEffect syncing with invalidated currentUser should correct the state
+    }
   };
 
   const handleRemoveBackground = async () => {
     if (isUpdating) return;
-
-    await toast.promise(mutateBackground.mutateAsync('none'), {
-      loading: 'Removing background image...',
-      success: 'Background image removed successfully',
-      error: 'Failed to remove background image',
-    });
+    console.log('[Remove] Clicked');
+    // 1. Set local state immediately
+    console.log('[Remove] Setting local state to: null');
     setSelectedImage(null);
+    // 2. Call mutation
+    try {
+      console.log('[Remove] Calling mutateAsync with: none');
+      await toast.promise(mutateBackground.mutateAsync('none'), {
+        loading: 'Removing background image...',
+        success: 'Background image removed successfully',
+        error: 'Failed to remove background image',
+      });
+      console.log('[Remove] Mutate async finished successfully for: none');
+    } catch (error) {
+      console.error('[Remove] Mutation failed:', error);
+      // If mutation fails, useEffect syncing with invalidated currentUser should correct the state
+    }
   };
 
-  // Error states
+  const isLoading = isUserLoading || isPublicImagesLoading || isCustomImagesLoading;
+
   if (userError) {
     return (
       <div className="max-w-[640px] mx-auto my-6">
         <h3 className="text-xl font-semibold">Background Images</h3>
         <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600">
-            Failed to load user data. Please try refreshing the page.
-          </p>
+          <p className="text-red-600">Failed to load user data. Please try refreshing the page.</p>
         </div>
       </div>
     );
   }
 
-  if (imagesError) {
+  if (publicImagesError) {
     return (
       <div className="max-w-[640px] mx-auto my-6">
-        <h3 className="text-xl font-semibold">Background Images</h3>
+        <UserBackgroundImageUploader />
+        <h3 className="text-xl font-semibold mt-6">Background Images</h3>
         <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600">
-            {imagesError instanceof Error
-              ? imagesError.message
-              : 'An error occurred'}
+            {publicImagesError instanceof Error
+              ? publicImagesError.message
+              : 'An error occurred loading public backgrounds'}
           </p>
         </div>
       </div>
     );
   }
 
-  // Loading state
-  if (isUserLoading || isImagesLoading) {
+  if (customImagesError) {
+    return (
+      <div className="max-w-[640px] mx-auto my-6">
+        <UserBackgroundImageUploader />
+        <h3 className="text-xl font-semibold mt-6">Your Uploaded Backgrounds</h3>
+        <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600">
+            {customImagesError instanceof Error
+              ? customImagesError.message
+              : 'An error occurred loading your custom backgrounds'}
+          </p>
+        </div>
+        {publicBackgroundImages && publicBackgroundImages.length > 0 ? (
+          <BackgroundImageGrid
+            backgroundImages={publicBackgroundImages}
+            selectedImage={selectedImage}
+            isUpdating={isUpdating}
+            onImageSelect={handleImageSelect}
+            onRemoveBackground={handleRemoveBackground}
+          />
+        ) : (
+          <div className="my-4 p-4 text-center">
+            <p className="text-gray-500">No public background images available.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="max-w-[640px] mx-auto my-6">
         <h3 className="text-xl font-semibold">Background Images</h3>
         <LoadingState
-          message={
-            isUserLoading
-              ? 'Loading user data...'
-              : 'Loading background images...'
-          }
+          message={isUserLoading ? 'Loading user data...' : 'Loading background images...'}
         />
       </div>
     );
   }
 
-  // Error state for missing background images
-  if (!backgroundImages || backgroundImages.length === 0) {
+  if (!currentUser) {
     return (
       <div className="max-w-[640px] mx-auto my-6">
         <h3 className="text-xl font-semibold">Background Images</h3>
-        <div className="my-4 p-4 text-center">
-          <p>No background images available.</p>
-        </div>
+        <p className="text-gray-600 mt-2 mb-4">Loading user data...</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-[640px] mx-auto my-6">
-      <h3 className="text-xl font-semibold">Background Images</h3>
+      <UserBackgroundImageUploader />
+
+      <h3 className="text-xl font-semibold mt-8">Your Uploaded Backgrounds</h3>
+      <ErrorBoundary
+        fallbackTitle="Failed to load your backgrounds"
+        fallbackMessage="There was an error displaying your uploaded backgrounds. Please try refreshing."
+      >
+        <UserBackgroundImageGrid
+          customImages={customImages}
+          selectedImage={selectedImage}
+          isUpdating={isUpdating}
+          onImageSelect={handleImageSelect}
+        />
+      </ErrorBoundary>
+
+      <h3 className="text-xl font-semibold mt-8">Select a Background</h3>
       <p className="text-gray-600 mt-2 mb-4">
-        Select a background image for your profile. The background image will be
-        displayed behind your theme.
+        Select a public background image for your profile. The background image will be displayed
+        behind your theme.
       </p>
 
       <ErrorBoundary
         fallbackTitle="Failed to load background image selector"
         fallbackMessage="There was an error loading the background image selector. Please try refreshing the page."
       >
-        <BackgroundImageGrid
-          backgroundImages={backgroundImages}
-          selectedImage={selectedImage}
-          isUpdating={isUpdating}
-          onImageSelect={handleImageSelect}
-          onRemoveBackground={handleRemoveBackground}
-        />
+        {publicBackgroundImages && publicBackgroundImages.length > 0 ? (
+          <BackgroundImageGrid
+            backgroundImages={publicBackgroundImages}
+            selectedImage={selectedImage}
+            isUpdating={isUpdating}
+            onImageSelect={handleImageSelect}
+            onRemoveBackground={handleRemoveBackground}
+          />
+        ) : (
+          <div className="my-4 p-4 text-center">
+            <p className="text-gray-500">No public background images available.</p>
+          </div>
+        )}
       </ErrorBoundary>
     </div>
   );
