@@ -11,8 +11,9 @@ import axios from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const BackgroundImageUploader = () => {
-  const [previewImage, setPreviewImage] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const queryClient = useQueryClient();
 
   const {
@@ -24,7 +25,6 @@ const BackgroundImageUploader = () => {
     watch,
   } = useForm({
     defaultValues: {
-      name: '',
       description: '',
       isPublic: true,
     },
@@ -33,64 +33,119 @@ const BackgroundImageUploader = () => {
   const isPublic = watch('isPublic');
 
   const uploadMutation = useMutation({
-    mutationFn: async (formData) => {
-      const { data } = await axios.post('/api/background-images', formData);
+    mutationFn: async formData => {
+      const { data } = await axios.post('/api/background-images/bulk', formData, {
+        onUploadProgress: progressEvent => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        },
+      });
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['backgroundImages']);
-      toast.success('Background image uploaded successfully');
+      toast.success('Background images uploaded successfully');
       reset();
-      setPreviewImage(null);
+      setSelectedFiles([]);
+      setUploadProgress(0);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Upload error:', error);
-      toast.error(
-        error.response?.data?.message || 'Failed to upload background image'
-      );
+      toast.error(error.response?.data?.message || 'Failed to upload background images');
     },
   });
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleImageChange = e => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-    // Check file size (max 4MB)
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error('Image size should not exceed 4MB');
-      return;
+    const validFiles = [];
+    const invalidFiles = [];
+
+    files.forEach(file => {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        invalidFiles.push({ file, reason: 'size' });
+        return;
+      }
+
+      // Check file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        invalidFiles.push({ file, reason: 'type' });
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (invalidFiles.length > 0) {
+      const sizeErrors = invalidFiles.filter(f => f.reason === 'size').map(f => f.file.name);
+      const typeErrors = invalidFiles.filter(f => f.reason === 'type').map(f => f.file.name);
+
+      if (sizeErrors.length > 0) {
+        toast.error(`Some files exceed 10MB size limit: ${sizeErrors.join(', ')}`);
+      }
+
+      if (typeErrors.length > 0) {
+        toast.error(`Some files have unsupported formats: ${typeErrors.join(', ')}`);
+      }
     }
 
-    // Check file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      toast.error('Only JPG, PNG, and WebP images are supported');
-      return;
-    }
+    if (validFiles.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setPreviewImage(event.target.result);
-    };
-    reader.readAsDataURL(file);
+    // Convert valid files to preview objects
+    Promise.all(
+      validFiles.map(file => {
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = event => {
+            resolve({
+              name: file.name,
+              preview: event.target.result,
+              file,
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      })
+    ).then(previewFiles => {
+      setSelectedFiles(previewFiles);
+    });
   };
 
-  const clearImage = () => {
-    setPreviewImage(null);
+  const removeFile = index => {
+    setSelectedFiles(prev => {
+      const newFiles = [...prev];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
   };
 
-  const onSubmit = async (data) => {
-    if (!previewImage) {
-      toast.error('Please select an image');
+  const clearAllFiles = () => {
+    setSelectedFiles([]);
+  };
+
+  const onSubmit = async data => {
+    if (selectedFiles.length === 0) {
+      toast.error('Please select at least one image');
       return;
     }
 
     setIsUploading(true);
     try {
-      await uploadMutation.mutateAsync({
+      // Prepare form data with all files and common settings
+      const formData = {
         ...data,
-        imageData: previewImage,
-      });
+        images: selectedFiles.map(file => ({
+          name: file.name.split('.')[0], // Use filename as default name
+          imageData: file.preview,
+        })),
+      };
+
+      await uploadMutation.mutateAsync(formData);
     } finally {
       setIsUploading(false);
     }
@@ -98,26 +153,14 @@ const BackgroundImageUploader = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-      <h3 className="text-lg font-medium mb-4">Upload New Background Image</h3>
+      <h3 className="text-lg font-medium mb-4">Upload Background Images</h3>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            {...register('name', { required: 'Name is required' })}
-            placeholder="Enter a name for this background"
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-          )}
-        </div>
-
         <div>
           <Label htmlFor="description">Description (optional)</Label>
           <Textarea
             id="description"
             {...register('description')}
-            placeholder="Enter a description"
+            placeholder="Enter a description for these images"
             rows={3}
           />
         </div>
@@ -126,48 +169,81 @@ const BackgroundImageUploader = () => {
           <Switch
             id="isPublic"
             checked={isPublic}
-            onCheckedChange={(checked) => setValue('isPublic', checked)}
+            onCheckedChange={checked => setValue('isPublic', checked)}
           />
-          <Label htmlFor="isPublic">Make this background public</Label>
+          <Label htmlFor="isPublic">Make these backgrounds public</Label>
         </div>
 
         <div className="mt-4">
-          {!previewImage ? (
+          {selectedFiles.length === 0 ? (
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <label className="cursor-pointer flex flex-col items-center">
                 <Upload className="h-10 w-10 text-gray-400 mb-2" />
                 <span className="text-sm text-gray-500 mb-2">
-                  Click to upload an image (JPG, PNG, WebP)
+                  Click to upload images (JPG, PNG, WebP)
                 </span>
-                <span className="text-xs text-gray-400">Max size: 4MB</span>
+                <span className="text-xs text-gray-400">Max size: 10MB per image</span>
                 <input
                   type="file"
                   className="hidden"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={handleImageChange}
+                  multiple
                 />
               </label>
             </div>
           ) : (
-            <div className="relative">
-              <img
-                src={previewImage}
-                alt="Preview"
-                className="w-full h-48 object-cover rounded-lg"
-              />
-              <button
-                type="button"
-                onClick={clearImage}
-                className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 text-white"
-              >
-                <X size={16} />
-              </button>
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-medium text-gray-700">
+                  {selectedFiles.length} image(s) selected
+                </span>
+                <Button type="button" variant="outline" size="sm" onClick={clearAllFiles}>
+                  Clear All
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={file.preview}
+                      alt={file.name}
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 text-white p-1 rounded-full"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <p className="text-xs mt-1 truncate">{file.name}</p>
+                  </div>
+                ))}
+              </div>
+
+              <label className="mt-4 cursor-pointer flex justify-center items-center py-2 border-2 border-dashed border-gray-300 rounded-lg">
+                <Upload className="h-4 w-4 text-gray-400 mr-2" />
+                <span className="text-sm text-gray-500">Add more images</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageChange}
+                  multiple
+                />
+              </label>
             </div>
           )}
         </div>
 
         <Button type="submit" disabled={isUploading} className="w-full">
-          {isUploading ? 'Uploading...' : 'Upload Background Image'}
+          {isUploading
+            ? `Uploading... ${uploadProgress}%`
+            : `Upload ${selectedFiles.length > 0 ? selectedFiles.length : ''} Background Image${selectedFiles.length !== 1 ? 's' : ''}`}
         </Button>
       </form>
     </div>

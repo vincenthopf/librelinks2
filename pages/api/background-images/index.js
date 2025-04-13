@@ -61,14 +61,17 @@ export default async function handler(req, res) {
     try {
       const { name, description, isPublic, imageData } = req.body;
 
-      if (!name || !imageData) {
-        return res.status(400).json({ message: 'Name and image are required' });
+      if (!imageData) {
+        return res.status(400).json({ message: 'Image is required' });
       }
+
+      // Generate a name if not provided
+      const imageName = name || `Background_${Date.now()}`;
 
       // Validate file size on server side
       const base64Size = Buffer.from(imageData.split(',')[1], 'base64').length;
-      if (base64Size > 4 * 1024 * 1024) {
-        return res.status(400).json({ message: 'File size exceeds 4MB limit' });
+      if (base64Size > 10 * 1024 * 1024) {
+        return res.status(400).json({ message: 'File size exceeds 10MB limit' });
       }
 
       // Upload image to Cloudinary
@@ -86,7 +89,7 @@ export default async function handler(req, res) {
       // Create background image in database
       const backgroundImage = await db.backgroundImage.create({
         data: {
-          name,
+          name: imageName,
           description,
           imageUrl: uploadResult.secure_url,
           isPublic: isPublic !== undefined ? isPublic : true,

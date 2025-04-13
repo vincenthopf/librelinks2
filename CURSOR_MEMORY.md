@@ -283,6 +283,40 @@
   3. The preview dialog displays thumbnails in this aspect ratio
 - Use the standardized `getTemplateUploadParams` function for all template uploads
 
+## Background Image Upload Functionality
+
+### Admin Background Image Management
+
+- The application now supports bulk upload of background images by admins in the Templates Admin section
+- Key implementation details:
+  1. Max file size increased from 4MB to 10MB per image
+  2. Added bulk upload capability to upload multiple images at once
+  3. Removed requirement to name each image (filenames are used as default names)
+  4. Added progress tracking for uploads to improve user feedback
+
+### API Endpoints for Background Images
+
+- Two API endpoints handle background image uploads:
+  - `/api/background-images` - for individual image uploads
+  - `/api/background-images/bulk` - for batch uploads of multiple images
+- Both endpoints validate file sizes on the server side (max 10MB per image)
+- The bulk upload endpoint processes images sequentially to avoid overloading Cloudinary
+- Image naming is now optional - if no name is provided, a default name is generated using the filename or timestamp
+
+### Important Changes
+
+- Increased the bodyParser size limit from 4MB to 10MB (individual uploads) and 100MB (bulk uploads)
+- Changed the UI to display multiple selected images in a grid with remove/preview options
+- Added progress tracking during uploads to provide better feedback
+- Made the name field optional in both the UI and API validation
+
+### Troubleshooting Upload Issues
+
+1. Check server logs for file size validation errors
+2. Verify that the client-side validation matches server-side limits (10MB)
+3. For bulk uploads, watch for partial success scenarios where some images fail
+4. Use the image preview grid to confirm all selected files before upload
+
 ## Repository Security and Code Protection
 
 ### Protecting Code While Keeping Vercel Deployment Working
