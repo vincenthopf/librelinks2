@@ -186,9 +186,6 @@ const BackgroundImageGrid: React.FC<BackgroundImageGridProps> = ({
               console.error(`Failed to load image: ${image.imageUrl}`);
             }}
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1">
-            <p className="text-xs truncate">{image.name}</p>
-          </div>
           {selectedImage === image.imageUrl && (
             <span className="absolute top-2 right-2 z-10 text-white">
               <CheckMark size={16} />

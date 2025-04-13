@@ -36,6 +36,17 @@ export const authOptions = {
     }),
   ],
 
+  events: {
+    async createUser({ user }) {
+      // Generate a unique sharePrefix upon user creation
+      const sharePrefix = nanoid(10); // Generate a 10-character unique ID
+      await db.user.update({
+        where: { id: user.id },
+        data: { sharePrefix: sharePrefix },
+      });
+    },
+  },
+
   callbacks: {
     async session({ token, session }) {
       if (token) {

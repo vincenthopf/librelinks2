@@ -69,7 +69,7 @@ model User {
   backgroundImages     BackgroundImage[]
   photoBookImages      PhotoBookImage[] // Relation to photo book images
   customBackgroundImages String[]             @default([]) // Added field for user-uploaded background images
-  sharePrefix         String?                @unique
+  sharePrefix         String?                @unique @default(cuid())
   showBranding        Boolean                @default(true)
   verified            Boolean                @default(false)
 
