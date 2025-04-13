@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import PropTypes from 'prop-types';
 
 // Define query keys locally
 const QUERY_KEYS = {
@@ -35,7 +36,7 @@ const readFileAsDataURL = file => {
   });
 };
 
-const UserBackgroundImageUploader = () => {
+const UserBackgroundImageUploader = ({ onImageUploaded }) => {
   const [previewImage, setPreviewImage] = useState(null);
   const [currentFile, setCurrentFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -93,6 +94,12 @@ const UserBackgroundImageUploader = () => {
       toast.success('Background image uploaded successfully!');
       // Update cached data
       queryClient.invalidateQueries([QUERY_KEYS.userBackgroundImages]);
+
+      // Automatically select the newly uploaded image if callback provided
+      if (onImageUploaded && data && data.url) {
+        onImageUploaded(data.url);
+      }
+
       resetUploadState();
     },
     onError: error => {
@@ -181,7 +188,7 @@ const UserBackgroundImageUploader = () => {
       <div
         {...getRootProps()}
         className={cn(
-          'border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 ease-in-out',
+          'border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors duration-200 ease-in-out',
           isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400',
           isUploading ? 'cursor-not-allowed bg-gray-100' : '',
           previewImage ? 'border-solid border-gray-200 p-2' : '' // Adjust padding/border when preview is shown
@@ -190,7 +197,7 @@ const UserBackgroundImageUploader = () => {
         <input {...getInputProps()} disabled={isUploading} />
 
         {isUploading ? (
-          <div className="flex flex-col items-center justify-center h-32">
+          <div className="flex flex-col items-center justify-center h-24">
             <p className="text-sm font-semibold text-gray-700 mb-2">Uploading...</p>
             <p className="text-sm text-gray-600 mb-2">{uploadProgress}%</p>
             {currentFile && (
@@ -201,7 +208,7 @@ const UserBackgroundImageUploader = () => {
             </Button>
           </div>
         ) : previewImage ? (
-          <div className="relative flex flex-col items-center justify-center h-32 group">
+          <div className="relative flex flex-col items-center justify-center h-24 group">
             <img
               src={previewImage}
               alt="Preview"
@@ -223,8 +230,8 @@ const UserBackgroundImageUploader = () => {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-32 text-gray-500">
-            <Upload className="w-8 h-8 mb-2" />
+          <div className="flex flex-col items-center justify-center h-24 text-gray-500">
+            <Upload className="w-6 h-6 mb-1" />
             {isDragActive ? (
               <p className="text-sm font-medium">Drop the image here...</p>
             ) : (
@@ -239,6 +246,14 @@ const UserBackgroundImageUploader = () => {
       </div>
     </div>
   );
+};
+
+UserBackgroundImageUploader.propTypes = {
+  onImageUploaded: PropTypes.func,
+};
+
+UserBackgroundImageUploader.defaultProps = {
+  onImageUploaded: null,
 };
 
 export default UserBackgroundImageUploader;

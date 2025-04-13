@@ -17,6 +17,18 @@ import {
 import UserBackgroundImageUploader from './user-background-image-uploader.jsx';
 import { cn } from '@/lib/utils';
 
+// Define prop type for UserBackgroundImageUploader
+interface UserBackgroundImageUploaderProps {
+  onImageUploaded?: (imageUrl: string) => Promise<void>;
+}
+
+// Declare the component with its props
+declare module './user-background-image-uploader.jsx' {
+  export default function UserBackgroundImageUploader(
+    props: UserBackgroundImageUploaderProps
+  ): React.ReactElement;
+}
+
 // Query keys
 const QUERY_KEYS = {
   backgroundImages: 'backgroundImages',
@@ -379,7 +391,7 @@ const BackgroundImageSelector: React.FC = () => {
   if (publicImagesError) {
     return (
       <div className="max-w-[640px] mx-auto my-6">
-        <UserBackgroundImageUploader />
+        <UserBackgroundImageUploader onImageUploaded={handleImageSelect} />
         <h3 className="text-xl font-semibold mt-6">Background Images</h3>
         <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600">
@@ -395,7 +407,7 @@ const BackgroundImageSelector: React.FC = () => {
   if (customImagesError) {
     return (
       <div className="max-w-[640px] mx-auto my-6">
-        <UserBackgroundImageUploader />
+        <UserBackgroundImageUploader onImageUploaded={handleImageSelect} />
         <h3 className="text-xl font-semibold mt-6">Your Uploaded Backgrounds</h3>
         <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600">
@@ -443,7 +455,7 @@ const BackgroundImageSelector: React.FC = () => {
 
   return (
     <div className="max-w-[640px] mx-auto my-6">
-      <UserBackgroundImageUploader />
+      <UserBackgroundImageUploader onImageUploaded={handleImageSelect} />
 
       <h3 className="text-xl font-semibold mt-8">Your Uploaded Backgrounds</h3>
       <ErrorBoundary
