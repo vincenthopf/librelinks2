@@ -45,13 +45,31 @@ const PreviewMobile = ({ close }) => {
       .join('|');
   }, [userTexts]);
 
+  // Create a comprehensive string representation of links for dependency tracking
+  const linksSnapshot = useMemo(() => {
+    if (!userLinks) return '';
+    // Sort links for consistency before stringifying
+    return JSON.stringify(
+      [...userLinks]
+        .sort((a, b) => a.order - b.order)
+        .map(link => ({
+          id: link.id,
+          order: link.order,
+          title: link.title, // Include title
+          url: link.url, // Include url
+          archived: link.archived, // Include archived status
+          isSocial: link.isSocial, // Include type
+          alwaysExpandEmbed: link.alwaysExpandEmbed, // Include expansion state
+        }))
+    );
+  }, [userLinks]);
+
   const refreshDependencies = [
     currentUser?.handle,
     currentUser?.photoBookLayout,
-    userLinks?.length,
     userTexts?.length,
     photos?.length,
-    linksOrderString, // Add dependency on link orders
+    linksSnapshot, // Use the comprehensive snapshot
     textsOrderString, // Add dependency on text orders
     currentUser?.photoBookOrder, // Add dependency on photo book order
   ];
