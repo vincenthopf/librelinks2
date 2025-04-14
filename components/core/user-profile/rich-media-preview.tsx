@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { EMBED_CONFIGS } from '@/config/embed';
 import { RichMediaContent, EmbedConfig } from '@/types/embed';
 import {
@@ -12,6 +12,7 @@ interface RichMediaPreviewProps {
   link: RichMediaContent;
   config?: Partial<EmbedConfig>;
   embedBackground?: string;
+  frameAnimation?: any;
 }
 
 declare global {
@@ -27,175 +28,163 @@ declare global {
   }
 }
 
-const RichMediaPreview = ({ link, config, embedBackground }: RichMediaPreviewProps) => {
+// Global script tracking
+const loadedScripts: Record<string, boolean> = {};
+
+const RichMediaPreview = ({
+  link,
+  config,
+  embedBackground,
+  frameAnimation,
+}: RichMediaPreviewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const embedRef = useRef<HTMLDivElement>(null);
   const initializeCount = useRef(0);
+  const idleCallbackHandle = useRef<number | null>(null);
 
   // Get provider config
   const providerConfig = EMBED_CONFIGS[link.providerName] || EMBED_CONFIGS.Generic;
   const mergedConfig = { ...providerConfig, ...config };
 
-  // Debug the incoming link data
-  useEffect(() => {
-    console.log('RichMediaPreview - Component mounted/updated with link:', {
-      providerName: link.providerName,
-      hasEmbedHtml: !!link.embedHtml,
-      scriptLoaded,
-      isLoading,
-    });
-  }, [link, scriptLoaded, isLoading]);
-
-  // Handle provider-specific script loading
-  useEffect(() => {
-    console.log('Script loading effect triggered:', {
-      providerName: link.providerName,
-      hasScript: !!scriptRef.current,
-    });
-
-    // Don't reload if script is already loaded
-    if (scriptRef.current || scriptLoaded) {
-      console.log('Script already loaded, skipping');
-      return;
-    }
-
-    const loadScript = () => {
-      const scriptConfig = mergedConfig.script;
-      if (!scriptConfig) {
-        console.log('Loading Iframely script');
-        const script = document.createElement('script');
-        script.src = '//cdn.iframe.ly/embed.js';
-        script.async = true;
-        script.onload = () => {
-          console.log('Iframely script loaded successfully');
-          if (window.iframely) {
-            window.iframely.load();
-          }
-          setScriptLoaded(true);
-          setIsLoading(false);
-        };
-        script.onerror = () => {
-          console.error('Failed to load Iframely script');
-          setHasError(true);
-          setErrorMessage('Failed to load preview service');
-        };
-        scriptRef.current = script;
-        document.body.appendChild(script);
-      } else {
-        console.log('Loading provider script:', link.providerName);
-        const mainScript = document.createElement('script');
-        mainScript.async = true;
-        mainScript.src = scriptConfig.main;
-
-        mainScript.onerror = () => {
-          if (scriptConfig.fallback) {
-            console.log('Main script failed, loading fallback');
-            const fallbackScript = document.createElement('script');
-            fallbackScript.src = scriptConfig.fallback;
-            fallbackScript.async = true;
-            fallbackScript.onload = () => {
-              console.log('Fallback script loaded successfully');
-              setScriptLoaded(true);
-              setIsLoading(false);
-            };
-            fallbackScript.onerror = () => {
-              console.error('Both main and fallback scripts failed');
-              setHasError(true);
-              setErrorMessage('Failed to load preview service');
-            };
-            scriptRef.current = fallbackScript;
-            document.body.appendChild(fallbackScript);
-          } else {
-            setHasError(true);
-            setErrorMessage('Failed to load preview service');
-          }
-        };
-
-        mainScript.onload = () => {
-          console.log('Main script loaded successfully');
-          setScriptLoaded(true);
-          setIsLoading(false);
-        };
-
-        scriptRef.current = mainScript;
-        document.body.appendChild(mainScript);
-      }
-    };
-
-    loadScript();
-
-    return () => {
-      if (scriptRef.current) {
-        console.log('Cleaning up script');
-        document.body.removeChild(scriptRef.current);
-        scriptRef.current = null;
-      }
-    };
-  }, [link.providerName, mergedConfig.script]);
-
   // Initialize embeds when content changes or script loads
-  useEffect(() => {
-    if (!scriptLoaded) {
-      console.log('Script not loaded yet, skipping initialization');
+  const initializeEmbed = useCallback(() => {
+    initializeCount.current += 1;
+
+    // Process only if we have embed HTML
+    if (!link.embedHtml) {
+      setIsLoading(false);
       return;
     }
 
-    initializeCount.current += 1;
-    console.log('Initializing embed:', {
-      count: initializeCount.current,
-      providerName: link.providerName,
-      hasEmbedHtml: !!link.embedHtml,
-    });
-
-    // Only reset loading state on first initialization
-    if (initializeCount.current === 1) {
-      setIsLoading(true);
-    }
-
-    // Initialize appropriate embed
+    // Initialize appropriate embed based on provider
     if (link.providerName === 'Instagram' && window.instgrm) {
-      console.log('Processing Instagram embed');
       window.instgrm.Embeds.process();
+    } else if (link.providerName === 'Twitter' && window.twttr) {
+      window.twttr.widgets.load();
     } else if (window.iframely) {
-      console.log('Processing Iframely embed');
       window.iframely.load();
     }
 
-    // Set loading to false after initialization
-    const timer = setTimeout(() => {
-      console.log('Setting loading to false after initialization');
+    // If the script was already loaded when initializeEmbed was called, loading should stop now.
+    if (scriptLoaded) {
       setIsLoading(false);
-    }, 1000);
+    }
+  }, [link.embedHtml, link.providerName, scriptLoaded]);
 
-    return () => clearTimeout(timer);
-  }, [link.embedHtml, scriptLoaded]);
+  // Handle provider-specific script loading
+  const loadEmbedScripts = useCallback(() => {
+    // Skip if scripts are already loaded
+    if (scriptLoaded) return;
+
+    const scriptConfig = mergedConfig.script;
+    const scriptUrl = scriptConfig?.main || '//cdn.iframe.ly/embed.js';
+
+    // Check if script is already loaded globally
+    if (loadedScripts[scriptUrl]) {
+      setScriptLoaded(true);
+      // Initialize immediately, don't wait for idle
+      initializeEmbed();
+      // No need for idleCallbackHandle here
+      return;
+    }
+
+    const loadScript = (url: string, onSuccess: () => void, onError: () => void) => {
+      const script = document.createElement('script');
+      script.src = url;
+      script.async = true;
+      script.onload = onSuccess;
+      script.onerror = onError;
+      document.body.appendChild(script);
+      return script;
+    };
+
+    // Load main script
+    loadScript(
+      scriptUrl,
+      () => {
+        loadedScripts[scriptUrl] = true;
+        setScriptLoaded(true);
+        // Initialize immediately and set loading false
+        initializeEmbed();
+        setIsLoading(false);
+        // No need for idleCallbackHandle here
+      },
+      () => {
+        // Try fallback if available
+        if (scriptConfig?.fallback && !loadedScripts[scriptConfig.fallback]) {
+          loadScript(
+            scriptConfig.fallback,
+            () => {
+              loadedScripts[scriptConfig.fallback!] = true;
+              setScriptLoaded(true);
+              // Initialize immediately and set loading false
+              initializeEmbed();
+              setIsLoading(false);
+              // No need for idleCallbackHandle here
+            },
+            () => {
+              setHasError(true);
+              setErrorMessage('Failed to load preview service');
+              setIsLoading(false);
+            }
+          );
+        } else {
+          setHasError(true);
+          setErrorMessage('Failed to load preview service');
+          setIsLoading(false);
+        }
+      }
+    );
+  }, [scriptLoaded, mergedConfig.script, initializeEmbed]);
+
+  // ADD Effect to trigger eager loading on mount
+  useEffect(() => {
+    // Start loading scripts soon after component mounts,
+    // using requestIdleCallback to avoid blocking initial render too much.
+    const handle = window.requestIdleCallback
+      ? window.requestIdleCallback(loadEmbedScripts)
+      : window.setTimeout(loadEmbedScripts, 50); // Short delay fallback
+
+    return () => {
+      if (window.cancelIdleCallback) {
+        window.cancelIdleCallback(handle);
+      } else {
+        clearTimeout(handle);
+      }
+    };
+  }, [loadEmbedScripts]); // Run when loadEmbedScripts is stable
+
+  // Force re-initialization when content changes
+  useEffect(() => {
+    if (scriptLoaded && link.embedHtml) {
+      // Initialize immediately, don't wait for idle
+      initializeEmbed();
+      // No need for idleCallbackHandle here
+    }
+  }, [link.embedHtml, scriptLoaded, initializeEmbed]);
 
   // Early return if no embed data
   if (
     !link.embedHtml &&
     (!link.thumbnails || !Array.isArray(link.thumbnails) || link.thumbnails.length === 0)
   ) {
-    console.log('RichMediaPreview - No preview content available');
     return null;
   }
 
-  const handleIframeError = (error: React.SyntheticEvent<HTMLDivElement, Event>) => {
-    console.error('RichMediaPreview - Iframe error:', error);
+  const handleIframeError = () => {
     setIsLoading(false);
     setHasError(true);
     setErrorMessage('Failed to load preview');
   };
 
   const handleImageLoad = () => {
-    console.log('Image loaded successfully');
     setIsLoading(false);
   };
 
-  const handleImageError = (error: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error('No image:', error);
+  const handleImageError = () => {
     setIsLoading(false);
     setHasError(true);
     setErrorMessage('Failed to load preview image');
@@ -226,69 +215,38 @@ const RichMediaPreview = ({ link, config, embedBackground }: RichMediaPreviewPro
         src={thumbnailUrl}
         alt={link.title || 'Content preview'}
         className="w-full h-full object-cover"
+        loading="eager" // Use eager loading for visible content
         onLoad={handleImageLoad}
         onError={handleImageError}
       />
     ) : null;
 
+    // Pass frameAnimation to all containers
+    const commonContainerProps = {
+      config: mergedConfig,
+      isLoading,
+      hasError,
+      embedBackground,
+      frameAnimation,
+    };
+
     switch (link.providerName) {
       case 'Instagram':
         return (
-          <InstagramContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-            embedBackground={embedBackground}
-          >
+          <InstagramContainer {...commonContainerProps}>
             <div className="instagram-embed-scaling w-full h-full">{content}</div>
           </InstagramContainer>
         );
       case 'YouTube':
-        return (
-          <YouTubeContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-            embedBackground={embedBackground}
-          >
-            {content}
-          </YouTubeContainer>
-        );
+        return <YouTubeContainer {...commonContainerProps}>{content}</YouTubeContainer>;
       case 'Twitter':
-        return (
-          <TwitterContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-            embedBackground={embedBackground}
-          >
-            {content}
-          </TwitterContainer>
-        );
+        return <TwitterContainer {...commonContainerProps}>{content}</TwitterContainer>;
       default:
-        return (
-          <GenericContainer
-            config={mergedConfig}
-            isLoading={isLoading}
-            hasError={hasError}
-            embedBackground={embedBackground}
-          >
-            {content}
-          </GenericContainer>
-        );
+        return <GenericContainer {...commonContainerProps}>{content}</GenericContainer>;
     }
   };
 
-  return (
-    <>
-      {renderContent()}
-      {link.iframelyMeta?.description && !hasError && !isLoading && (
-        <div className="p-4 border-t border-gray-100">
-          <p className="text-sm text-gray-600 line-clamp-2">{link.iframelyMeta.description}</p>
-        </div>
-      )}
-    </>
-  );
+  return <div ref={embedRef}>{renderContent()}</div>;
 };
 
 export default RichMediaPreview;

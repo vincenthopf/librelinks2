@@ -8,6 +8,7 @@ interface GenericContainerProps {
   isLoading?: boolean;
   hasError?: boolean;
   embedBackground?: string;
+  frameAnimation?: any;
 }
 
 const GenericContainer: React.FC<GenericContainerProps> = ({
@@ -16,6 +17,7 @@ const GenericContainer: React.FC<GenericContainerProps> = ({
   isLoading,
   hasError,
   embedBackground,
+  frameAnimation,
 }) => {
   // Generic container with sensible defaults
   const genericConfig = {
@@ -39,6 +41,7 @@ const GenericContainer: React.FC<GenericContainerProps> = ({
         isLoading={isLoading}
         hasError={hasError}
         style={containerStyle}
+        frameAnimation={frameAnimation}
       >
         {/* Generic wrapper with flexible content area */}
         <div className="generic-content-wrapper relative w-full h-full">{children}</div>

@@ -466,14 +466,19 @@ export const getFramePathForClipping = (
 
 // Add animation props function for rounded corners frame
 const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => {
-  if (!animation?.enabled || !animation.type) return {};
+  // Explicitly check for enabled: false or type: 'none'
+  if (!animation?.enabled || !animation.type || animation.type === 'none') return {};
+
+  // Safely access config with defaults
+  const config = animation.config || {};
+  const duration = (key: string, defaultVal: number) => config[key] || defaultVal;
 
   switch (animation.type) {
     case 'rotate':
       return {
         animate: { rotate: [0, 360] },
         transition: {
-          duration: animation.config.duration || 3,
+          duration: duration('duration', 3),
           repeat: Infinity,
           ease: 'linear',
         },
@@ -482,7 +487,7 @@ const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => 
       return {
         animate: { scale: [1, 1.05, 1] },
         transition: {
-          duration: animation.config.duration || 2,
+          duration: duration('duration', 2),
           repeat: Infinity,
           ease: 'easeInOut',
         },
@@ -493,7 +498,7 @@ const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => 
           filter: ['drop-shadow(0 0 0px)', 'drop-shadow(0 0 8px)', 'drop-shadow(0 0 0px)'],
         },
         transition: {
-          duration: animation.config.duration || 2,
+          duration: duration('duration', 2),
           repeat: Infinity,
           ease: 'easeInOut',
         },
@@ -502,7 +507,7 @@ const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => 
       return {
         animate: { y: [0, -10, 0] },
         transition: {
-          duration: animation.config.duration || 1.5,
+          duration: duration('duration', 1.5),
           repeat: Infinity,
           ease: 'easeInOut',
         },
@@ -518,7 +523,7 @@ const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => 
           ],
         },
         transition: {
-          duration: animation.config.duration || 2.5,
+          duration: duration('duration', 2.5),
           repeat: Infinity,
           ease: 'easeInOut',
         },
@@ -530,7 +535,7 @@ const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => 
           opacity: [1, 0.9, 1],
         },
         transition: {
-          duration: animation.config.duration || 4,
+          duration: duration('duration', 4),
           repeat: Infinity,
           ease: 'easeInOut',
         },
@@ -539,7 +544,7 @@ const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => 
       return {
         animate: { rotate: [0, -2, 0, 2, 0] },
         transition: {
-          duration: animation.config.duration || 0.5,
+          duration: duration('duration', 0.5),
           repeat: Infinity,
           ease: 'easeInOut',
         },
@@ -552,15 +557,15 @@ const getAnimationProps = (animation: RoundedCornersFrameProps['animation']) => 
         },
         transition: {
           rotate: {
-            duration: animation.config.duration || 3,
+            duration: duration('duration', 3),
             repeat: Infinity,
             ease: 'linear',
           },
           scale: {
-            duration: animation.config.duration || 1.5,
+            duration: duration('duration', 1.5),
             repeat: Infinity,
             ease: 'easeInOut',
-            repeatDelay: 0.5,
+            repeatDelay: duration('repeatDelay', 0.5), // Also check repeatDelay
           },
         },
       };

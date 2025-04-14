@@ -12,6 +12,8 @@ import { useState } from 'react';
  * @param {number} props.fontSize - Font size for the title
  * @param {string} props.fontFamily - Font family for the title
  * @param {number} props.cardHeight - Height of the card padding
+ * @param {string} props.className - Additional classes for animation
+ * @param {Object} props.animationStyle - Animation style properties
  * @returns {JSX.Element} - Rendered component
  */
 const TextCard = props => {
@@ -48,10 +50,17 @@ const TextCard = props => {
     style.border = `1.5px solid ${props.theme.neutral}`;
   }
 
+  // Apply animation styles if provided
+  const animationStyles = props.animationStyle || {};
+  const animationClass = props.className || '';
+
+  // Merge animation styles with card styles
+  const combinedStyles = { ...style, ...animationStyles };
+
   return (
     <div
-      className={`w-full flex flex-col transition-all duration-200 ${buttonStyle || 'rounded-md'} p-4`}
-      style={style}
+      className={`w-full flex flex-col transition-all duration-200 ${buttonStyle || 'rounded-md'} p-4 ${animationClass}`}
+      style={combinedStyles}
     >
       <button onClick={() => setExpanded(!expanded)} className="w-full text-left">
         <p

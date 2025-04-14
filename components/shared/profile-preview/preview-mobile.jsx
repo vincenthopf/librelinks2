@@ -64,6 +64,12 @@ const PreviewMobile = ({ close }) => {
     );
   }, [userLinks]);
 
+  // Create a string representation of animation settings for dependency tracking
+  const animationSettings = useMemo(() => {
+    if (!currentUser?.frameAnimation) return '';
+    return JSON.stringify(currentUser.frameAnimation);
+  }, [currentUser?.frameAnimation]);
+
   const refreshDependencies = [
     currentUser?.handle,
     currentUser?.photoBookLayout,
@@ -72,6 +78,7 @@ const PreviewMobile = ({ close }) => {
     linksSnapshot, // Use the comprehensive snapshot
     textsOrderString, // Add dependency on text orders
     currentUser?.photoBookOrder, // Add dependency on photo book order
+    animationSettings, // Add dependency on animation settings
   ];
 
   const theme = useMemo(
@@ -182,6 +189,7 @@ const PreviewMobile = ({ close }) => {
       >
         <iframe
           ref={iframeRef}
+          key={`${refreshKey}-${currentUser?.handle}-${animationSettings}`}
           seamless
           loading="lazy"
           title="preview"

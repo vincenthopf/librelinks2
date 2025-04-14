@@ -9,6 +9,7 @@ import FontSelector from '@/components/core/custom-fonts/font-selector';
 import ImageSizeSelector from '@/components/core/custom-image-sizes/image-size-selector';
 import SizeSelector from '@/components/core/custom-sizes/size-selector';
 import BackgroundImageSelector from '@/components/core/background-images/background-image-selector';
+import AnimationSelector from '@/components/core/custom-animations/animation-selector';
 import Head from 'next/head';
 import { FrameCustomizer } from '@/components/core/profile-frames/frame-customizer';
 import PaddingSelector from '@/components/core/custom-padding/padding-selector';
@@ -87,6 +88,16 @@ const Customize = () => {
               </button>
               <button
                 className={`py-2 px-4 font-medium ${
+                  activeTab === 'animation'
+                    ? 'border-b-2 border-blue-500 text-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setActiveTab('animation')}
+              >
+                Animation
+              </button>
+              <button
+                className={`py-2 px-4 font-medium ${
                   activeTab === 'frame'
                     ? 'border-b-2 border-blue-500 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -147,6 +158,13 @@ const Customize = () => {
                 <ButtonSelector />
                 <div className="border-t my-8 pt-4"></div>
                 <TextCardButtonSelector />
+              </div>
+            )}
+
+            {/* Animation Tab */}
+            {activeTab === 'animation' && (
+              <div className="space-y-8">
+                <AnimationSelector />
               </div>
             )}
 

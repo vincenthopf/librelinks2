@@ -412,3 +412,76 @@ This approach was successfully used for the background-images API endpoint that 
 - Include style props in the component interface even if not immediately needed
 - When components are used by other components, ensure style props are properly passed down
 - Test components with different style configurations to ensure they behave as expected
+
+## Animation System
+
+### Animation Feature Implementation
+
+- Added a dedicated "Animation" tab to the Customize page to control how elements appear on the profile page
+- Animation settings are stored in the `frameAnimation` field of the User model as a JSON object
+- The animation system supports various types of animations:
+  - Fade In: Elements fade in smoothly
+  - Slide Up/Down/Left/Right: Elements slide in from different directions
+  - Scale: Elements scale from smaller to larger
+  - Rotate: Elements rotate while appearing
+  - Bounce: Elements bounce into view
+
+### Implementation Details
+
+- **Animation Component Structure**:
+  - `components/core/custom-animations/animation-selector.jsx`: Main component for selecting and customizing animations
+  - `styles/animations.css`: CSS definitions for all animation keyframes and classes
+  - `pages/api/animations.js`: API endpoint for saving animation preferences
+- **Animation Configuration Options**:
+
+  - Animation type: The style of animation to apply
+  - Duration: How long the animation takes to complete
+  - Delay: Time before the animation starts
+  - Staggered: Option to make elements appear one after another
+  - Stagger amount: Time between each element's animation when staggered
+
+- **Storage Implementation**:
+
+  - Currently using the existing `frameAnimation` field to store animation settings
+  - This is a temporary solution until a dedicated `animations` field is added to the Prisma schema
+  - The data structure includes: type, duration, delay, staggered, staggerAmount, and enabled properties
+
+- **CSS Implementation**:
+  - Each animation type has a corresponding CSS class (e.g., `.animate-fade`, `.animate-slideUp`)
+  - Animation properties like duration and delay are applied via inline styles
+  - Standard animation patterns use both transform and opacity changes for smooth effects
+
+### Adding New Animation Types
+
+When adding new animation types to the system:
+
+1. Define the keyframes in `styles/animations.css`
+2. Add a corresponding CSS class with the same naming convention
+3. Add the new animation to the `animationPresets` array in the animation selector
+4. Update the demo component to properly display the new animation
+
+### Integration with Page Elements
+
+- Animation classes should be applied to profile elements (link cards, text cards, etc.) based on the user's preferences
+- For staggered animations, ensure elements receive incremental delays based on their order and the stagger amount
+- The animation system should work seamlessly with other customization options
+
+### Troubleshooting Animation Issues
+
+1. Check that animations.css is properly imported in \_app.js
+2. Verify that animation classes are correctly applied to elements
+3. Ensure animation properties (duration, delay) are passed as inline styles
+4. For staggered animations, check that delay calculations are correct
+5. Test animations on different devices and browsers for compatibility
+
+### Future Schema Enhancement
+
+To properly support animations in the future:
+
+1. Add a dedicated `animations` field to the User model in the Prisma schema:
+   ```prisma
+   animations  Json?  @default("{\"type\": \"none\", \"duration\": 0.5, \"delay\": 0, \"staggered\": false, \"staggerAmount\": 0.1}")
+   ```
+2. Run the appropriate Prisma migration
+3. Update the animations API endpoint to use the new field
+4. Update the animation-selector component to read from the new field

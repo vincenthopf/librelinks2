@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import '@/styles/globals.css';
+import '@/styles/animations.css';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import { ProxyFlock } from '@/components/analytics/ProxyFlock';

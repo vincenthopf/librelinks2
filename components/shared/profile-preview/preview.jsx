@@ -56,6 +56,12 @@ const Preview = () => {
     );
   }, [userLinks]);
 
+  // Create a string representation of animation settings for dependency tracking
+  const animationSettings = useMemo(() => {
+    if (!currentUser?.frameAnimation) return '';
+    return JSON.stringify(currentUser.frameAnimation);
+  }, [currentUser?.frameAnimation]);
+
   const refreshDependencies = [
     currentUser?.handle,
     currentUser?.photoBookLayout,
@@ -64,6 +70,7 @@ const Preview = () => {
     linksSnapshot, // Use the comprehensive snapshot
     textsOrderString, // Add dependency on text orders
     currentUser?.photoBookOrder, // Add dependency on photo book order
+    animationSettings, // Add dependency on animation settings
   ];
 
   useEffect(() => {
@@ -165,7 +172,7 @@ const Preview = () => {
           {currentUser && (
             <iframe
               ref={iframeRef}
-              key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${linksSnapshot}-${textsOrderString}-${currentUser?.photoBookOrder}`}
+              key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${linksSnapshot}-${textsOrderString}-${currentUser?.photoBookOrder}-${animationSettings}`}
               seamless
               loading="lazy"
               title="preview"

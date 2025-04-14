@@ -26,8 +26,43 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 
-// Object to store last click timestamp for each link ID
+// Object to store last click timestamps for each link ID
 const lastClickTimestamps = {};
+
+// Helper function to generate animation props based on user's animation settings and item index
+const getAnimationProps = (frameAnimation, index) => {
+  if (
+    !frameAnimation ||
+    !frameAnimation.type ||
+    frameAnimation.type === 'none' ||
+    frameAnimation.enabled === false
+  ) {
+    return { className: '', style: {} };
+  }
+
+  // Extract animation settings
+  const {
+    type,
+    duration = 0.5,
+    delay = 0,
+    staggered = false,
+    staggerAmount = 0.1,
+  } = frameAnimation;
+
+  // Calculate total delay including stagger effect
+  const totalDelay = staggered ? delay + index * staggerAmount : delay;
+
+  return {
+    className: `animate-${type}`,
+    style: {
+      animationDuration: `${duration}s`,
+      animationDelay: `${totalDelay}s`,
+      // Ensure elements are hidden until animation starts
+      opacity: 0,
+      animationFillMode: 'forwards',
+    },
+  };
+};
 
 const ProfilePage = () => {
   const { query } = useRouter();
@@ -343,19 +378,36 @@ const ProfilePage = () => {
             </div>
           )}
 
-          {/* Profile section with improved z-index management */}
+          {/* Profile section with animation */}
           <div className="relative flex flex-col items-center">
-            {/* Avatar wrapper with lower z-index */}
-            <div className="relative" style={{ zIndex: 5 }}>
+            {/* Avatar wrapper with animation */}
+            <div
+              className={`relative ${fetchedUser?.frameAnimation?.type ? `animate-${fetchedUser.frameAnimation.type}` : ''}`}
+              style={{
+                zIndex: 5,
+                ...(fetchedUser?.frameAnimation?.type && {
+                  animationDuration: `${fetchedUser.frameAnimation.duration || 0.5}s`,
+                  animationDelay: `${fetchedUser.frameAnimation.delay || 0}s`,
+                  opacity: 0,
+                  animationFillMode: 'forwards',
+                }),
+              }}
+            >
               <UserAvatarSetting isPreview={true} handle={handle} />
             </div>
 
-            {/* Text content with higher z-index to ensure it's above the image */}
+            {/* Text content with animation */}
             <div
-              className="relative"
+              className={`relative ${fetchedUser?.frameAnimation?.type ? `animate-${fetchedUser.frameAnimation.type}` : ''}`}
               style={{
                 zIndex: 15,
                 marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`,
+                ...(fetchedUser?.frameAnimation?.type && {
+                  animationDuration: `${fetchedUser.frameAnimation.duration || 0.5}s`,
+                  animationDelay: `${(fetchedUser.frameAnimation.delay || 0) + (fetchedUser.frameAnimation.staggered ? 0.1 : 0)}s`,
+                  opacity: 0,
+                  animationFillMode: 'forwards',
+                }),
               }}
             >
               <p
@@ -391,11 +443,17 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Apply dynamic margin to the social icons container */}
+          {/* Social icons with animation */}
           <div
-            className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4"
+            className={`min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4 ${fetchedUser?.frameAnimation?.type ? `animate-${fetchedUser.frameAnimation.type}` : ''}`}
             style={{
               marginTop: `${fetchedUser?.bioToSocialPadding ?? 16}px`,
+              ...(fetchedUser?.frameAnimation?.type && {
+                animationDuration: `${fetchedUser.frameAnimation.duration || 0.5}s`,
+                animationDelay: `${(fetchedUser.frameAnimation.delay || 0) + (fetchedUser.frameAnimation.staggered ? 0.2 : 0)}s`,
+                opacity: 0,
+                animationFillMode: 'forwards',
+              }),
             }}
           >
             {userLinks
@@ -414,32 +472,31 @@ const ProfilePage = () => {
               })}
           </div>
 
-          {/* Apply dynamic margin to the container holding the link/text cards and photobook */}
-          <div
-            className="w-full mx-auto" // Use mx-auto for centering
-            style={dynamicMarginStyle} // Apply calculated margin
-          >
-            {/* --- Unified Rendering Container --- */}
+          {/* Main content items (links, texts, photobook) with animations */}
+          <div className="w-full mx-auto" style={dynamicMarginStyle}>
             <div
               className="flex flex-col items-center w-full mx-auto max-w-3xl pb-10"
               style={{
                 gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
               }}
             >
-              {displayItems.map(item => {
-                // --- Render Photo Book ---
+              {displayItems.map((item, index) => {
+                // Get animation props based on the item's index
+                const animationProps = getAnimationProps(fetchedUser?.frameAnimation, index);
+
+                // Apply animation to photobook
                 if (item.type === 'photobook') {
-                  // Ensure renderPhotoBook() returns a component compatible with the flex gap
-                  // Adding a key here for React list rendering
                   return (
-                    <div key={item.id} className="w-full">
-                      {' '}
-                      {/* Ensure full width if needed */}
+                    <div
+                      key={item.id}
+                      className={`w-full ${animationProps.className}`}
+                      style={animationProps.style}
+                    >
                       {renderPhotoBook()}
                     </div>
                   );
                 }
-                // --- Render LinkCard ---
+                // Apply animation directly to link cards without extra wrapper
                 else if (item.url) {
                   return (
                     <LinkCard
@@ -453,21 +510,26 @@ const ProfilePage = () => {
                       cardHeight={fetchedUser?.linkCardHeight}
                       registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
                       alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
+                      className={animationProps.className}
+                      animationStyle={animationProps.style}
+                      frameAnimation={fetchedUser?.frameAnimation}
                     />
                   );
                 }
-                // --- Render TextCard ---
+                // Apply animation directly to text cards without extra wrapper
                 else {
                   return (
                     <TextCard
                       key={item.id}
                       {...item}
-                      fontSize={fetchedUser?.linkTitleFontSize} // Assuming same font settings for now
+                      fontSize={fetchedUser?.linkTitleFontSize}
                       fontFamily={fetchedUser?.linkTitleFontFamily}
                       buttonStyle={fetchedUser?.buttonStyle}
                       textCardButtonStyle={fetchedUser?.textCardButtonStyle}
                       theme={theme}
-                      cardHeight={fetchedUser?.linkCardHeight} // Assuming same height setting for now
+                      cardHeight={fetchedUser?.linkCardHeight}
+                      className={animationProps.className}
+                      animationStyle={animationProps.style}
                     />
                   );
                 }
