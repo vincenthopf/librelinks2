@@ -386,3 +386,29 @@ Example of conversion:
 3. Remove the App Router version if it exists to avoid conflicts
 
 This approach was successfully used for the background-images API endpoint that had persistent TypeScript errors with the db import.
+
+## Component Styling and Props
+
+### Inline Style Props
+
+- Components that may need custom styling should accept a `style` prop of type `React.CSSProperties`
+- This allows for dynamic and inline styling without requiring new CSS classes or Tailwind utilities
+- Important components with style props:
+  - `EmbedContainer` - Accepts style prop for customizing embed containers
+  - Other container components that might be styled differently in various contexts
+
+### Best Practices for Component Styling
+
+- Always include `style?: React.CSSProperties` in component props interfaces when the component might need custom styling
+- When a component is used as a building block for other components, ensure it accepts and passes style props appropriately
+- Maintain a consistent approach to styling across similar components:
+  1. Use Tailwind classes for most styling needs
+  2. Use inline style props for dynamic or computed styles
+  3. Use CSS modules when complex styling is required
+
+### Lessons Learned
+
+- When creating reusable components, always consider how they might need to be styled in different contexts
+- Include style props in the component interface even if not immediately needed
+- When components are used by other components, ensure style props are properly passed down
+- Test components with different style configurations to ensure they behave as expected

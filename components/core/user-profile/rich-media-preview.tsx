@@ -11,6 +11,7 @@ import {
 interface RichMediaPreviewProps {
   link: RichMediaContent;
   config?: Partial<EmbedConfig>;
+  embedBackground?: string;
 }
 
 declare global {
@@ -26,7 +27,7 @@ declare global {
   }
 }
 
-const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
+const RichMediaPreview = ({ link, config, embedBackground }: RichMediaPreviewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -233,25 +234,45 @@ const RichMediaPreview = ({ link, config }: RichMediaPreviewProps) => {
     switch (link.providerName) {
       case 'Instagram':
         return (
-          <InstagramContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
+          <InstagramContainer
+            config={mergedConfig}
+            isLoading={isLoading}
+            hasError={hasError}
+            embedBackground={embedBackground}
+          >
             <div className="instagram-embed-scaling w-full h-full">{content}</div>
           </InstagramContainer>
         );
       case 'YouTube':
         return (
-          <YouTubeContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
+          <YouTubeContainer
+            config={mergedConfig}
+            isLoading={isLoading}
+            hasError={hasError}
+            embedBackground={embedBackground}
+          >
             {content}
           </YouTubeContainer>
         );
       case 'Twitter':
         return (
-          <TwitterContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
+          <TwitterContainer
+            config={mergedConfig}
+            isLoading={isLoading}
+            hasError={hasError}
+            embedBackground={embedBackground}
+          >
             {content}
           </TwitterContainer>
         );
       default:
         return (
-          <GenericContainer config={mergedConfig} isLoading={isLoading} hasError={hasError}>
+          <GenericContainer
+            config={mergedConfig}
+            isLoading={isLoading}
+            hasError={hasError}
+            embedBackground={embedBackground}
+          >
             {content}
           </GenericContainer>
         );

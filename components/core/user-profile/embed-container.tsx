@@ -7,6 +7,7 @@ interface EmbedContainerProps {
   children: React.ReactNode;
   isLoading?: boolean;
   hasError?: boolean;
+  style?: React.CSSProperties;
 }
 
 const getAspectRatioClass = (aspectRatio: AspectRatioConfig | undefined): string => {
@@ -28,12 +29,13 @@ const EmbedContainer: React.FC<EmbedContainerProps> = ({
   children,
   isLoading = false,
   hasError = false,
+  style,
 }) => {
   const containerClass = config?.containerClass || DEFAULT_CONTAINER_CLASS;
   const aspectRatioClass = getAspectRatioClass(config?.aspectRatio);
 
   return (
-    <div className={`embed-container ${containerClass}`}>
+    <div className={`embed-container ${containerClass}`} style={style}>
       <div className={`relative ${aspectRatioClass}`}>
         {/* Loading Spinner */}
         {isLoading && (

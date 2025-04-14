@@ -157,7 +157,7 @@ const LinkCard = props => {
           height: showPreview ? 'auto' : '0',
           visibility: showPreview ? 'visible' : 'hidden',
           marginBottom: showPreview ? '8px' : '0',
-          background: 'transparent',
+          background: showPreview ? props.theme.embedBackground || 'transparent' : 'transparent',
         }}
         onPointerEnter={() => {
           console.log('[Pointer Enter] Embed container entered, registering click for:', props.url);
@@ -168,7 +168,9 @@ const LinkCard = props => {
           }
         }}
       >
-        {showPreview && <RichMediaPreview link={iframelyData} />}
+        {showPreview && (
+          <RichMediaPreview link={iframelyData} embedBackground={props.theme.embedBackground} />
+        )}
       </div>
     </div>
   );

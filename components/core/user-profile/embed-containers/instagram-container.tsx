@@ -7,6 +7,7 @@ interface InstagramContainerProps {
   children: React.ReactNode;
   isLoading?: boolean;
   hasError?: boolean;
+  embedBackground?: string;
 }
 
 const InstagramContainer: React.FC<InstagramContainerProps> = ({
@@ -14,11 +15,16 @@ const InstagramContainer: React.FC<InstagramContainerProps> = ({
   children,
   isLoading,
   hasError,
+  embedBackground,
 }) => {
   // Instagram-specific container class
   const instagramConfig = {
     ...config,
     containerClass: `instagram-embed-container w-full max-w-[540px] mx-auto overflow-hidden rounded-lg relative aspect-[0.6/1] ${config?.containerClass || ''}`,
+  };
+
+  const containerStyle = {
+    background: embedBackground || 'transparent',
   };
 
   return (
@@ -27,14 +33,13 @@ const InstagramContainer: React.FC<InstagramContainerProps> = ({
         config={instagramConfig}
         isLoading={isLoading}
         hasError={hasError}
+        style={containerStyle}
       >
         {/* Instagram-specific wrapper for better mobile handling */}
-        <div className="instagram-content-wrapper relative w-full">
-          {children}
-        </div>
+        <div className="instagram-content-wrapper relative w-full">{children}</div>
       </EmbedContainer>
     </div>
   );
 };
 
-export default InstagramContainer; 
+export default InstagramContainer;

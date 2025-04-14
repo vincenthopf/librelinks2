@@ -7,6 +7,7 @@ interface TwitterContainerProps {
   children: React.ReactNode;
   isLoading?: boolean;
   hasError?: boolean;
+  embedBackground?: string;
 }
 
 const TwitterContainer: React.FC<TwitterContainerProps> = ({
@@ -14,6 +15,7 @@ const TwitterContainer: React.FC<TwitterContainerProps> = ({
   children,
   isLoading,
   hasError,
+  embedBackground,
 }) => {
   // Twitter-specific container class
   const twitterConfig = {
@@ -26,20 +28,23 @@ const TwitterContainer: React.FC<TwitterContainerProps> = ({
     },
   };
 
+  const containerStyle = {
+    background: embedBackground || 'transparent',
+  };
+
   return (
     <div className="twitter-wrapper relative">
       <EmbedContainer
         config={twitterConfig}
         isLoading={isLoading}
         hasError={hasError}
+        style={containerStyle}
       >
         {/* Twitter-specific wrapper for dynamic height */}
-        <div className="twitter-content-wrapper relative w-full min-h-[250px]">
-          {children}
-        </div>
+        <div className="twitter-content-wrapper relative w-full min-h-[250px]">{children}</div>
       </EmbedContainer>
     </div>
   );
 };
 
-export default TwitterContainer; 
+export default TwitterContainer;

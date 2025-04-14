@@ -7,6 +7,7 @@ interface GenericContainerProps {
   children: React.ReactNode;
   isLoading?: boolean;
   hasError?: boolean;
+  embedBackground?: string;
 }
 
 const GenericContainer: React.FC<GenericContainerProps> = ({
@@ -14,6 +15,7 @@ const GenericContainer: React.FC<GenericContainerProps> = ({
   children,
   isLoading,
   hasError,
+  embedBackground,
 }) => {
   // Generic container with sensible defaults
   const genericConfig = {
@@ -26,20 +28,23 @@ const GenericContainer: React.FC<GenericContainerProps> = ({
     },
   };
 
+  const containerStyle = {
+    background: embedBackground || 'transparent',
+  };
+
   return (
     <div className="generic-wrapper relative">
       <EmbedContainer
         config={genericConfig}
         isLoading={isLoading}
         hasError={hasError}
+        style={containerStyle}
       >
         {/* Generic wrapper with flexible content area */}
-        <div className="generic-content-wrapper relative w-full h-full">
-          {children}
-        </div>
+        <div className="generic-content-wrapper relative w-full h-full">{children}</div>
       </EmbedContainer>
     </div>
   );
 };
 
-export default GenericContainer; 
+export default GenericContainer;

@@ -189,10 +189,12 @@ const ProfilePage = () => {
 
   const buttonStyle = fetchedUser?.buttonStyle;
   const theme = {
-    primary: fetchedUser?.themePalette.palette[0],
-    secondary: fetchedUser?.themePalette.palette[1],
-    accent: fetchedUser?.themePalette.palette[2],
-    neutral: fetchedUser?.themePalette.palette[3],
+    primary: fetchedUser?.themePalette?.palette?.[0] || '#F3F3F1', // Background
+    secondary: fetchedUser?.themePalette?.palette?.[1] || '#ffffff', // Card Background
+    accent: fetchedUser?.themePalette?.palette?.[3] || '#0a0a0a', // Accent (used for text sometimes)
+    neutral: fetchedUser?.themePalette?.palette?.[2] || '#0a0a0a', // Text Color
+    // Add embedBackground, falling back to transparent
+    embedBackground: fetchedUser?.themePalette?.embedBackground || 'transparent',
   };
 
   // Background image styles

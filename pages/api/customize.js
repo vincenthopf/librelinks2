@@ -29,6 +29,8 @@ export default async function handler(req, res) {
       faviconSize,
       // Background image
       backgroundImage,
+      // Theme palette object (may include name, palette array, embedBackground)
+      themePalette,
       // Button styles
       buttonStyle,
       textCardButtonStyle,
@@ -67,7 +69,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Validate pageHorizontalMargin
+    // Validate pageHorizontalMargin if it exists outside themePalette
     if (
       pageHorizontalMargin !== undefined &&
       (typeof pageHorizontalMargin !== 'number' ||
@@ -78,6 +80,51 @@ export default async function handler(req, res) {
         message: 'Page Horizontal Margin must be a number between 0 and 20',
       });
       return;
+    }
+
+    // Helper function to validate color strings (hex or 'transparent')
+    const isValidColor = color => {
+      if (typeof color !== 'string') return false;
+      return color === 'transparent' || /^#[0-9A-F]{6}$/i.test(color);
+    };
+
+    // Validate themePalette if provided
+    if (themePalette) {
+      console.log('[API] Received themePalette:', JSON.stringify(themePalette, null, 2));
+
+      // Basic validation: check if palette is an array
+      if (themePalette.palette && !Array.isArray(themePalette.palette)) {
+        return res
+          .status(400)
+          .json({ message: 'Invalid theme palette format: palette must be an array.' });
+      }
+      // Validate each color in the palette
+      if (themePalette.palette) {
+        for (const color of themePalette.palette) {
+          if (!isValidColor(color)) {
+            console.log(`[API] Invalid color rejected: ${color}`);
+            return res
+              .status(400)
+              .json({
+                message: `Invalid color format in palette: ${color}. Must be hex or 'transparent'.`,
+              });
+          }
+        }
+      }
+      // Validate embedBackground if present
+      if (
+        themePalette.embedBackground !== undefined &&
+        !isValidColor(themePalette.embedBackground)
+      ) {
+        console.log(`[API] Invalid embedBackground rejected: ${themePalette.embedBackground}`);
+        return res
+          .status(400)
+          .json({
+            message: "Invalid embed background color format. Must be hex or 'transparent'.",
+          });
+      }
+
+      console.log('[API] themePalette validation passed');
     }
 
     // Validate background image if provided
@@ -120,6 +167,19 @@ export default async function handler(req, res) {
       backgroundImage
     );
 
+    // Log the full update data in a readable format
+    console.log(
+      `[Customize API] Updating user ${session.user.email} with data:`,
+      JSON.stringify(
+        {
+          themePalette,
+          backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
+        },
+        null,
+        2
+      )
+    );
+
     try {
       const user = await db.user.update({
         where: {
@@ -139,6 +199,8 @@ export default async function handler(req, res) {
           faviconSize,
           // Background image - set to null if 'none' is selected
           backgroundImage: backgroundImage === 'none' ? null : backgroundImage,
+          // Theme palette (including embed background)
+          ...(themePalette && { themePalette }),
           // Button styles
           buttonStyle,
           textCardButtonStyle,
@@ -146,15 +208,17 @@ export default async function handler(req, res) {
           bioToSocialPadding,
           pageHorizontalMargin,
           // Other customization fields
-          ...otherFields,
+          ...otherFields, // Spread remaining fields AFTER specific ones
         },
         // Select the updated field to confirm
-        select: { id: true, email: true, backgroundImage: true },
+        select: { id: true, email: true, backgroundImage: true, themePalette: true }, // Select themePalette too
       });
 
       console.log(
         `[Customize API] Successfully updated user ${user.email}. New background:`,
-        user.backgroundImage
+        user.backgroundImage,
+        'New Theme Palette:',
+        user.themePalette
       );
       res.status(200).json(user);
       return;

@@ -7,6 +7,7 @@ interface YouTubeContainerProps {
   children: React.ReactNode;
   isLoading?: boolean;
   hasError?: boolean;
+  embedBackground?: string;
 }
 
 const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
@@ -14,6 +15,7 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
   children,
   isLoading,
   hasError,
+  embedBackground,
 }) => {
   // YouTube-specific container class with 16:9 aspect ratio
   const youtubeConfig = {
@@ -26,20 +28,23 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
     },
   };
 
+  const containerStyle = {
+    background: embedBackground || 'transparent',
+  };
+
   return (
     <div className="youtube-wrapper relative">
       <EmbedContainer
         config={youtubeConfig}
         isLoading={isLoading}
         hasError={hasError}
+        style={containerStyle}
       >
         {/* YouTube-specific wrapper for responsive iframe */}
-        <div className="youtube-content-wrapper relative w-full h-full">
-          {children}
-        </div>
+        <div className="youtube-content-wrapper relative w-full h-full">{children}</div>
       </EmbedContainer>
     </div>
   );
 };
 
-export default YouTubeContainer; 
+export default YouTubeContainer;
