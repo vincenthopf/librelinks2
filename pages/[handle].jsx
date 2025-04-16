@@ -250,12 +250,11 @@ const ProfilePage = () => {
 
   const buttonStyle = fetchedUser?.buttonStyle;
   const theme = {
-    primary: fetchedUser?.themePalette?.palette?.[0] || '#F3F3F1', // Background
-    secondary: fetchedUser?.themePalette?.palette?.[1] || '#ffffff', // Card Background
-    accent: fetchedUser?.themePalette?.palette?.[3] || '#0a0a0a', // Accent (used for text sometimes)
-    neutral: fetchedUser?.themePalette?.palette?.[2] || '#0a0a0a', // Text Color
-    // Add embedBackground, falling back to transparent
-    embedBackground: fetchedUser?.themePalette?.embedBackground || 'transparent',
+    primary: fetchedUser?.themePalette?.palette?.[0] || '#ffffff',
+    secondary: fetchedUser?.themePalette?.palette?.[1] || '#f8f8f8',
+    accent: fetchedUser?.themePalette?.palette?.[2] || '#000000',
+    neutral: fetchedUser?.themePalette?.palette?.[3] || '#888888',
+    base100: fetchedUser?.themePalette?.palette?.[4] || '#ffffff', // Added for base color
   };
 
   // Background image styles
@@ -350,44 +349,63 @@ const ProfilePage = () => {
   return (
     <>
       <Head>
-        <title> @{handle} | Idly.pro</title>
-        <meta property="og:image" content={fetchedUser?.image || ''} />
+        <title>{`Idly.pro | ${fetchedUser?.name ?? handle}`}</title>
+        <meta name="description" content={fetchedUser?.bio ?? 'Your personal link hub'} />
+        {fetchedUser?.image && <meta property="og:image" content={fetchedUser.image} />}
+        {/* Optional: Add Twitter card meta tags */}
       </Head>
 
-      {/* Use our ProxyFlock component as a fallback */}
-      {useFallback && <ProxyFlock handle={handle} debug={process.env.NODE_ENV === 'development'} />}
-
-      {!query.isIframe && (
+      {/* Google Analytics */}
+      {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS && (
         <Script
-          id="tinybird-analytics-check"
           strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                window.setTimeout(function() {
-                  if (!window.flock) {
-                    console.warn('Tinybird Flock.js not loaded, activating fallback tracking');
-                    window.dispatchEvent(new CustomEvent('activateFallbackTracking'));
-                  } else {
-                    console.log('Tinybird Flock.js loaded for handle: ${handle}');
-                  }
-                }, 1000);
-              })();
-            `,
-          }}
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
         />
       )}
-      <section
-        className="min-h-fit md:min-h-screen w-full relative"
+      {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS && (
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
+      )}
+
+      {/* Conditionally include ProxyFlock */}
+      {useFallback ? (
+        <Script
+          id="fallback-tracker"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `console.log("Fallback tracker script loaded")`,
+          }}
+        />
+      ) : (
+        <ProxyFlock
+          apiKey={process.env.NEXT_PUBLIC_PROXYFLOCK_API_KEY}
+          campaignId={fetchedUser?.id}
+          trackPageViews={true}
+        />
+      )}
+
+      <main
         style={{
-          backgroundColor: theme.primary,
+          background: theme.primary,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           backgroundImage: fetchedUser?.backgroundImage
             ? `url(${fetchedUser.backgroundImage})`
             : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed', // Optional: make background fixed
+          paddingTop: fetchedUser?.customPadding?.paddingTop || '2rem', // Default 2rem
+          paddingBottom: fetchedUser?.customPadding?.paddingBottom || '2rem', // Default 2rem
+          paddingLeft: fetchedUser?.customPadding?.paddingSide || '0.75rem', // Default 0.75rem
+          paddingRight: fetchedUser?.customPadding?.paddingSide || '0.75rem', // Default 0.75rem
         }}
+        className={`flex flex-col items-center relative min-h-screen`}
       >
         <div
           className={`flex items-center w-full flex-col mx-auto max-w-3xl justify-center`}
@@ -572,7 +590,7 @@ const ProfilePage = () => {
             </div>
           )} */}
         </div>
-      </section>
+      </main>
     </>
   );
 };

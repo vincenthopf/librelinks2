@@ -172,7 +172,7 @@ const Settings = () => {
                         <button
                           onClick={handleDeletePfp}
                           className="w-full h-[45px] border border-[#aaa] 
-                          outline-none font-semibold text-slate-900 bg-white p-2 rounded-3xl hover:bg-gray-100"
+                          outline-none font-semibold text-slate-900 bg-white p-2 rounded-3xl hover:bg-gray-100 mt-2"
                         >
                           Remove
                         </button>

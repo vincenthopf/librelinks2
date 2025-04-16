@@ -62,6 +62,7 @@ interface UserBackgroundImageGridProps {
   selectedImage: string | null;
   isUpdating: boolean;
   onImageSelect: (imageUrl: string) => Promise<void>;
+  onRemoveBackground: () => Promise<void>;
   // Optional: Add delete functionality later
   // onDelete: (imageUrl: string) => Promise<void>;
 }
@@ -72,17 +73,45 @@ const UserBackgroundImageGrid: React.FC<UserBackgroundImageGridProps> = ({
   selectedImage,
   isUpdating,
   onImageSelect,
+  onRemoveBackground,
 }) => {
-  if (!customImages || customImages.length === 0) {
-    return (
-      <p className="text-sm text-gray-500 my-4">
-        You haven&apos;t uploaded any custom backgrounds yet.
-      </p>
-    );
-  }
+  // No need for this check if we always show the "None" option
+  // if (!customImages || customImages.length === 0) {
+  //   return (
+  //     <p className="text-sm text-gray-500 my-4">
+  //       You haven&apos;t uploaded any custom backgrounds yet.
+  //     </p>
+  //   );
+  // }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-4">
+      {/* None option */}
+      <div
+        className={cn(
+          'rounded-lg overflow-hidden cursor-pointer relative border-2 h-32 flex items-center justify-center',
+          !selectedImage ? 'border-blue-500' : 'border-gray-200',
+          isUpdating ? 'opacity-50 cursor-not-allowed' : ''
+        )}
+        onClick={!isUpdating ? onRemoveBackground : undefined}
+      >
+        <div className="text-center">
+          <p className="font-medium">None</p>
+          <p className="text-xs text-gray-500">Remove background</p>
+        </div>
+        {!selectedImage && (
+          <span className="absolute top-2 right-2 z-10">
+            <CheckMark size={16} />
+          </span>
+        )}
+        {isUpdating && (
+          <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
+            <LoadingSpinner size="sm" />
+          </div>
+        )}
+      </div>
+
+      {/* Display custom uploaded images */}
       {customImages.map((imageUrl, index) => (
         <div
           key={imageUrl}
@@ -467,6 +496,7 @@ const BackgroundImageSelector: React.FC = () => {
           selectedImage={selectedImage}
           isUpdating={isUpdating}
           onImageSelect={handleImageSelect}
+          onRemoveBackground={handleRemoveBackground}
         />
       </ErrorBoundary>
 

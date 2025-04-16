@@ -263,7 +263,7 @@ const LinksEditor = () => {
   return (
     <div className="max-w-[640px] mx-auto my-10">
       {/* Three buttons container */}
-      <div className="grid grid-cols-3 gap-1">
+      <div className="grid grid-cols-3 gap-1 mb-6">
         {/* Add Link Button */}
         <Dialog.Root>
           <Dialog.Trigger asChild>
