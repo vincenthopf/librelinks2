@@ -7,14 +7,15 @@ import { signalIframe } from '@/utils/helpers';
 
 // Frame Animation presets
 const frameAnimationPresets = [
-  { id: 'rotate', name: 'Rotate', description: 'Frame rotates continuously' },
+  // { id: 'rotate', name: 'Rotate', description: 'Frame rotates continuously' },
   { id: 'pulse', name: 'Pulse', description: 'Frame pulses in and out' },
   { id: 'glow', name: 'Glow', description: 'Frame glows with varying intensity' },
   { id: 'bounce', name: 'Bounce', description: 'Frame bounces up and down' },
   { id: 'shimmer', name: 'Shimmer', description: 'Frame shimmers with light effect' },
   { id: 'breathe', name: 'Breathe', description: 'Frame slowly expands and contracts' },
   { id: 'shake', name: 'Shake', description: 'Frame shakes from side to side' },
-  { id: 'spin-pulse', name: 'Spin-pulse', description: 'Frame spins and pulses' },
+  { id: 'warp', name: 'Warp', description: 'Frame quickly pulses in size' },
+  { id: 'jitter', name: 'Jitter', description: 'Frame subtly shakes' },
   { id: 'none', name: 'None', description: 'No animation' },
 ];
 
@@ -102,7 +103,7 @@ const FrameAnimationSelector = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">Frame Animation</h2>
+        {/* <h2 className="text-lg font-semibold mb-4">Frame Animation</h2> */}
         <p className="text-sm text-gray-600 mb-4">
           Select an animation for your profile picture frame.
         </p>

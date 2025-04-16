@@ -1,16 +1,7 @@
 import { AnimationProps } from 'framer-motion';
 
 export interface FrameAnimation {
-  type:
-    | 'rotate'
-    | 'pulse'
-    | 'glow'
-    | 'bounce'
-    | 'shimmer'
-    | 'breathe'
-    | 'shake'
-    | 'spin-pulse'
-    | null;
+  type: 'pulse' | 'glow' | 'bounce' | 'shimmer' | 'breathe' | 'shake' | 'warp' | 'jitter' | null;
   enabled: boolean;
   config: {
     duration?: number;
@@ -32,18 +23,6 @@ export const getFrameAnimationProps = (animation: FrameAnimation | undefined): A
   };
 
   switch (animation.type) {
-    case 'rotate':
-      return {
-        animate: {
-          rotate: [0, 360],
-        },
-        transition: {
-          ...baseConfig,
-          ease: 'linear',
-          duration: baseConfig.duration || 3,
-        },
-      };
-
     case 'pulse':
       return {
         animate: {
@@ -114,39 +93,12 @@ export const getFrameAnimationProps = (animation: FrameAnimation | undefined): A
         },
       };
 
-    case 'spin-pulse':
-      return {
-        animate: {
-          rotate: [0, 360],
-          scale: [1, 1.05, 1],
-        },
-        transition: {
-          rotate: {
-            ...baseConfig,
-            ease: 'linear',
-            duration: baseConfig.duration || 3,
-          },
-          scale: {
-            ...baseConfig,
-            duration: baseConfig.duration || 1.5,
-            repeatDelay: 0.5,
-          },
-        },
-      };
-
     default:
       return {};
   }
 };
 
 export const FRAME_ANIMATION_PRESETS = {
-  rotate: {
-    type: 'rotate',
-    enabled: true,
-    config: {
-      duration: 3,
-    },
-  },
   pulse: {
     type: 'pulse',
     enabled: true,
@@ -189,11 +141,18 @@ export const FRAME_ANIMATION_PRESETS = {
       duration: 0.5,
     },
   },
-  'spin-pulse': {
-    type: 'spin-pulse',
+  warp: {
+    type: 'warp',
     enabled: true,
     config: {
-      duration: 3,
+      duration: 1,
+    },
+  },
+  jitter: {
+    type: 'jitter',
+    enabled: true,
+    config: {
+      duration: 0.3,
     },
   },
   none: {

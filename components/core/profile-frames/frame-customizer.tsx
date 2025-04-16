@@ -333,30 +333,29 @@ export const FrameCustomizer: React.FC<FrameCustomizerProps> = ({
         </>
       )}
 
-      {/* Animation Selection */}
-      {template !== 'none' && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Frame Animation</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {(Object.keys(FRAME_ANIMATION_PRESETS) as FrameAnimationType[]).map(type => (
-              <button
-                key={type}
-                onClick={() => handleAnimationSelect(type)}
-                className={`
-                  px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium
-                  ${
-                    animation.type === type
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-blue-300 text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* {template !== 'none' && ( */}
+      {/*  <div> */}
+      {/*    <h3 className="text-lg font-semibold text-gray-900 mb-4">Frame Animation</h3> */}
+      {/*    <div className="grid grid-cols-2 md:grid-cols-4 gap-4"> */}
+      {/*      {(Object.keys(FRAME_ANIMATION_PRESETS) as FrameAnimationType[]).map(type => ( */}
+      {/*        <button */}
+      {/*          key={type} */}
+      {/*          onClick={() => handleAnimationSelect(type)} */}
+      {/*          className={` */}
+      {/*            px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium */}
+      {/*            ${ */}
+      {/*              animation.type === type */}
+      {/*                ? 'border-blue-500 bg-blue-50 text-blue-700' */}
+      {/*                : 'border-gray-200 hover:border-blue-300 text-gray-700 hover:bg-gray-50' */}
+      {/*            } */}
+      {/*          `} */}
+      {/*        > */}
+      {/*          {type.charAt(0).toUpperCase() + type.slice(1)} */}
+      {/*        </button> */}
+      {/*      ))} */}
+      {/*    </div> */}
+      {/*  </div> */}
+      {/* )} */}
     </div>
   );
 };

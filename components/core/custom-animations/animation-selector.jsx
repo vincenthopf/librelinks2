@@ -175,7 +175,7 @@ const ContentAnimationSelector = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">Select Animation Style</h2>
+        {/* <h2 className="text-lg font-semibold mb-4">Select Animation Style</h2> */}
         <p className="text-sm text-gray-600 mb-4">
           Choose how your embedded content and links appear when your page loads.
         </p>
