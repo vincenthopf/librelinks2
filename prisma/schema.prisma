@@ -51,6 +51,7 @@ model User {
   pictureRotation      Int         @default(0)
   syncRotation         Boolean     @default(true)
   frameAnimation       Json?       @default("{\"type\": null, \"enabled\": false, \"config\": {}}")
+  contentAnimation     Json?       @default("{\"type\": null, \"duration\": 0.5, \"delay\": 0, \"staggered\": false, \"staggerAmount\": 0.1}")
   // Rounded corners frame properties
   frameCornerStyle     String      @default("squircle")
   frameBorderRadius    Int         @default(20)
@@ -197,6 +198,7 @@ model Template {
   pictureRotation      Int     @default(0)
   syncRotation         Boolean @default(true)
   frameAnimation       Json?   @default("{\"type\": null, \"enabled\": false, \"config\": {}}")
+  contentAnimation     Json?   @default("{\"type\": null, \"duration\": 0.5, \"delay\": 0, \"staggered\": false, \"staggerAmount\": 0.1}")
   // Frame corner properties
   frameCornerStyle     String  @default("squircle")
   frameBorderRadius    Int     @default(20)
