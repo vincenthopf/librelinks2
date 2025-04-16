@@ -240,6 +240,10 @@ const ProfilePage = () => {
     }
   }, [fetchedUser, userLinks]);
 
+  if (isUserLoading) {
+    return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
+  }
+
   if (!fetchedUser?.id) {
     return <NotFound />;
   }
@@ -496,69 +500,63 @@ const ProfilePage = () => {
                 gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
               }}
             >
-              {isLinksFetching || isTextsFetching ? (
-                <div className="flex justify-center items-center h-40">
-                  <Loader strokeWidth={5} width={25} height={25} bgColor={theme.accent} />
-                </div>
-              ) : (
-                displayItems.map((item, index) => {
-                  // Get animation props based on the item's index
-                  const animationProps = getContentAnimationProps(
-                    fetchedUser?.contentAnimation,
-                    index
-                  );
+              {displayItems.map((item, index) => {
+                // Get animation props based on the item's index
+                const animationProps = getContentAnimationProps(
+                  fetchedUser?.contentAnimation,
+                  index
+                );
 
-                  // Apply animation to photobook
-                  if (item.type === 'photobook') {
-                    return (
-                      <div
-                        key={item.id}
-                        className={`w-full ${animationProps.className}`}
-                        style={animationProps.style}
-                      >
-                        {renderPhotoBook()}
-                      </div>
-                    );
-                  }
-                  // Apply animation directly to link cards without extra wrapper
-                  else if (item.url) {
-                    return (
-                      <LinkCard
-                        key={item.id}
-                        {...item}
-                        fontSize={fetchedUser?.linkTitleFontSize}
-                        fontFamily={fetchedUser?.linkTitleFontFamily}
-                        buttonStyle={fetchedUser?.buttonStyle}
-                        theme={theme}
-                        faviconSize={fetchedUser?.faviconSize ?? 32}
-                        cardHeight={fetchedUser?.linkCardHeight}
-                        registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
-                        alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
-                        className={animationProps.className}
-                        animationStyle={animationProps.style}
-                        contentAnimation={fetchedUser?.contentAnimation}
-                      />
-                    );
-                  }
-                  // Apply animation directly to text cards without extra wrapper
-                  else {
-                    return (
-                      <TextCard
-                        key={item.id}
-                        {...item}
-                        fontSize={fetchedUser?.linkTitleFontSize}
-                        fontFamily={fetchedUser?.linkTitleFontFamily}
-                        buttonStyle={fetchedUser?.buttonStyle}
-                        textCardButtonStyle={fetchedUser?.textCardButtonStyle}
-                        theme={theme}
-                        cardHeight={fetchedUser?.linkCardHeight}
-                        className={animationProps.className}
-                        animationStyle={animationProps.style}
-                      />
-                    );
-                  }
-                })
-              )}
+                // Apply animation to photobook
+                if (item.type === 'photobook') {
+                  return (
+                    <div
+                      key={item.id}
+                      className={`w-full ${animationProps.className}`}
+                      style={animationProps.style}
+                    >
+                      {renderPhotoBook()}
+                    </div>
+                  );
+                }
+                // Apply animation directly to link cards without extra wrapper
+                else if (item.url) {
+                  return (
+                    <LinkCard
+                      key={item.id}
+                      {...item}
+                      fontSize={fetchedUser?.linkTitleFontSize}
+                      fontFamily={fetchedUser?.linkTitleFontFamily}
+                      buttonStyle={fetchedUser?.buttonStyle}
+                      theme={theme}
+                      faviconSize={fetchedUser?.faviconSize ?? 32}
+                      cardHeight={fetchedUser?.linkCardHeight}
+                      registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
+                      alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
+                      className={animationProps.className}
+                      animationStyle={animationProps.style}
+                      contentAnimation={fetchedUser?.contentAnimation}
+                    />
+                  );
+                }
+                // Apply animation directly to text cards without extra wrapper
+                else {
+                  return (
+                    <TextCard
+                      key={item.id}
+                      {...item}
+                      fontSize={fetchedUser?.linkTitleFontSize}
+                      fontFamily={fetchedUser?.linkTitleFontFamily}
+                      buttonStyle={fetchedUser?.buttonStyle}
+                      textCardButtonStyle={fetchedUser?.textCardButtonStyle}
+                      theme={theme}
+                      cardHeight={fetchedUser?.linkCardHeight}
+                      className={animationProps.className}
+                      animationStyle={animationProps.style}
+                    />
+                  );
+                }
+              })}
             </div>
           </div>
 
@@ -579,20 +577,4 @@ const ProfilePage = () => {
   );
 };
 
-// Add a check for secondary loading state
-const ProfilePageWithLoadingStates = () => {
-  const { query } = useRouter();
-  const { handle } = query;
-  const { data: fetchedUser, isLoading: isUserLoading } = useUser(handle);
-  const { data: userLinks, isFetching: isLinksFetching } = useLinks(fetchedUser?.id);
-  const { data: userTexts, isFetching: isTextsFetching } = useTexts(fetchedUser?.id);
-
-  if (isUserLoading) {
-    return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
-  }
-
-  // Render the main page, but handle secondary loading inside
-  return <ProfilePage />;
-};
-
-export default ProfilePageWithLoadingStates; // Export the wrapper
+export default ProfilePage;
