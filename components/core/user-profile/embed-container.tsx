@@ -8,7 +8,7 @@ interface EmbedContainerProps {
   isLoading?: boolean;
   hasError?: boolean;
   style?: React.CSSProperties;
-  frameAnimation?: any;
+  contentAnimation?: any;
 }
 
 const getAspectRatioClass = (aspectRatio: AspectRatioConfig | undefined): string => {
@@ -31,7 +31,7 @@ const EmbedContainer: React.FC<EmbedContainerProps> = ({
   isLoading = false,
   hasError = false,
   style,
-  frameAnimation,
+  contentAnimation,
 }) => {
   // State to track if the container is visible in the viewport
   const [isInView, setIsInView] = useState(false);
@@ -71,14 +71,14 @@ const EmbedContainer: React.FC<EmbedContainerProps> = ({
   };
 
   // Determine animation class and style for content fade-in
-  const contentAnimation = useMemo(() => {
-    if (!frameAnimation || !frameAnimation.enabled || frameAnimation.type === 'none') {
+  const contentAnimationProps = useMemo(() => {
+    if (!contentAnimation || !contentAnimation.type) {
       // Fallback to default fade if no user animation is set
       return { className: 'embed-fade-in', style: {} };
     }
 
     // Use user's animation settings
-    const { type, duration = 0.5, delay = 0 } = frameAnimation;
+    const { type, duration = 0.5, delay = 0 } = contentAnimation;
     return {
       className: `animate-${type}`,
       style: {
@@ -88,7 +88,7 @@ const EmbedContainer: React.FC<EmbedContainerProps> = ({
         animationFillMode: 'forwards',
       },
     };
-  }, [frameAnimation]);
+  }, [contentAnimation]);
 
   // Determine if the content should start its animation
   const shouldAnimate = isInView && !isLoading && !hasError;
@@ -131,13 +131,13 @@ const EmbedContainer: React.FC<EmbedContainerProps> = ({
 
         {/* Content - Rendered when not loading/error, animation applied only when shouldAnimate is true */}
         <div
-          className={`h-full w-full ${shouldAnimate ? contentAnimation.className : 'opacity-0'}`}
+          className={`h-full w-full ${shouldAnimate ? contentAnimationProps.className : 'opacity-0'}`}
           style={{
             // Use visibility hidden to prevent layout shifts before animation starts
             visibility: isLoading || hasError ? 'hidden' : 'visible',
             // Apply animation styles only when animating
             ...(shouldAnimate
-              ? contentAnimation.style
+              ? contentAnimationProps.style
               : { animationDuration: '0s', animationDelay: '0s' }),
           }}
         >

@@ -20,6 +20,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
 import { debounce } from 'lodash';
+import ContentAnimationSelector from '@/components/core/custom-animations/animation-selector';
+import FrameAnimationSelector from '@/components/core/profile-frames/frame-animation-selector';
 
 const Customize = () => {
   const [activeTab, setActiveTab] = useState('themes');
@@ -164,7 +166,15 @@ const Customize = () => {
             {/* Animation Tab */}
             {activeTab === 'animation' && (
               <div className="space-y-8">
-                <AnimationSelector />
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold mb-4">Profile Frame Animation</h3>
+                  <FrameAnimationSelector />
+                </div>
+
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold mb-4">Content Animation</h3>
+                  <ContentAnimationSelector />
+                </div>
               </div>
             )}
 

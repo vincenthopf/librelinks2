@@ -485,3 +485,26 @@ To properly support animations in the future:
 2. Run the appropriate Prisma migration
 3. Update the animations API endpoint to use the new field
 4. Update the animation-selector component to read from the new field
+
+## Animation System Improvements
+
+### Separation of Frame Animation and Content Animation
+
+- Created separate systems for profile frame animations and embedded content animations
+- Added a new `contentAnimation` field to the User model to store content animation settings
+- Created dedicated components for each animation type: `FrameAnimationSelector` and `ContentAnimationSelector`
+- Added frame-specific animation CSS classes with `animate-frame-` prefix
+- Created migration script to populate the new contentAnimation field from existing data
+- Updated all references to use the appropriate animation type in the profile page
+
+This separation ensures that:
+
+1. Frame animations (rotate, pulse, etc.) apply only to the avatar profile picture frame
+2. Content animations (fade, slide, etc.) apply only to the embedded content and links
+3. Each can be customized independently without affecting the other
+
+### Migration Path
+
+- Existing animation data is preserved by copying it to both fields during migration
+- The migration script handles converting existing data to the proper format
+- API endpoints were updated to target the correct animation type

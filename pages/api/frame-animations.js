@@ -16,30 +16,28 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { type, duration, delay, staggered, staggerAmount } = req.body;
+    const { type, enabled, config } = req.body;
 
-    // Create the animation settings as a JSON object
-    const animationSettings = {
+    // Create the frame animation settings as a JSON object
+    const frameAnimationSettings = {
       type,
-      duration,
-      delay,
-      staggered,
-      staggerAmount,
+      enabled: enabled !== false,
+      config: config || {},
     };
 
-    // Update user's contentAnimation field for embedded content animations
+    // Update user's frameAnimation field
     const updatedUser = await db.user.update({
       where: {
         id: currentUser.id,
       },
       data: {
-        contentAnimation: animationSettings,
+        frameAnimation: frameAnimationSettings,
       },
     });
 
     return res.status(200).json(updatedUser);
   } catch (error) {
-    console.error('ANIMATIONS API ERROR:', error);
+    console.error('FRAME ANIMATIONS API ERROR:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }

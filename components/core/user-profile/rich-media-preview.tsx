@@ -12,7 +12,7 @@ interface RichMediaPreviewProps {
   link: RichMediaContent;
   config?: Partial<EmbedConfig>;
   embedBackground?: string;
-  frameAnimation?: any;
+  contentAnimation?: any;
 }
 
 declare global {
@@ -35,7 +35,7 @@ const RichMediaPreview = ({
   link,
   config,
   embedBackground,
-  frameAnimation,
+  contentAnimation,
 }: RichMediaPreviewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -221,13 +221,13 @@ const RichMediaPreview = ({
       />
     ) : null;
 
-    // Pass frameAnimation to all containers
+    // Pass contentAnimation to all containers
     const commonContainerProps = {
       config: mergedConfig,
       isLoading,
       hasError,
       embedBackground,
-      frameAnimation,
+      contentAnimation,
     };
 
     switch (link.providerName) {

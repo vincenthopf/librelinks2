@@ -101,7 +101,7 @@ const LinkCard = props => {
   // Apply animation styles from props if provided
   const animationStyles = props.animationStyle || {};
   const animationClass = props.className || '';
-  const frameAnimation = props.frameAnimation;
+  const contentAnimation = props.contentAnimation;
 
   return (
     <>
@@ -206,7 +206,7 @@ const LinkCard = props => {
               <RichMediaPreview
                 link={iframelyData}
                 embedBackground={props.theme.embedBackground}
-                frameAnimation={frameAnimation}
+                contentAnimation={contentAnimation}
               />
             )}
             {!isPreviewLoaded && showPreview && (

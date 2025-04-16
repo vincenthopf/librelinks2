@@ -58,9 +58,14 @@ const Preview = () => {
 
   // Create a string representation of animation settings for dependency tracking
   const animationSettings = useMemo(() => {
-    if (!currentUser?.frameAnimation) return '';
-    return JSON.stringify(currentUser.frameAnimation);
-  }, [currentUser?.frameAnimation]);
+    const frameAnimString = currentUser?.frameAnimation
+      ? JSON.stringify(currentUser.frameAnimation)
+      : '{}';
+    const contentAnimString = currentUser?.contentAnimation
+      ? JSON.stringify(currentUser.contentAnimation)
+      : '{}';
+    return `${frameAnimString}|${contentAnimString}`;
+  }, [currentUser?.frameAnimation, currentUser?.contentAnimation]);
 
   const refreshDependencies = [
     currentUser?.handle,

@@ -110,6 +110,109 @@
   }
 }
 
+/* Frame Animation Keyframes */
+@keyframes frameRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes framePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes frameGlow {
+  0% {
+    filter: drop-shadow(0 0 0px);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px);
+  }
+  100% {
+    filter: drop-shadow(0 0 0px);
+  }
+}
+
+@keyframes frameBounce {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes frameShimmer {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes frameBreathe {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes frameShake {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes frameSpinPulse {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
 /* Animation classes */
 .animate-fade {
   animation-name: fade;
@@ -157,6 +260,47 @@
   animation-name: bounce;
   animation-fill-mode: both;
   will-change: transform, opacity;
+}
+
+/* Frame animation classes */
+.animate-frame-rotate {
+  animation: frameRotate 3s linear infinite;
+  will-change: transform;
+}
+
+.animate-frame-pulse {
+  animation: framePulse 2s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-frame-glow {
+  animation: frameGlow 2s ease-in-out infinite;
+  will-change: filter;
+}
+
+.animate-frame-bounce {
+  animation: frameBounce 1.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-frame-shimmer {
+  animation: frameShimmer 2.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.animate-frame-breathe {
+  animation: frameBreathe 4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-frame-shake {
+  animation: frameShake 0.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-frame-spin-pulse {
+  animation: frameSpinPulse 3s ease-in-out infinite;
+  will-change: transform;
 }
 
 /* Optimized embedded content classes */

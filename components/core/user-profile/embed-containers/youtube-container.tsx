@@ -8,7 +8,7 @@ interface YouTubeContainerProps {
   isLoading?: boolean;
   hasError?: boolean;
   embedBackground?: string;
-  frameAnimation?: any;
+  contentAnimation?: any;
 }
 
 const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
@@ -17,7 +17,7 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
   isLoading,
   hasError,
   embedBackground,
-  frameAnimation,
+  contentAnimation,
 }) => {
   // YouTube-specific container class with 16:9 aspect ratio
   const youtubeConfig = {
@@ -41,7 +41,7 @@ const YouTubeContainer: React.FC<YouTubeContainerProps> = ({
         isLoading={isLoading}
         hasError={hasError}
         style={containerStyle}
-        frameAnimation={frameAnimation}
+        contentAnimation={contentAnimation}
       >
         {/* YouTube-specific wrapper for responsive iframe */}
         <div className="youtube-content-wrapper relative w-full h-full">{children}</div>

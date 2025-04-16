@@ -8,7 +8,7 @@ interface InstagramContainerProps {
   isLoading?: boolean;
   hasError?: boolean;
   embedBackground?: string;
-  frameAnimation?: any;
+  contentAnimation?: any;
 }
 
 const InstagramContainer: React.FC<InstagramContainerProps> = ({
@@ -17,7 +17,7 @@ const InstagramContainer: React.FC<InstagramContainerProps> = ({
   isLoading,
   hasError,
   embedBackground,
-  frameAnimation,
+  contentAnimation,
 }) => {
   // Instagram-specific container class
   const instagramConfig = {
@@ -36,7 +36,7 @@ const InstagramContainer: React.FC<InstagramContainerProps> = ({
         isLoading={isLoading}
         hasError={hasError}
         style={containerStyle}
-        frameAnimation={frameAnimation}
+        contentAnimation={contentAnimation}
       >
         {/* Instagram-specific wrapper for better mobile handling */}
         <div className="instagram-content-wrapper relative w-full">{children}</div>

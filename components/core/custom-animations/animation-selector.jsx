@@ -18,7 +18,7 @@ const animationPresets = [
   { id: 'none', name: 'None', description: 'No animation' },
 ];
 
-const AnimationSelector = () => {
+const ContentAnimationSelector = () => {
   const { data: currentUser } = useCurrentUser();
   const [selectedAnimation, setSelectedAnimation] = useState('none');
   const [animationDuration, setAnimationDuration] = useState(0.5);
@@ -30,13 +30,12 @@ const AnimationSelector = () => {
 
   useEffect(() => {
     // Initialize from user preferences if available
-    // We're using frameAnimation as a temporary storage for animation settings
-    if (currentUser?.frameAnimation) {
-      setSelectedAnimation(currentUser.frameAnimation.type || 'none');
-      setAnimationDuration(currentUser.frameAnimation.duration || 0.5);
-      setAnimationDelay(currentUser.frameAnimation.delay || 0);
-      setStaggered(currentUser.frameAnimation.staggered || false);
-      setStaggerAmount(currentUser.frameAnimation.staggerAmount || 0.1);
+    if (currentUser?.contentAnimation) {
+      setSelectedAnimation(currentUser.contentAnimation.type || 'none');
+      setAnimationDuration(currentUser.contentAnimation.duration || 0.5);
+      setAnimationDelay(currentUser.contentAnimation.delay || 0);
+      setStaggered(currentUser.contentAnimation.staggered || false);
+      setStaggerAmount(currentUser.contentAnimation.staggerAmount || 0.1);
     }
   }, [currentUser]);
 
@@ -54,12 +53,9 @@ const AnimationSelector = () => {
       onSuccess: () => {
         queryClient.invalidateQueries('users');
         queryClient.invalidateQueries(['currentUser']);
-        // Use 'refresh' signal for better iframe refresh, and add a slight delay
-        signalIframe('refresh');
-        // Add a secondary signal after a short delay to ensure the refresh is complete
-        setTimeout(() => {
-          signalIframe('refresh');
-        }, 300);
+        // Explicitly send a 'refresh' message to trigger iframe key change
+        window.postMessage('refresh', '*');
+        console.log('Posted refresh message after content animation update');
       },
     }
   );
@@ -180,6 +176,9 @@ const AnimationSelector = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4">Select Animation Style</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Choose how your embedded content and links appear when your page loads.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {animationPresets.map(animation => (
             <div
@@ -270,4 +269,4 @@ const AnimationSelector = () => {
   );
 };
 
-export default AnimationSelector;
+export default ContentAnimationSelector;

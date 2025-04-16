@@ -37,10 +37,12 @@ const getAnimationProps = (frameAnimation, index) => {
     frameAnimation.type === 'none' ||
     frameAnimation.enabled === false
   ) {
-    return { className: '', style: {} };
+    return {
+      className: '',
+      style: {},
+    };
   }
 
-  // Extract animation settings
   const {
     type,
     duration = 0.5,
@@ -49,15 +51,39 @@ const getAnimationProps = (frameAnimation, index) => {
     staggerAmount = 0.1,
   } = frameAnimation;
 
-  // Calculate total delay including stagger effect
-  const totalDelay = staggered ? delay + index * staggerAmount : delay;
+  return {
+    className: `animate-${type}`,
+    style: {
+      animationDuration: `${duration}s`,
+      animationDelay: `${delay + (staggered ? index * staggerAmount : 0)}s`,
+      opacity: 0,
+      animationFillMode: 'forwards',
+    },
+  };
+};
+
+// New function for content animations
+const getContentAnimationProps = (contentAnimation, index) => {
+  if (!contentAnimation || !contentAnimation.type || contentAnimation.type === 'none') {
+    return {
+      className: '',
+      style: {},
+    };
+  }
+
+  const {
+    type,
+    duration = 0.5,
+    delay = 0,
+    staggered = false,
+    staggerAmount = 0.1,
+  } = contentAnimation;
 
   return {
     className: `animate-${type}`,
     style: {
       animationDuration: `${duration}s`,
-      animationDelay: `${totalDelay}s`,
-      // Ensure elements are hidden until animation starts
+      animationDelay: `${delay + (staggered ? index * staggerAmount : 0)}s`,
       opacity: 0,
       animationFillMode: 'forwards',
     },
@@ -213,10 +239,6 @@ const ProfilePage = () => {
       setIsDataLoaded(true);
     }
   }, [fetchedUser, userLinks]);
-
-  if (isUserLoading) {
-    return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
-  }
 
   if (!fetchedUser?.id) {
     return <NotFound />;
@@ -382,15 +404,9 @@ const ProfilePage = () => {
           <div className="relative flex flex-col items-center">
             {/* Avatar wrapper with animation */}
             <div
-              className={`relative ${fetchedUser?.frameAnimation?.type ? `animate-${fetchedUser.frameAnimation.type}` : ''}`}
+              className={`relative ${fetchedUser?.frameAnimation?.type && fetchedUser?.frameAnimation?.enabled ? `animate-frame-${fetchedUser.frameAnimation.type}` : ''}`}
               style={{
                 zIndex: 5,
-                ...(fetchedUser?.frameAnimation?.type && {
-                  animationDuration: `${fetchedUser.frameAnimation.duration || 0.5}s`,
-                  animationDelay: `${fetchedUser.frameAnimation.delay || 0}s`,
-                  opacity: 0,
-                  animationFillMode: 'forwards',
-                }),
               }}
             >
               <UserAvatarSetting isPreview={true} handle={handle} />
@@ -398,13 +414,13 @@ const ProfilePage = () => {
 
             {/* Text content with animation */}
             <div
-              className={`relative ${fetchedUser?.frameAnimation?.type ? `animate-${fetchedUser.frameAnimation.type}` : ''}`}
+              className={`relative ${fetchedUser?.contentAnimation?.type ? `animate-${fetchedUser.contentAnimation.type}` : ''}`}
               style={{
                 zIndex: 15,
                 marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`,
-                ...(fetchedUser?.frameAnimation?.type && {
-                  animationDuration: `${fetchedUser.frameAnimation.duration || 0.5}s`,
-                  animationDelay: `${(fetchedUser.frameAnimation.delay || 0) + (fetchedUser.frameAnimation.staggered ? 0.1 : 0)}s`,
+                ...(fetchedUser?.contentAnimation?.type && {
+                  animationDuration: `${fetchedUser.contentAnimation.duration || 0.5}s`,
+                  animationDelay: `${(fetchedUser.contentAnimation.delay || 0) + (fetchedUser.contentAnimation.staggered ? 0.1 : 0)}s`,
                   opacity: 0,
                   animationFillMode: 'forwards',
                 }),
@@ -445,12 +461,12 @@ const ProfilePage = () => {
 
           {/* Social icons with animation */}
           <div
-            className={`min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4 ${fetchedUser?.frameAnimation?.type ? `animate-${fetchedUser.frameAnimation.type}` : ''}`}
+            className={`min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4 ${fetchedUser?.contentAnimation?.type ? `animate-${fetchedUser.contentAnimation.type}` : ''}`}
             style={{
               marginTop: `${fetchedUser?.bioToSocialPadding ?? 16}px`,
-              ...(fetchedUser?.frameAnimation?.type && {
-                animationDuration: `${fetchedUser.frameAnimation.duration || 0.5}s`,
-                animationDelay: `${(fetchedUser.frameAnimation.delay || 0) + (fetchedUser.frameAnimation.staggered ? 0.2 : 0)}s`,
+              ...(fetchedUser?.contentAnimation?.type && {
+                animationDuration: `${fetchedUser.contentAnimation.duration || 0.5}s`,
+                animationDelay: `${(fetchedUser.contentAnimation.delay || 0) + (fetchedUser.contentAnimation.staggered ? 0.2 : 0)}s`,
                 opacity: 0,
                 animationFillMode: 'forwards',
               }),
@@ -480,64 +496,74 @@ const ProfilePage = () => {
                 gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
               }}
             >
-              {displayItems.map((item, index) => {
-                // Get animation props based on the item's index
-                const animationProps = getAnimationProps(fetchedUser?.frameAnimation, index);
+              {isLinksFetching || isTextsFetching ? (
+                <div className="flex justify-center items-center h-40">
+                  <Loader strokeWidth={5} width={25} height={25} bgColor={theme.accent} />
+                </div>
+              ) : (
+                displayItems.map((item, index) => {
+                  // Get animation props based on the item's index
+                  const animationProps = getContentAnimationProps(
+                    fetchedUser?.contentAnimation,
+                    index
+                  );
 
-                // Apply animation to photobook
-                if (item.type === 'photobook') {
-                  return (
-                    <div
-                      key={item.id}
-                      className={`w-full ${animationProps.className}`}
-                      style={animationProps.style}
-                    >
-                      {renderPhotoBook()}
-                    </div>
-                  );
-                }
-                // Apply animation directly to link cards without extra wrapper
-                else if (item.url) {
-                  return (
-                    <LinkCard
-                      key={item.id}
-                      {...item}
-                      fontSize={fetchedUser?.linkTitleFontSize}
-                      fontFamily={fetchedUser?.linkTitleFontFamily}
-                      buttonStyle={fetchedUser?.buttonStyle}
-                      theme={theme}
-                      faviconSize={fetchedUser?.faviconSize ?? 32}
-                      cardHeight={fetchedUser?.linkCardHeight}
-                      registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
-                      alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
-                      className={animationProps.className}
-                      animationStyle={animationProps.style}
-                      frameAnimation={fetchedUser?.frameAnimation}
-                    />
-                  );
-                }
-                // Apply animation directly to text cards without extra wrapper
-                else {
-                  return (
-                    <TextCard
-                      key={item.id}
-                      {...item}
-                      fontSize={fetchedUser?.linkTitleFontSize}
-                      fontFamily={fetchedUser?.linkTitleFontFamily}
-                      buttonStyle={fetchedUser?.buttonStyle}
-                      textCardButtonStyle={fetchedUser?.textCardButtonStyle}
-                      theme={theme}
-                      cardHeight={fetchedUser?.linkCardHeight}
-                      className={animationProps.className}
-                      animationStyle={animationProps.style}
-                    />
-                  );
-                }
-              })}
+                  // Apply animation to photobook
+                  if (item.type === 'photobook') {
+                    return (
+                      <div
+                        key={item.id}
+                        className={`w-full ${animationProps.className}`}
+                        style={animationProps.style}
+                      >
+                        {renderPhotoBook()}
+                      </div>
+                    );
+                  }
+                  // Apply animation directly to link cards without extra wrapper
+                  else if (item.url) {
+                    return (
+                      <LinkCard
+                        key={item.id}
+                        {...item}
+                        fontSize={fetchedUser?.linkTitleFontSize}
+                        fontFamily={fetchedUser?.linkTitleFontFamily}
+                        buttonStyle={fetchedUser?.buttonStyle}
+                        theme={theme}
+                        faviconSize={fetchedUser?.faviconSize ?? 32}
+                        cardHeight={fetchedUser?.linkCardHeight}
+                        registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
+                        alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
+                        className={animationProps.className}
+                        animationStyle={animationProps.style}
+                        contentAnimation={fetchedUser?.contentAnimation}
+                      />
+                    );
+                  }
+                  // Apply animation directly to text cards without extra wrapper
+                  else {
+                    return (
+                      <TextCard
+                        key={item.id}
+                        {...item}
+                        fontSize={fetchedUser?.linkTitleFontSize}
+                        fontFamily={fetchedUser?.linkTitleFontFamily}
+                        buttonStyle={fetchedUser?.buttonStyle}
+                        textCardButtonStyle={fetchedUser?.textCardButtonStyle}
+                        theme={theme}
+                        cardHeight={fetchedUser?.linkCardHeight}
+                        className={animationProps.className}
+                        animationStyle={animationProps.style}
+                      />
+                    );
+                  }
+                })
+              )}
             </div>
           </div>
 
-          {userLinks?.length === 0 && !photos?.length && (!userTexts || userTexts.length === 0) && (
+          {/* Commenting out the "Hello World" placeholder */}
+          {/* {userLinks?.length === 0 && !photos?.length && (!userTexts || userTexts.length === 0) && (
             <div className="flex justify-center">
               <h3
                 style={{ color: theme.neutral }}
@@ -546,11 +572,27 @@ const ProfilePage = () => {
                 Hello World 🚀
               </h3>
             </div>
-          )}
+          )} */}
         </div>
       </section>
     </>
   );
 };
 
-export default ProfilePage;
+// Add a check for secondary loading state
+const ProfilePageWithLoadingStates = () => {
+  const { query } = useRouter();
+  const { handle } = query;
+  const { data: fetchedUser, isLoading: isUserLoading } = useUser(handle);
+  const { data: userLinks, isFetching: isLinksFetching } = useLinks(fetchedUser?.id);
+  const { data: userTexts, isFetching: isTextsFetching } = useTexts(fetchedUser?.id);
+
+  if (isUserLoading) {
+    return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
+  }
+
+  // Render the main page, but handle secondary loading inside
+  return <ProfilePage />;
+};
+
+export default ProfilePageWithLoadingStates; // Export the wrapper

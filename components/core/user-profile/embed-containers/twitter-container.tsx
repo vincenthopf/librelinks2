@@ -8,7 +8,7 @@ interface TwitterContainerProps {
   isLoading?: boolean;
   hasError?: boolean;
   embedBackground?: string;
-  frameAnimation?: any;
+  contentAnimation?: any;
 }
 
 const TwitterContainer: React.FC<TwitterContainerProps> = ({
@@ -17,7 +17,7 @@ const TwitterContainer: React.FC<TwitterContainerProps> = ({
   isLoading,
   hasError,
   embedBackground,
-  frameAnimation,
+  contentAnimation,
 }) => {
   // Twitter-specific container class
   const twitterConfig = {
@@ -41,7 +41,7 @@ const TwitterContainer: React.FC<TwitterContainerProps> = ({
         isLoading={isLoading}
         hasError={hasError}
         style={containerStyle}
-        frameAnimation={frameAnimation}
+        contentAnimation={contentAnimation}
       >
         {/* Twitter-specific wrapper for dynamic height */}
         <div className="twitter-content-wrapper relative w-full min-h-[250px]">{children}</div>
