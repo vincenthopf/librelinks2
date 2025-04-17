@@ -12,6 +12,11 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(timezone);
 dayjs.extend(utc);
 
+// Define metrics for main query (excluding events)
+const mainMetricNames = ['visitors', 'visits', 'pageviews', 'time_on_page', 'scroll_depth'];
+// Define metrics for events query
+const eventMetricName = ['events']; // Just events
+
 /**
  * API endpoint for fetching Plausible dashboard metrics for a specific user
  *
@@ -61,11 +66,6 @@ export default async function handler(req, res) {
 
     // Format date range for v2 API, passing timezone
     const date_range = formatTimeRangeV2(timeRange, timezone);
-
-    // Define metrics for main query (excluding events)
-    const mainMetricNames = ['visitors', 'visits', 'pageviews', 'time_on_page', 'scroll_depth'];
-    // Define metrics for events query
-    const eventMetricName = ['events']; // Just events
 
     // Define the page filter
     const pageFilter = ['contains', 'event:page', [pathToFilter]];

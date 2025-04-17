@@ -5,7 +5,7 @@ import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, CreditCard } from 'lucide-react';
 import useMediaQuery from '@/hooks/use-media-query';
 import { Drawer } from 'vaul';
 import UserNavButtonMobile from './usernavbutton-mobile';
@@ -55,6 +55,13 @@ const UserAccountNavDesktop = () => {
             >
               <User size={17} color="gray" />
               <h4 className="w-full truncate">{data.user.name}</h4>
+            </Link>
+            <Link
+              href="/admin/subscription"
+              className="group flex w-full items-center gap-2 rounded-md p-3 text-sm font-medium text-gray-500 transition-all duration-75 hover:bg-gray-100"
+            >
+              <CreditCard size={17} color="gray" />
+              <h4 className="w-full truncate">Subscription</h4>
             </Link>
             <button
               onClick={handleLogout}

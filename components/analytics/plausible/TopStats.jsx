@@ -40,8 +40,9 @@ const formatTime = seconds => {
  * @param {boolean} isLoading - Loading state
  * @param {string} selectedMetric - The currently selected metric
  * @param {function} onMetricSelect - Callback function to select a metric
+ * @param {boolean} isSubscribed - Whether the user is subscribed
  */
-const TopStats = ({ metrics, isLoading, selectedMetric, onMetricSelect }) => {
+const TopStats = ({ metrics, isLoading, selectedMetric, onMetricSelect, isSubscribed }) => {
   // Define stats with keys for selection
   const stats = [
     { key: 'visitors', label: 'Unique Visitors', value: metrics?.visitors ?? 0 },
@@ -90,24 +91,31 @@ const TopStats = ({ metrics, isLoading, selectedMetric, onMetricSelect }) => {
         <StatCard
           key={stat.key || stat.label} // Use key if available
           label={stat.label}
-          value={stat.value}
+          value={isSubscribed ? stat.value : '--'}
           metricKey={stat.key}
           isPlottable={plottableMetrics.includes(stat.key)}
           isSelected={selectedMetric === stat.key}
           onSelect={onMetricSelect}
+          isSubscribed={isSubscribed}
         />
       ))}
     </div>
   );
 };
 
-// Update StatCard to handle selection and highlighting
-const StatCard = ({ label, value, metricKey, isPlottable, isSelected, onSelect }) => {
+// Update StatCard to accept isSubscribed and conditionally apply styling
+const StatCard = ({ label, value, metricKey, isPlottable, isSelected, onSelect, isSubscribed }) => {
   const cardClasses = `bg-white p-4 rounded-lg shadow-sm text-center transition-all duration-150 ease-in-out ${
+    // Apply clickable styles based only on isPlottable, not isSubscribed
     isPlottable ? 'cursor-pointer hover:shadow-md' : ''
-  } ${isSelected ? 'ring-2 ring-blue-500 shadow-md' : ''}`;
+  } ${isSelected ? 'ring-2 ring-blue-500 shadow-md' : ''} ${
+    // Apply ring based only on isSelected
+    // Keep opacity change for non-subscribed
+    !isSubscribed ? 'opacity-70' : ''
+  }`;
 
   const handleClick = () => {
+    // Always call onSelect if plottable, VisitorsGraph handles subscription for rendering
     if (isPlottable && onSelect && metricKey) {
       onSelect(metricKey);
     }
@@ -116,7 +124,13 @@ const StatCard = ({ label, value, metricKey, isPlottable, isSelected, onSelect }
   return (
     <div className={cardClasses} onClick={handleClick}>
       <div className="text-sm text-gray-500 mb-1">{label}</div>
-      <div className="text-l font-bold">{value}</div>
+      <div
+        className={`text-l font-bold ${
+          !isSubscribed ? 'text-gray-400 select-none opacity-75' : ''
+        }`}
+      >
+        {!isSubscribed ? <span className="select-none">{value}</span> : value}
+      </div>
     </div>
   );
 };

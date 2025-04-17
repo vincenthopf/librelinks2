@@ -77,6 +77,13 @@ model User {
   // Store the expansion state for connected links
   linkExpansionStates  Json?
 
+  // Stripe Customer Information
+  stripeCustomerId          String?   @map("stripe_customer_id")
+  stripeSubscriptionId      String?   @map("stripe_subscription_id")
+  stripePriceId             String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd    DateTime? @map("stripe_current_period_end")
+  stripeSubscriptionStatus  String?   @map("stripe_subscription_status")
+
   @@unique([handle, email])
 }
 

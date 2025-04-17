@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { Lock } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * LocationsComponent for displaying geographic data
@@ -7,8 +9,9 @@ import React, { useState, useMemo } from 'react';
  * @param {Object} props - Component props
  * @param {Object} props.locationsData - Locations data from the API
  * @param {boolean} props.isLoading - Whether the data is still loading
+ * @param {boolean} props.isSubscribed - Whether the user is subscribed
  */
-const LocationsComponent = ({ locationsData, isLoading = false }) => {
+const LocationsComponent = ({ locationsData, isLoading = false, isSubscribed }) => {
   // Re-introduce tabs
   const [activeTab, setActiveTab] = useState('countries'); // Default to countries
   const tabs = ['countries', 'regions', 'cities'];
@@ -16,34 +19,44 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
   // Helper to capitalize
   const capitalizeFirstLetter = string => string.charAt(0).toUpperCase() + string.slice(1);
 
-  // Get data based on active tab and calculate total visitors for percentage
-  const { activeData, totalVisitors } = useMemo(() => {
-    if (!locationsData) return { activeData: [], totalVisitors: 0 };
-    let data = [];
+  // Determine which data source to use based on tab
+  const getDataSource = () => {
     switch (activeTab) {
       case 'regions':
-        data = locationsData.regions || [];
-        break;
+        return locationsData?.regions || [];
       case 'cities':
-        data = locationsData.cities || [];
-        break;
+        return locationsData?.cities || [];
       case 'countries':
       default:
-        data = locationsData.countries || [];
-        break;
+        return locationsData?.countries || [];
     }
-    // Ensure data is sorted by visitors descending for correct percentage calculation
+  };
+
+  const currentDataSource = getDataSource();
+  const hasActualData = currentDataSource.length > 0;
+
+  // Process data for display (sorting, calculating total - only if subscribed)
+  const { activeData, totalVisitors } = useMemo(() => {
+    // Use the actual data source determined above
+    const data = [...currentDataSource];
     data.sort((a, b) => b.visitors - a.visitors);
-    const total = data.reduce((sum, item) => sum + (item.visitors || 0), 0);
+
+    // Calculate total only if subscribed
+    const total = isSubscribed ? data.reduce((sum, item) => sum + (item.visitors || 0), 0) : 0;
+
     return { activeData: data, totalVisitors: total };
-  }, [locationsData, activeTab]);
+    // Depend on the original data source and tab, plus subscription status for total
+  }, [currentDataSource, activeTab, isSubscribed]);
 
   if (isLoading) {
     return <LocationsSkeleton />;
   }
 
+  // Determine max visitors for bar calculation (only if subscribed)
+  const maxVisitors = isSubscribed && activeData.length > 0 ? activeData[0].visitors : 0;
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm mb-8">
+    <div className="bg-white p-4 rounded-lg shadow-sm mb-8 relative">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium">Locations</h2>
         {/* Tabs */}
@@ -61,12 +74,11 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
       </div>
 
       {/* Data table */}
-      {activeData.length > 0 ? (
+      {hasActualData ? (
         <div className="overflow-x-auto">
           <table className="w-full text-sm table-fixed">
             <thead>
               <tr className="text-left text-xs uppercase text-gray-500 border-b">
-                {/* Standardized Headers with explicit widths */}
                 <th className="pb-2 pl-2 pr-4 font-medium text-left" style={{ width: '60%' }}>
                   {capitalizeFirstLetter(activeTab)}
                 </th>
@@ -81,29 +93,47 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
             <tbody>
               {activeData.map((item, index) => {
                 const percentage =
-                  totalVisitors > 0 ? Math.round((item.visitors / totalVisitors) * 100) : 0;
-                const barStyle = {
-                  background: `linear-gradient(to right, rgba(134, 239, 172, 0.3) ${percentage}%, transparent ${percentage}%)`,
-                };
+                  isSubscribed && totalVisitors > 0
+                    ? Math.round((item.visitors / totalVisitors) * 100)
+                    : 0;
+                // Use percentage for bar width, but only if subscribed
+                const barPercentage = isSubscribed ? percentage : 0;
+                const barStyle = isSubscribed
+                  ? {
+                      background: `linear-gradient(to right, rgba(134, 239, 172, 0.3) ${barPercentage}%, transparent ${barPercentage}%)`,
+                    }
+                  : {}; // No bar style if not subscribed
 
                 return (
                   <tr key={index} className="border-b last:border-0">
-                    {/* Standardized Cells */}
                     <td className="py-2 pl-2 pr-4 font-medium flex items-center" style={barStyle}>
-                      {/* Consistent icon/flag spacing - using w-5 and min-w-[1.25rem] */}
+                      {' '}
+                      {/* Apply conditional bar style */}
                       <span
                         className={`inline-block mr-2 w-5 min-w-[1.25rem] h-4 text-center ${activeTab === 'countries' && item.country_code ? '' : 'opacity-0'}`}
                       >
                         {' '}
-                        {/* Use opacity-0 to reserve space even if no flag */}
                         {activeTab === 'countries' && item.country_code && (
                           <span className={`fi fi-${item.country_code.toLowerCase()}`} />
                         )}
                       </span>
                       {item.name || 'Unknown'}
                     </td>
-                    <td className="py-2 px-4 text-right font-medium">{item.visitors}</td>
-                    <td className="py-2 pl-4 pr-2 text-right text-gray-600">{percentage}%</td>
+                    {/* Conditionally render blurred data */}
+                    {isSubscribed ? (
+                      <td className="py-2 px-4 text-right font-medium">{item.visitors}</td>
+                    ) : (
+                      <td className="py-2 px-4 text-right font-medium text-gray-400 select-none opacity-75">
+                        --
+                      </td>
+                    )}
+                    {isSubscribed ? (
+                      <td className="py-2 pl-4 pr-2 text-right text-gray-600">{percentage}%</td>
+                    ) : (
+                      <td className="py-2 pl-4 pr-2 text-right text-gray-400 select-none opacity-75">
+                        --%
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -111,6 +141,7 @@ const LocationsComponent = ({ locationsData, isLoading = false }) => {
           </table>
         </div>
       ) : (
+        // Show "No data" message only if hasActualData is false
         <div className="text-center py-8 text-gray-500">No data available for this time period</div>
       )}
     </div>

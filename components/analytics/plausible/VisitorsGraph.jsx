@@ -14,6 +14,8 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+import { Check } from 'lucide-react'; // Added Check
+import Link from 'next/link'; // Added Link
 
 dayjs.extend(utc); // Extend dayjs with UTC plugin
 dayjs.extend(timezonePlugin); // Extend with timezone plugin
@@ -35,6 +37,26 @@ ChartJS.defaults.datasets.line.borderWidth = 5; // Extremely thick line
 ChartJS.defaults.elements.point.radius = 6; // Large points
 ChartJS.defaults.elements.point.borderWidth = 2;
 
+// Helper function to get label based on metric
+const getLabelForMetric = metric => {
+  switch (metric) {
+    case 'visitors':
+      return 'Unique Visitors';
+    case 'visits':
+      return 'Total Visits';
+    case 'events':
+      return 'Total Clicks';
+    case 'pageviews':
+      return 'Total Pageviews';
+    case 'time_on_page':
+      return 'Time on Page (Avg Sec)';
+    case 'scroll_depth':
+      return 'Scroll Depth (%)';
+    default:
+      return 'Total Visits';
+  }
+};
+
 /**
  * Simplified VisitorsGraph component showing only visits line
  */
@@ -44,6 +66,7 @@ const VisitorsGraph = ({
   timeRange = 'day',
   timezone = 'UTC',
   metricToPlot = 'visits',
+  isSubscribed, // Added isSubscribed prop
 }) => {
   // Debug logging
   useEffect(() => {
@@ -52,6 +75,10 @@ const VisitorsGraph = ({
     console.log('VisitorsGraph timezone:', timezone);
     console.log('VisitorsGraph metricToPlot:', metricToPlot);
   }, [timeseriesData, timeRange, timezone, metricToPlot]);
+
+  // Define chart title early so it's available for the placeholder
+  const chartLabel = getLabelForMetric(metricToPlot);
+  const chartTitle = `${chartLabel} Over Time`;
 
   // Loading state
   if (isLoading) {
@@ -65,28 +92,6 @@ const VisitorsGraph = ({
   // Extract data for chart based on metricToPlot
   const { labels, dataArrays } = processedData; // Expect dataArrays object now
   const dataToPlot = dataArrays[metricToPlot] || dataArrays['visits'] || []; // Fallback to visits
-
-  // Dynamically generate label based on metricToPlot
-  const getLabelForMetric = metric => {
-    switch (metric) {
-      case 'visitors':
-        return 'Unique Visitors';
-      case 'visits':
-        return 'Total Visits';
-      case 'events':
-        return 'Total Clicks';
-      case 'pageviews':
-        return 'Total Pageviews';
-      case 'time_on_page':
-        return 'Time on Page (Avg Sec)'; // Assuming processed data is in seconds
-      case 'scroll_depth':
-        return 'Scroll Depth (%)'; // Assuming processed data is percentage
-      default:
-        return 'Total Visits';
-    }
-  };
-  const chartLabel = getLabelForMetric(metricToPlot);
-  const chartTitle = `${chartLabel} Over Time`; // Create dynamic title
 
   // Simplest possible chart configuration
   const chartConfig = {
@@ -160,7 +165,10 @@ const VisitorsGraph = ({
     <div className="bg-white p-4 rounded-lg shadow-sm mb-8">
       <h2 className="text-lg font-medium mb-4">{chartTitle}</h2>
       <div className="h-64">
-        <Line data={chartConfig} options={options} />
+        <div className={`h-full ${!isSubscribed ? 'filter blur-lg opacity-50' : ''}`}>
+          {!isLoading && <Line data={chartConfig} options={options} />}
+        </div>
+        {isLoading && <GraphSkeleton />}
       </div>
 
       {/* Debug display to verify data exists 
