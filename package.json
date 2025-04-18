@@ -53,6 +53,7 @@
         "flag-icons": "^7.3.2",
         "framer-motion": "^10.12.16",
         "iso-3166-1": "^2.1.1",
+        "lottie-react": "^2.4.1",
         "lucide-react": "^0.220.0",
         "micro": "^10.0.1",
         "mini-svg-data-uri": "^1.4.4",
