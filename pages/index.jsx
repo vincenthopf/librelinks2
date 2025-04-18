@@ -1,9 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
+import dynamic from 'next/dynamic';
 import { ArrowRight } from 'lucide-react';
 import LazyLottieLoader from '@/components/utils/lazy-lottie-loader';
+
+// Re-added dynamic import for direct Lottie use
+const Lottie = dynamic(() => import('lottie-react'), {
+  ssr: false,
+});
 
 // Updated pageMeta
 const pageMeta = {
@@ -15,6 +22,30 @@ const pageMeta = {
 const Home = () => {
   const session = useSession();
   const isAuthenticated = session.status === 'authenticated';
+  const logoLottieRef = useRef();
+  const logoContainerRef = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          logoLottieRef.current?.goToAndPlay(0, true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const currentLogoContainer = logoContainerRef.current;
+    if (currentLogoContainer) {
+      observer.observe(currentLogoContainer);
+    }
+
+    return () => {
+      if (currentLogoContainer) {
+        observer.unobserve(currentLogoContainer);
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -41,8 +72,13 @@ const Home = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 text-gray-800 font-sans overflow-x-hidden">
         <header className="absolute top-0 left-0 right-0 z-10 py-4 px-4">
           <div className="flex justify-between items-center">
-            <Link href="/" className="-ml-4 hover:opacity-80 transition-opacity">
-              <LazyLottieLoader
+            <Link
+              ref={logoContainerRef}
+              href="/"
+              className="-ml-4 hover:opacity-80 transition-opacity"
+            >
+              <Lottie
+                lottieRef={logoLottieRef}
                 path="/lotties/Logo.json"
                 loop={false}
                 autoplay={true}
