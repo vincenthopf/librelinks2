@@ -25,6 +25,7 @@ import { ProxyFlock, trackEvent } from '@/components/analytics/ProxyFlock';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
+import { StackedCardsView } from '@/components/core/user-profile/stacked-cards-view';
 
 // Object to store last click timestamps for each link ID
 const lastClickTimestamps = {};
@@ -88,121 +89,6 @@ const getContentAnimationProps = (contentAnimation, index) => {
       animationFillMode: 'forwards',
     },
   };
-};
-
-// Create a StackedCardsView component inside the file
-const StackedCardsView = ({
-  items,
-  fetchedUser,
-  theme,
-  handleRegisterClick,
-  renderPhotoBook,
-  contentAnimation,
-}) => {
-  const [positions, setPositions] = useState(['front', 'middle', 'back']);
-  const [currentItems, setCurrentItems] = useState([]);
-  const [dragging, setDragging] = useState(false);
-
-  // Initialize with the first 3 items or fewer
-  useEffect(() => {
-    if (items && items.length > 0) {
-      setCurrentItems(items.slice(0, Math.min(3, items.length)));
-    }
-  }, [items]);
-
-  const handleShuffle = () => {
-    // Rotate the positions: back -> front -> middle -> back
-    const newPositions = [...positions];
-    newPositions.unshift(newPositions.pop());
-    setPositions(newPositions);
-
-    // Rotate the items if there are more than 3
-    if (items.length > 3) {
-      setTimeout(() => {
-        const newCurrentItems = [...currentItems];
-        // Remove the back card and add the next card from items
-        const removedItem = newCurrentItems.pop();
-        const nextItemIndex = (items.indexOf(removedItem) + 1) % items.length;
-        newCurrentItems.unshift(items[nextItemIndex]);
-        setCurrentItems(newCurrentItems);
-      }, 350); // Wait for animation to complete
-    }
-  };
-
-  // Return null if no items
-  if (!items || items.length === 0) return null;
-
-  return (
-    <div className="relative h-[450px] w-full">
-      {currentItems.map((item, index) => {
-        const position = positions[index % positions.length];
-        const isFront = position === 'front';
-
-        return (
-          <motion.div
-            key={item.id || `${item.type}-${index}`}
-            style={{
-              zIndex: position === 'front' ? '20' : position === 'middle' ? '19' : '18',
-            }}
-            animate={{
-              rotate: position === 'front' ? '-6deg' : position === 'middle' ? '0deg' : '6deg',
-              scale: position === 'front' ? 1 : position === 'middle' ? 0.95 : 0.9,
-              y: position === 'front' ? '0%' : position === 'middle' ? '5%' : '10%',
-              opacity: position === 'back' ? 0.7 : 1,
-            }}
-            drag={isFront && !dragging}
-            dragElastic={0.2}
-            dragConstraints={{
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-            onDragStart={() => setDragging(true)}
-            onDragEnd={(e, { offset, velocity }) => {
-              setDragging(false);
-              const swipe = Math.abs(offset.x) > 100 || Math.abs(velocity.x) > 800;
-              if (swipe) {
-                handleShuffle();
-              }
-            }}
-            transition={{ duration: 0.35, ease: 'easeInOut' }}
-            className={`absolute left-0 mx-auto right-0 w-full max-w-md rounded-xl border shadow-lg overflow-hidden ${
-              isFront ? 'cursor-grab active:cursor-grabbing' : ''
-            }`}
-          >
-            {/* Render different content based on item type */}
-            {item.type === 'photobook' ? (
-              <div key={item.id}>{renderPhotoBook()}</div>
-            ) : item.url ? (
-              <LinkCard
-                key={item.id}
-                {...item}
-                fontSize={fetchedUser?.linkTitleFontSize}
-                fontFamily={fetchedUser?.linkTitleFontFamily}
-                buttonStyle={fetchedUser?.buttonStyle}
-                theme={theme}
-                faviconSize={fetchedUser?.faviconSize ?? 32}
-                cardHeight={fetchedUser?.linkCardHeight}
-                registerClicks={() => handleRegisterClick(item.id, item.url, item.title)}
-                alwaysExpandEmbed={fetchedUser?.linkExpansionStates?.[item.id] ?? false}
-              />
-            ) : (
-              <TextCard
-                key={item.id}
-                title={item.title}
-                content={item.content}
-                buttonStyle={fetchedUser?.textCardButtonStyle}
-                theme={theme}
-                fontSize={fetchedUser?.linkTitleFontSize}
-                fontFamily={fetchedUser?.linkTitleFontFamily}
-              />
-            )}
-          </motion.div>
-        );
-      })}
-    </div>
-  );
 };
 
 const ProfilePage = () => {
@@ -639,7 +525,7 @@ const ProfilePage = () => {
                   items={displayItems}
                   fetchedUser={fetchedUser}
                   theme={theme}
-                  handleRegisterClick={handleRegisterClick}
+                  registerClicks={handleRegisterClick}
                   renderPhotoBook={renderPhotoBook}
                   contentAnimation={fetchedUser?.contentAnimation}
                 />

@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-const TikTokContainer: React.FC<TikTokContainerProps> = ({ embedHtml, url, title }) => {
+const TikTokContainer: React.FC<TikTokContainerProps> = ({ embedHtml, url, title, className }) => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
 
@@ -66,9 +66,9 @@ const TikTokContainer: React.FC<TikTokContainerProps> = ({ embedHtml, url, title
 
   // This is a React fragment with no wrapper elements, just rendering the HTML directly
   return embedHtml ? (
-    <>{React.createElement('div', { dangerouslySetInnerHTML: { __html: embedHtml } })}</>
+    <div className={className} dangerouslySetInnerHTML={{ __html: embedHtml }} />
   ) : (
-    <a href={url} target="_blank" rel="noopener noreferrer">
+    <a href={url} target="_blank" rel="noopener noreferrer" className={className}>
       {title}
     </a>
   );

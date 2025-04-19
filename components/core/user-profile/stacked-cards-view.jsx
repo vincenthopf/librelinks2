@@ -251,22 +251,30 @@ const MemoizedCard = React.memo(
                   buttonStyle={fetchedUser?.buttonStyle}
                   faviconSize={fetchedUser?.faviconSize ?? 32}
                   cardHeight={fetchedUser?.linkCardHeight}
+                  alwaysExpandEmbed={expandedState || position !== 'active'} // Always expand if not active
+                  toggleExpand={() => toggleExpand(item.id)}
                   registerClicks={
                     position === 'active'
                       ? () => registerClicks(item.id, item.url, item.title)
                       : undefined
                   }
-                  alwaysExpandEmbed={expandedState || position !== 'active'} // Always expand if not active
-                  onToggleExpand={toggleExpand}
                   contentAnimation={contentAnimation}
+                  animationStyle={{
+                    opacity: position === 'active' ? 1 : 0,
+                    transition: 'opacity 0.3s ease',
+                  }}
                 />
               ) : (
                 <TextCard
                   {...item}
                   theme={theme}
-                  buttonStyle={fetchedUser?.textCardButtonStyle}
                   fontSize={fetchedUser?.linkTitleFontSize}
                   fontFamily={fetchedUser?.linkTitleFontFamily}
+                  buttonStyle={fetchedUser?.textCardButtonStyle}
+                  style={{
+                    opacity: position === 'active' ? 1 : 0,
+                    transition: 'opacity 0.3s ease',
+                  }}
                 />
               )}
             </div>
