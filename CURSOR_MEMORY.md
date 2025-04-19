@@ -508,3 +508,29 @@ This separation ensures that:
 - Existing animation data is preserved by copying it to both fields during migration
 - The migration script handles converting existing data to the proper format
 - API endpoints were updated to target the correct animation type
+
+## Stack View Feature Implementation
+
+A stacked cards view feature was added to allow users to display their link cards, text cards, and photobook in a visually appealing card stack style.
+
+Key implementation details:
+
+1. Added a `stackView` boolean field to the User model in `prisma/schema.prisma` (default: false)
+2. Added UI toggle in the following locations:
+   - The `PaddingSelector` component in the Layout & Spacing section
+   - The `LinksEditor` component at the top of the links management page
+3. Updated the preview components (`preview.jsx` and `preview-mobile.jsx`) to pass the stackView parameter to the iframe
+4. Created a `StackedCardsView` component in `pages/[handle].jsx` using framer-motion for animations and drag interactions
+5. Added conditional rendering in the profile page to switch between vertical layout and stack view based on user preference
+
+The stack view implementation enables:
+
+- Cards stacked on top of each other with a visual 3D effect using rotation and scaling
+- Interactive dragging of the front card to shuffle through content
+- Dynamic rotation of cards through the stack
+
+Dependencies:
+
+- Added framer-motion to the project dependencies for animations and interactions
+
+This implementation provides a more interactive and visually distinctive option for presenting user content alongside the traditional vertical layout.

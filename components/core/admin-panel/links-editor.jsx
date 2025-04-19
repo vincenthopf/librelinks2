@@ -33,6 +33,8 @@ import { usePhotoBook } from '@/hooks/usePhotoBook';
 import TooltipWrapper from '@/components/utils/tooltip';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Special ID for the photo book item
 const PHOTO_BOOK_ID = 'photo-book-item';
@@ -43,6 +45,9 @@ const LinksEditor = () => {
   const currentPhotoBookOrder = currentUser?.photoBookOrder;
   const { photos } = usePhotoBook();
   const hasPhotos = Array.isArray(photos) && photos.length > 0;
+
+  // Add state for the stack view toggle
+  const [stackView, setStackView] = useState(false);
 
   const mouseSensor = useSensor(MouseSensor);
   const touchSensor = useSensor(TouchSensor);
@@ -134,6 +139,13 @@ const LinksEditor = () => {
     }
   }, [userLinks, userTexts, currentPhotoBookOrder, hasPhotos]);
 
+  // Initialize stack view state from user preferences
+  useEffect(() => {
+    if (currentUser) {
+      setStackView(currentUser.stackView || false);
+    }
+  }, [currentUser]);
+
   // Drag handler for regular items (Links, Texts, PhotoBook)
   const handleRegularDragEnd = async event => {
     const { active, over } = event;
@@ -200,6 +212,33 @@ const LinksEditor = () => {
     reorderItemsMutation.mutate(payload);
   };
 
+  // Handler for stack view toggle
+  const handleStackViewChange = async checked => {
+    setStackView(checked);
+    // Signal both user update and a general refresh
+    signalIframe('update_user');
+    signalIframe('refresh');
+
+    try {
+      const toastId = toast.loading('Updating stack view preference...');
+      await axios.patch('/api/users/update', {
+        stackView: checked,
+      });
+      // Invalidate user queries AFTER successful update
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users', currentUser?.handle] });
+      queryClient.refetchQueries({ queryKey: ['users'] });
+      toast.success('Stack view updated', { id: toastId });
+    } catch (error) {
+      console.error('Error updating stack view:', error);
+      toast.error('Failed to update stack view setting');
+      // Revert UI state if API call fails
+      setStackView(!checked);
+      // Optionally signal refresh again on error to reset preview
+      signalIframe('refresh');
+    }
+  };
+
   // Drag handler for social links - Keep using the separate endpoint for now
   const handleSocialDragEnd = async event => {
     const { active, over } = event;
@@ -262,6 +301,17 @@ const LinksEditor = () => {
   // --- Render Logic ---
   return (
     <div className="max-w-[640px] mx-auto my-10">
+      {/* Stack View Toggle */}
+      <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center space-x-2">
+          <Switch id="stack-view" checked={stackView} onCheckedChange={handleStackViewChange} />
+          <Label htmlFor="stack-view" className="font-medium text-gray-800">
+            Stack View
+          </Label>
+        </div>
+        <div className="text-sm text-gray-500">Display cards in a stacked layout</div>
+      </div>
+
       {/* Three buttons container */}
       <div className="grid grid-cols-3 gap-1 mb-6">
         {/* Add Link Button */}

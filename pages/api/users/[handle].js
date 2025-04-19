@@ -67,6 +67,7 @@ export default async function handler(req, res) {
         photoBookOrder: true,
         linkExpansionStates: true,
         contentAnimation: true,
+        stackView: true,
       },
     });
 

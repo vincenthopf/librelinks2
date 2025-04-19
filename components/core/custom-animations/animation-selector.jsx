@@ -51,11 +51,12 @@ const ContentAnimationSelector = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('users');
-        queryClient.invalidateQueries(['currentUser']);
-        // Explicitly send a 'refresh' message to trigger iframe key change
-        window.postMessage('refresh', '*');
-        console.log('Posted refresh message after content animation update');
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+        // queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      },
+      onError: error => {
+        // Optional: Add better error handling/toast message here
+        toast.error('Failed to save animation setting.');
       },
     }
   );

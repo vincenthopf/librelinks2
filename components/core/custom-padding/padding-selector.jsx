@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Define the valid horizontal margin values (0 to 40)
 const VALID_HORIZONTAL_MARGINS = Array.from({ length: 41 }, (_, i) => i);
@@ -31,6 +33,9 @@ const PaddingSelector = () => {
   // Memoized valid horizontal margins
   const validHorizontalMargins = useMemo(() => VALID_HORIZONTAL_MARGINS, []);
 
+  // Add state for stack view toggle
+  const [stackView, setStackView] = useState(false);
+
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -56,6 +61,9 @@ const PaddingSelector = () => {
         horizontalMargin: currentUser.pageHorizontalMargin ?? DEFAULT_HORIZONTAL_MARGIN, // Use new default
       };
       setPaddingValues(newValues);
+
+      // Initialize stackView from user preferences
+      setStackView(currentUser.stackView || false);
     }
   }, [currentUser]); // Only depend on currentUser
 
@@ -230,6 +238,33 @@ const PaddingSelector = () => {
         Overlap: {value}px
       </div>
     );
+  };
+
+  // Add handler for stackView toggle
+  const handleStackViewChange = async checked => {
+    setStackView(checked);
+    // Signal both user update and a general refresh
+    signalIframe('update_user');
+    signalIframe('refresh');
+
+    try {
+      const toastId = toast.loading('Updating stack view preference...');
+      await axios.patch('/api/users/update', {
+        stackView: checked,
+      });
+      // Invalidate user queries AFTER successful update
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users', currentUser?.handle] });
+      queryClient.refetchQueries({ queryKey: ['users'] });
+      toast.success('Stack view updated', { id: toastId });
+    } catch (error) {
+      console.error('Error updating stack view:', error);
+      toast.error('Failed to update stack view setting');
+      // Revert UI state if API call fails
+      setStackView(!checked);
+      // Optionally signal refresh again on error to reset preview
+      signalIframe('refresh');
+    }
   };
 
   return (
@@ -555,6 +590,19 @@ const PaddingSelector = () => {
                 {paddingValues.horizontalMargin}px each side
               </span>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-6 border-t pt-6">
+          <h4 className="text-lg font-medium mb-4">Card Layout</h4>
+          <div className="flex items-center space-x-2 mb-8">
+            <Switch id="stack-view" checked={stackView} onCheckedChange={handleStackViewChange} />
+            <Label htmlFor="stack-view" className="font-medium text-gray-800">
+              Stack View
+            </Label>
+            <p className="text-sm text-gray-500 ml-2">
+              Display links and content cards in a stacked card view
+            </p>
           </div>
         </div>
       </div>

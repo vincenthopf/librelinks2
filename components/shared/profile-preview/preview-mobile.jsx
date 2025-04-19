@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as Avatar from '@radix-ui/react-avatar';
 import LinkCard from '@/components/core/user-profile/links-card';
 import Link from 'next/link';
@@ -13,6 +13,12 @@ import { UserAvatarSetting } from '@/components/utils/avatar';
 import { getCurrentBaseURL } from '@/utils/helpers';
 import useTexts from '@/hooks/useTexts';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
+import { StackedCardsView } from '@/components/core/user-profile/stacked-cards-view';
+// Import Photo Book Layouts
+import PortfolioLayout from '@/components/core/photo-book/layouts/portfolio-layout';
+import MasonryLayout from '@/components/core/photo-book/layouts/masonry-layout';
+import GridLayout from '@/components/core/photo-book/layouts/grid-layout';
+import CarouselLayout from '@/components/core/photo-book/layouts/carousel-layout';
 
 const PreviewMobile = ({ close }) => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -88,6 +94,7 @@ const PreviewMobile = ({ close }) => {
   const refreshDependencies = [
     currentUser?.handle,
     currentUser?.photoBookLayout,
+    currentUser?.stackView,
     userTexts?.length,
     photos?.length,
     linksSnapshot, // Use the comprehensive snapshot
@@ -108,7 +115,7 @@ const PreviewMobile = ({ close }) => {
   );
 
   const socialLinks = useMemo(
-    () => userLinks?.filter(link => link.isSocial && !link.archived),
+    () => userLinks?.filter(link => link.isSocial && !link.archived) || [],
     [userLinks]
   );
 
@@ -190,6 +197,54 @@ const PreviewMobile = ({ close }) => {
     }
   }, [currentUser?.photoBookLayout]);
 
+  // Define the actual renderPhotoBook function
+  const renderPhotoBook = useCallback(() => {
+    if (!photos || photos.length === 0) return null;
+
+    const layout = currentUser?.photoBookLayout || 'grid'; // Default to grid
+
+    switch (layout) {
+      case 'portfolio':
+        return <PortfolioLayout photos={photos} theme={theme} />;
+      case 'masonry':
+        return <MasonryLayout photos={photos} theme={theme} />;
+      case 'carousel':
+        return <CarouselLayout photos={photos} theme={theme} />;
+      case 'grid':
+      default:
+        return <GridLayout photos={photos} theme={theme} />;
+    }
+  }, [photos, currentUser?.photoBookLayout, theme]);
+
+  // Combine and sort items for stacked view (links, texts, photobook)
+  const combinedItems = useMemo(() => {
+    const links = userLinks?.filter(link => !link.isSocial && !link.archived) || [];
+    const texts = userTexts?.filter(text => !text.archived) || [];
+    let allItems = [...links, ...texts].sort((a, b) => a.order - b.order);
+    const shouldShowPhotoBook =
+      currentUser?.photoBookOrder !== null &&
+      currentUser?.photoBookOrder !== undefined &&
+      photos &&
+      photos.length > 0;
+
+    if (shouldShowPhotoBook) {
+      const photoBookPosition = Math.min(Math.max(0, currentUser.photoBookOrder), allItems.length);
+      const itemsBefore = allItems.slice(0, photoBookPosition);
+      const itemsAfter = allItems.slice(photoBookPosition);
+      // Ensure the photobook item has a unique ID and type
+      allItems = [
+        ...itemsBefore,
+        { id: 'photobook-preview-mobile', type: 'photobook' },
+        ...itemsAfter,
+      ];
+    }
+    return allItems;
+  }, [userLinks, userTexts, photos, currentUser?.photoBookOrder]);
+
+  const handleRegisterClick = (id, url, title) => {
+    console.log(`Mobile Preview click registered for: ${title} (${id})`);
+  };
+
   if (isUserLoading) {
     return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
   }
@@ -200,25 +255,107 @@ const PreviewMobile = ({ close }) => {
 
   // Construct URL only when currentUser is available
   const baseURL = getCurrentBaseURL();
-  const url = `${baseURL}/${currentUser.handle}?isIframe=true&photoBookLayout=${currentUser.photoBookLayout || 'grid'}`;
+  const url = `${baseURL}/${currentUser.handle}?isIframe=true&photoBookLayout=${currentUser.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
 
   return (
     <>
       <section
         style={{ background: theme.primary }}
-        className="h-[100vh] w-full overflow-auto relative"
+        className="h-[100vh] w-full overflow-y-auto relative flex flex-col items-center p-4"
       >
-        <iframe
-          ref={iframeRef}
-          key={`${refreshKey}-${currentUser?.handle}-${animationSettings}-${photosOrderString}`}
-          seamless
-          loading="lazy"
-          title="preview"
-          id="preview-mobile"
-          className="w-full h-full"
-          style={{ height: '100%' }}
-          src={url}
-        />
+        {currentUser?.stackView ? (
+          <>
+            <div
+              className="relative flex flex-col items-center w-full flex-shrink-0"
+              style={{ paddingBottom: '1rem' }}
+            >
+              <div
+                className={`relative ${currentUser?.frameAnimation?.type && currentUser?.frameAnimation?.enabled ? `animate-frame-${currentUser.frameAnimation.type}` : ''}`}
+                style={{ zIndex: 5 }}
+              >
+                <UserAvatarSetting isPreview={true} handle={currentUser?.handle} />
+              </div>
+              <div
+                className={`relative text-center ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
+                style={{
+                  zIndex: 15,
+                  marginTop: `${currentUser?.pictureToNamePadding || 16}px`,
+                }}
+              >
+                <p
+                  style={{
+                    color: theme.accent,
+                    fontSize: `${currentUser?.profileNameFontSize || 16}px`,
+                    fontFamily: currentUser?.profileNameFontFamily || 'Inter',
+                  }}
+                  className="font-bold text-white mb-1"
+                >
+                  {currentUser?.name}
+                </p>
+                {currentUser?.bio && (
+                  <div
+                    className="w-full"
+                    style={{
+                      marginTop: `${currentUser?.nameToBioPadding || 10}px`,
+                    }}
+                  >
+                    <p
+                      style={{
+                        color: theme.accent,
+                        fontSize: `${currentUser?.bioFontSize || 14}px`,
+                        fontFamily: currentUser?.bioFontFamily || 'Inter',
+                      }}
+                      className="break-words whitespace-pre-wrap text-sm"
+                    >
+                      {currentUser?.bio}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {socialLinks.length > 0 && (
+                <div
+                  className={`flex flex-wrap justify-center gap-2 ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
+                  style={{
+                    marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`,
+                  }}
+                >
+                  {socialLinks.map(({ id, title, url }) => (
+                    <SocialCards
+                      key={id}
+                      title={title}
+                      url={url}
+                      color={theme.accent}
+                      socialIconSize={currentUser?.socialIconSize ?? 30}
+                      registerClicks={() => handleRegisterClick(id, url, title)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
+              <StackedCardsView
+                items={combinedItems}
+                fetchedUser={currentUser}
+                theme={theme}
+                registerClicks={handleRegisterClick}
+                renderPhotoBook={renderPhotoBook}
+                contentAnimation={currentUser?.contentAnimation}
+              />
+            </div>
+          </>
+        ) : (
+          <iframe
+            ref={iframeRef}
+            key={`${refreshKey}-${currentUser?.handle}-${currentUser?.stackView}-${animationSettings}-${photosOrderString}`}
+            seamless
+            loading="lazy"
+            title="preview"
+            id="preview-mobile"
+            className="w-full h-full"
+            style={{ height: '100%' }}
+            src={url}
+          />
+        )}
         <div className="fixed top-4 right-4 z-[100]">
           <button
             onClick={close}

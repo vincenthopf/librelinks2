@@ -7,12 +7,24 @@ import { getApexDomain } from '@/utils/helpers';
 import Head from 'next/head';
 
 const LinkCard = props => {
-  const [showPreview, setShowPreview] = useState(props.alwaysExpandEmbed || false);
+  const [showPreview, setShowPreview] = useState(false);
   const [isPreviewLoaded, setIsPreviewLoaded] = useState(false);
-  const isTransparent = props.buttonStyle.includes('bg-transparent');
-  const hasShadowProp = props.buttonStyle.includes('shadow');
-  const isHorizontalOnly = props.buttonStyle.includes('horizontal-only');
-  const isBottomOnly = props.buttonStyle.includes('bottom-only');
+
+  // Ensure buttonStyle is a string and provide a default if missing
+  const buttonStyle = typeof props.buttonStyle === 'string' ? props.buttonStyle : 'rounded-md'; // Default style
+
+  // Ensure theme is an object and provide defaults if missing
+  const theme = props.theme || {};
+  const themeSecondary = theme.secondary || '#f8f8f8'; // Default secondary color
+  const themeNeutral = theme.neutral || '#888888'; // Default neutral color
+  const themeAccent = theme.accent || '#000000'; // Default accent color
+  const themeEmbedBackground = theme.embedBackground || 'transparent'; // Default embed background
+
+  const isTransparent = buttonStyle.includes('bg-transparent');
+  const hasShadowProp = buttonStyle.includes('shadow');
+  const isHorizontalOnly = buttonStyle.includes('horizontal-only');
+  const isBottomOnly = buttonStyle.includes('bottom-only');
+
   const faviconSize = props.faviconSize || 32;
   const richMediaContainerRef = useRef(null);
   const previewRef = useRef(null);
@@ -20,69 +32,40 @@ const LinkCard = props => {
   // Extract domain for preconnect optimization
   const apexDomain = getApexDomain(props.url);
 
-  // Update showPreview state when alwaysExpandEmbed prop changes
+  // Load preview immediately if content exists
+  useEffect(() => {
+    const hasContent = !!(props.embedHtml || (props.thumbnails && props.thumbnails.length > 0));
+    if (hasContent) {
+      setIsPreviewLoaded(true);
+    }
+  }, [props.embedHtml, props.thumbnails]);
+
+  // Update showPreview state based on prop and keep it controlling visibility
   useEffect(() => {
     setShowPreview(!!props.alwaysExpandEmbed);
-
-    // If it should be expanded by default, mark as loaded
-    if (!!props.alwaysExpandEmbed) {
-      setIsPreviewLoaded(true);
-    }
   }, [props.alwaysExpandEmbed, props.id]);
 
-  // Preload the preview content when component mounts or when relevant props change
-  useEffect(() => {
-    // If we have embed HTML or thumbnails, preload the preview
-    const hasContent = props.embedHtml || (props.thumbnails && props.thumbnails.length > 0);
-
-    if (hasContent && !isPreviewLoaded) {
-      // Start loading the preview data immediately, even if not visible yet
-      setIsPreviewLoaded(true);
-    }
-  }, [props.embedHtml, props.thumbnails, isPreviewLoaded]);
-
-  // Optimize transition performance with IntersectionObserver
-  useEffect(() => {
-    if (!richMediaContainerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      entries => {
-        const entry = entries[0];
-        if (entry.isIntersecting && !isPreviewLoaded) {
-          setIsPreviewLoaded(true);
-        }
-      },
-      { rootMargin: '200px' } // Start loading when within 200px of viewport
-    );
-
-    observer.observe(richMediaContainerRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isPreviewLoaded]);
-
   const style = {
-    background: isTransparent ? 'transparent' : props.theme.secondary,
+    background: isTransparent ? 'transparent' : themeSecondary,
     display: props.archived ? 'none' : 'flex',
-    boxShadow: hasShadowProp ? `5px 5px 0 0 ${props.theme.neutral}` : '',
+    boxShadow: hasShadowProp ? `5px 5px 0 0 ${themeNeutral}` : '',
     minHeight: `${props.cardHeight || 40}px`,
   };
 
   // Apply border styles conditionally and explicitly
   if (isHorizontalOnly) {
-    style.borderTop = `1.5px solid ${props.theme.neutral}`;
-    style.borderBottom = `1.5px solid ${props.theme.neutral}`;
+    style.borderTop = `1.5px solid ${themeNeutral}`;
+    style.borderBottom = `1.5px solid ${themeNeutral}`;
     style.borderLeft = 'none';
     style.borderRight = 'none';
   } else if (isBottomOnly) {
-    style.borderBottom = `1.5px solid ${props.theme.neutral}`;
+    style.borderBottom = `1.5px solid ${themeNeutral}`;
     style.borderTop = 'none';
     style.borderLeft = 'none';
     style.borderRight = 'none';
   } else {
     // Default case: apply border to all sides
-    style.border = `1.5px solid ${props.theme.neutral}`;
+    style.border = `1.5px solid ${themeNeutral}`;
   }
 
   // Extract only the Iframely-related props
@@ -95,8 +78,10 @@ const LinkCard = props => {
     iframelyMeta: props.iframelyMeta,
   };
 
-  const hasPreview =
-    iframelyData.embedHtml || (iframelyData.thumbnails && iframelyData.thumbnails.length > 0);
+  const hasPreview = !!(
+    iframelyData.embedHtml ||
+    (iframelyData.thumbnails && iframelyData.thumbnails.length > 0)
+  );
 
   // Apply animation styles from props if provided
   const animationStyles = props.animationStyle || {};
@@ -122,7 +107,7 @@ const LinkCard = props => {
             href={props.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`block w-full ${props.buttonStyle} p-4 transition-all duration-300`}
+            className={`block w-full ${buttonStyle} p-4 transition-all duration-300`}
             style={style}
             onClick={e => {
               e.stopPropagation();
@@ -155,7 +140,7 @@ const LinkCard = props => {
                   style={{
                     fontSize: `${props.fontSize || 14}px`,
                     fontFamily: props.fontFamily || 'Inter',
-                    color: props.theme.accent,
+                    color: themeAccent,
                   }}
                 >
                   {props.title}
@@ -167,15 +152,15 @@ const LinkCard = props => {
                 onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setShowPreview(!showPreview);
+                  setShowPreview(prev => !prev);
                 }}
                 className="absolute right-[10px] top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
                 aria-label={showPreview ? 'Hide preview' : 'Show preview'}
               >
                 {showPreview ? (
-                  <ChevronUp className="w-5 h-5" style={{ color: props.theme.accent }} />
+                  <ChevronUp className="w-5 h-5" style={{ color: themeAccent }} />
                 ) : (
-                  <ChevronDown className="w-5 h-5" style={{ color: props.theme.accent }} />
+                  <ChevronDown className="w-5 h-5" style={{ color: themeAccent }} />
                 )}
               </button>
             )}
@@ -191,8 +176,8 @@ const LinkCard = props => {
             height: showPreview ? 'auto' : '0',
             visibility: showPreview ? 'visible' : 'hidden',
             marginBottom: showPreview ? '8px' : '0',
-            background: showPreview ? props.theme.embedBackground || 'transparent' : 'transparent',
-            transform: 'translateZ(0)', // Hardware acceleration
+            background: showPreview ? themeEmbedBackground : 'transparent',
+            transform: 'translateZ(0)',
           }}
           onPointerEnter={() => {
             if (typeof props.registerClicks === 'function') {
@@ -200,19 +185,13 @@ const LinkCard = props => {
             }
           }}
         >
-          {/* Always render the preview component but with conditional visibility */}
-          <div ref={previewRef} style={{ display: showPreview ? 'block' : 'none' }}>
-            {isPreviewLoaded && (
+          <div ref={previewRef}>
+            {isPreviewLoaded && hasPreview && (
               <RichMediaPreview
                 link={iframelyData}
-                embedBackground={props.theme.embedBackground}
+                embedBackground={themeEmbedBackground}
                 contentAnimation={contentAnimation}
               />
-            )}
-            {!isPreviewLoaded && showPreview && (
-              <div className="w-full h-32 flex items-center justify-center bg-gray-50 rounded">
-                <div className="w-6 h-6 border-t-2 border-accent animate-spin rounded-full"></div>
-              </div>
             )}
           </div>
         </div>

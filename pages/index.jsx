@@ -104,8 +104,8 @@ const Home = () => {
               </span>
             </h1>
             <p className="max-w-xl mx-auto text-lg md:text-xl text-gray-600 mb-8">
-              Create a personal page to showcase everything you are and create. Effortlessly connect
-              your audience to all your content.
+              Create a personal bio page to showcase everything you are and create. Effortlessly
+              connect your audience to all your content.
             </p>
             <Link
               href="/register"

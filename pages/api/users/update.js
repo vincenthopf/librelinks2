@@ -22,6 +22,26 @@ export default async function handler(req, res) {
         email: session.user.email,
       },
       data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        handle: true,
+        bio: true,
+        stackView: true,
+        links: {
+          select: {
+            id: true,
+            title: true,
+            url: true,
+            order: true,
+            archived: true,
+            isSocial: true,
+            alwaysExpandEmbed: true,
+          },
+        },
+      },
     });
 
     // Send response
