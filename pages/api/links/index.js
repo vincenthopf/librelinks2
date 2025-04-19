@@ -24,6 +24,7 @@ export default async function handler(req, res) {
           order,
           userId: currentUser.id,
           isSocial,
+          alwaysExpandEmbed: true,
           // Add Iframely data
           type: processedData.type,
           providerName: processedData.providerName,
