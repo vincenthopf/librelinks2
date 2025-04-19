@@ -4,7 +4,7 @@ import StandardLinkContainer from './standard-link-container';
 import TwitterContainer from './twitter-container';
 import YouTubeContainer from './youtube-container';
 import SpotifyContainer from './spotify-container';
-import { TikTokContainer } from './tiktok-container';
+import TikTokContainer from './tiktok-container';
 
 interface ContainerFactoryProps {
   type: string;
