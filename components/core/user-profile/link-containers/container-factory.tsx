@@ -4,6 +4,7 @@ import StandardLinkContainer from './standard-link-container';
 import TwitterContainer from './twitter-container';
 import YouTubeContainer from './youtube-container';
 import SpotifyContainer from './spotify-container';
+import { TikTokContainer } from './tiktok-container';
 
 interface ContainerFactoryProps {
   type: string;
@@ -52,19 +53,9 @@ const ContainerFactory: React.FC<ContainerFactoryProps> = ({
   const renderContainer = () => {
     const containerType = getContainerType();
 
-    // Special case for TikTok - render completely raw with no wrappers at all
-    if (containerType === 'tiktok') {
-      if (embedHtml) {
-        return <div dangerouslySetInnerHTML={{ __html: embedHtml }} />;
-      }
-      return (
-        <a href={url} target="_blank" rel="noopener noreferrer">
-          {title}
-        </a>
-      );
-    }
-
     switch (containerType) {
+      case 'tiktok':
+        return <TikTokContainer {...commonProps} />;
       case 'twitter':
         return <TwitterContainer {...commonProps} />;
       case 'youtube':

@@ -20,6 +20,38 @@ import MasonryLayout from '@/components/core/photo-book/layouts/masonry-layout';
 import GridLayout from '@/components/core/photo-book/layouts/grid-layout';
 import CarouselLayout from '@/components/core/photo-book/layouts/carousel-layout';
 
+// --- PreloadCard for eager loading ---
+const PreloadCard = ({ item, theme, fetchedUser }) => {
+  if (!item?.url || !item.embedHtml) return null;
+  return (
+    <div
+      className="sr-only"
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        top: '-9999px',
+        left: '-9999px',
+        width: '100%',
+        height: 'auto',
+        opacity: 0,
+        pointerEvents: 'none',
+        overflow: 'visible',
+      }}
+    >
+      <LinkCard
+        {...item}
+        theme={theme}
+        alwaysExpandEmbed={true}
+        buttonStyle={fetchedUser?.buttonStyle}
+        fontSize={fetchedUser?.linkTitleFontSize}
+        fontFamily={fetchedUser?.linkTitleFontFamily}
+        cardHeight={fetchedUser?.linkCardHeight}
+        faviconSize={fetchedUser?.faviconSize}
+      />
+    </div>
+  );
+};
+
 const PreviewMobile = ({ close }) => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -332,6 +364,10 @@ const PreviewMobile = ({ close }) => {
                 </div>
               )}
             </div>
+            {/* --- Preload all embed cards for reliability --- */}
+            {combinedItems.map(item => (
+              <PreloadCard key={item.id} item={item} theme={theme} fetchedUser={currentUser} />
+            ))}
             <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
               <StackedCardsView
                 items={combinedItems}

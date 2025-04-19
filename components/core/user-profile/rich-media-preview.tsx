@@ -7,6 +7,7 @@ import {
   TwitterContainer,
   GenericContainer,
 } from './embed-containers';
+import { TikTokContainer } from './link-containers';
 
 interface RichMediaPreviewProps {
   link: RichMediaContent;
@@ -23,6 +24,11 @@ declare global {
     instgrm: {
       Embeds: {
         process: () => void;
+      };
+    };
+    TikTok: {
+      embed: {
+        load: () => void;
       };
     };
   }
@@ -64,6 +70,8 @@ const RichMediaPreview = ({
       window.instgrm.Embeds.process();
     } else if (link.providerName === 'Twitter' && window.twttr) {
       window.twttr.widgets.load();
+    } else if (link.providerName === 'TikTok' && window.TikTok) {
+      window.TikTok.embed.load();
     } else if (window.iframely) {
       window.iframely.load();
     }
@@ -241,6 +249,17 @@ const RichMediaPreview = ({
         return <YouTubeContainer {...commonContainerProps}>{content}</YouTubeContainer>;
       case 'Twitter':
         return <TwitterContainer {...commonContainerProps}>{content}</TwitterContainer>;
+      case 'TikTok':
+        return (
+          <TikTokContainer
+            embedHtml={processedHtml}
+            url={link.url || ''}
+            title={link.title || ''}
+            maxWidth="100%"
+            config={mergedConfig}
+            className="w-full h-full"
+          />
+        );
       default:
         return <GenericContainer {...commonContainerProps}>{content}</GenericContainer>;
     }
