@@ -100,13 +100,14 @@ export const signalIframe = (type = 'refresh', data = {}) => {
   // Use requestAnimationFrame to ensure this doesn't block the UI
   requestAnimationFrame(() => {
     try {
-      // Validate type to prevent crashes
+      // Validate type
       if (typeof type !== 'string') {
+        console.error('Invalid type passed to signalIframe:', type);
         type = 'refresh';
       }
 
-      // For backward compatibility, use string message for standard types
-      // and object message for new types with data
+      // For backward compatibility & specific use cases like immediate refresh:
+      // Use string message for standard types, object message for others.
       const isStandardType = ['refresh', 'update_links', 'update_user'].includes(type);
       const message = isStandardType ? type : { type, ...data };
 
@@ -122,7 +123,7 @@ export const signalIframe = (type = 'refresh', data = {}) => {
         mobileIframe.contentWindow.postMessage(message, '*');
       }
     } catch (error) {
-      // Silent failure - don't let any iframe issues crash the app
+      // Silent failure
       console.error('Error in signalIframe:', error);
     }
   });

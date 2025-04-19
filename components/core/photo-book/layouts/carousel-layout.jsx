@@ -9,9 +9,16 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import {
+  SortableContext,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
+import { toast } from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable thumbnail component for the carousel
@@ -54,7 +61,7 @@ const SortableThumbnail = ({ photo, index, currentIndex, onThumbnailClick, isPub
           alt={photo.title || `Photo ${index + 1}`}
           width={100}
           height={100}
-          preserveAspectRatio={true}
+          preserveAspectRatio={false}
           className="w-full h-full object-cover"
         />
       </div>
@@ -157,13 +164,7 @@ const CarouselLayout = ({ photos, isPublicView = false, showTitle = false }) => 
 
       // Update local state first for immediate UI update
       setItems(newItems);
-
-      // If current index is affected, update it
-      if (currentIndex === oldIndex) {
-        setCurrentIndex(newIndex);
-      } else if (currentIndex === newIndex) {
-        setCurrentIndex(oldIndex);
-      }
+      signalIframe('refresh');
 
       // Update the order in the database
       try {
@@ -173,8 +174,10 @@ const CarouselLayout = ({ photos, isPublicView = false, showTitle = false }) => 
         );
 
         await Promise.all(updatePromises);
+        toast.success('Photo order updated successfully');
       } catch (error) {
         console.error('Failed to update photo order:', error);
+        toast.error('Failed to update photo order');
         // Revert to original order if update fails
         setItems(photos);
       }
@@ -218,8 +221,8 @@ const CarouselLayout = ({ photos, isPublicView = false, showTitle = false }) => 
                 alt={currentPhoto.title || `Photo ${currentIndex + 1}`}
                 width={800}
                 height={800}
-                preserveAspectRatio={true}
-                className={`w-full ${!isPublicView ? 'cursor-pointer' : ''}`}
+                preserveAspectRatio={false}
+                className={`w-full h-full object-cover ${!isPublicView ? 'cursor-pointer' : ''}`}
                 onLoad={handleImageLoad}
               />
 

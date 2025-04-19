@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CloudinaryImage } from '@/components/shared/cloudinary-image';
+import CloudinaryImage from '@/components/shared/cloudinary-image';
 import PhotoEditModal from '../photo-edit-modal';
 import {
   DndContext,
@@ -14,27 +14,18 @@ import {
   rectSortingStrategy,
   useSortable,
   arrayMove,
+  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
+import { toast } from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable photo item component
-const SortablePhoto = ({
-  photo,
-  index,
-  columnIndex,
-  onPhotoClick,
-  isPublicView,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: photo.id });
+const SortablePhoto = ({ photo, index, columnIndex, onPhotoClick, isPublicView }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: photo.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -79,9 +70,7 @@ const SortablePhoto = ({
           {(photo.title || photo.description) && isPublicView && (
             <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 flex flex-col justify-end p-3 text-white opacity-0 hover:opacity-100 transition-all duration-200">
               {photo.title && (
-                <h4 className="font-medium text-sm md:text-base truncate">
-                  {photo.title}
-                </h4>
+                <h4 className="font-medium text-sm md:text-base truncate">{photo.title}</h4>
               )}
               {photo.description && (
                 <p className="text-xs md:text-sm mt-1 line-clamp-2 text-gray-200">
@@ -136,7 +125,7 @@ const MasonryLayout = ({ photos, isPublicView = false, showTitle = false }) => {
     useSensor(KeyboardSensor)
   );
 
-  const handlePhotoClick = (photo) => {
+  const handlePhotoClick = photo => {
     if (isPublicView) return; // Don't open modal in public view
 
     setSelectedPhoto(photo);
@@ -148,19 +137,20 @@ const MasonryLayout = ({ photos, isPublicView = false, showTitle = false }) => {
     setSelectedPhoto(null);
   };
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async event => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
       // Find indices of the dragged item and the target
-      const oldIndex = items.findIndex((item) => item.id === active.id);
-      const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over.id);
 
       // Create new array with the item moved
       const newItems = arrayMove(items, oldIndex, newIndex);
 
       // Update local state first for immediate UI update
       setItems(newItems);
+      signalIframe('refresh');
 
       // Update the order in the database
       try {
@@ -170,11 +160,10 @@ const MasonryLayout = ({ photos, isPublicView = false, showTitle = false }) => {
         );
 
         await Promise.all(updatePromises);
-
-        // Signal iframe to update the preview
-        signalIframe();
+        toast.success('Photo order updated successfully');
       } catch (error) {
         console.error('Failed to update photo order:', error);
+        toast.error('Failed to update photo order');
         // Revert to original order if update fails
         setItems(photos);
       }
@@ -211,9 +200,7 @@ const MasonryLayout = ({ photos, isPublicView = false, showTitle = false }) => {
     <div className="space-y-4">
       {!isPublicView && (
         <div className="mb-4 text-center">
-          <p className="text-sm text-gray-500">
-            Drag and drop photos to rearrange them
-          </p>
+          <p className="text-sm text-gray-500">Drag and drop photos to rearrange them</p>
         </div>
       )}
 
@@ -225,7 +212,7 @@ const MasonryLayout = ({ photos, isPublicView = false, showTitle = false }) => {
         autoScroll={!isPublicView}
       >
         <SortableContext
-          items={items.map((photo) => photo.id)}
+          items={items.map(photo => photo.id)}
           strategy={rectSortingStrategy}
           disabled={isPublicView}
         >
@@ -256,11 +243,7 @@ const MasonryLayout = ({ photos, isPublicView = false, showTitle = false }) => {
       </DndContext>
 
       {!isPublicView && isModalOpen && selectedPhoto && (
-        <PhotoEditModal
-          photo={selectedPhoto}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-        />
+        <PhotoEditModal photo={selectedPhoto} isOpen={isModalOpen} onClose={handleCloseModal} />
       )}
     </div>
   );

@@ -12,6 +12,7 @@ import {
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
+import { toast } from 'react-hot-toast';
 import { signalIframe } from '@/utils/helpers';
 
 // Sortable photo item component
@@ -120,6 +121,7 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
 
       // Update local state first for immediate UI update
       setItems(newItems);
+      signalIframe('refresh');
 
       // Update the order in the database
       try {
@@ -129,8 +131,10 @@ const GridLayout = ({ photos, isPublicView = false, showTitle = false }) => {
         );
 
         await Promise.all(updatePromises);
+        toast.success('Photo order updated successfully');
       } catch (error) {
         console.error('Failed to update photo order:', error);
+        toast.error('Failed to update photo order');
         // Revert to original order if update fails
         setItems(photos);
       }

@@ -37,6 +37,16 @@ const Preview = () => {
       .join('|');
   }, [userTexts]);
 
+  // Create a value that changes when photo orders change
+  const photosOrderString = useMemo(() => {
+    if (!photos) return '';
+    // Sort photos by order before creating the string for consistency
+    return [...photos]
+      .sort((a, b) => a.order - b.order)
+      .map(p => `${p.id}-${p.order}`)
+      .join('|');
+  }, [photos]);
+
   // Create a comprehensive string representation of links for dependency tracking
   const linksSnapshot = useMemo(() => {
     if (!userLinks) return '';
@@ -74,7 +84,8 @@ const Preview = () => {
     photos?.length,
     linksSnapshot, // Use the comprehensive snapshot
     textsOrderString, // Add dependency on text orders
-    currentUser?.photoBookOrder, // Add dependency on photo book order
+    photosOrderString, // Add dependency on photo order
+    currentUser?.photoBookOrder, // Keep this? Or remove? Let's keep for now.
     animationSettings, // Add dependency on animation settings
   ];
 
@@ -100,23 +111,23 @@ const Preview = () => {
 
   useEffect(() => {
     const handleMessage = event => {
-      // Handle string messages (standard format)
+      // Handle string messages
       if (
         event.data &&
         typeof event.data === 'string' &&
-        ['refresh', 'update_user', 'update_links'].includes(event.data) &&
+        ['refresh', 'update_user', 'update_links'].includes(event.data) && // Re-add 'refresh'
         iframeRef.current
       ) {
-        // Force a complete iframe refresh by updating the key
+        console.log('Preview: Received string message, forcing full reload:', event.data);
         setRefreshKey(prev => prev + 1);
         return;
       }
 
-      // Handle structured messages (new format)
+      // Handle structured messages (like update_dimensions)
       if (event.data && typeof event.data === 'object' && event.data.type && iframeRef.current) {
         const { type } = event.data;
 
-        // Special handling for dimension updates to avoid screen flashing
+        // Special handling for dimension updates
         if (type === 'update_dimensions') {
           // For dimension updates, we don't need to refresh the entire iframe
           // Instead, we can forward the message to the iframe content
@@ -147,7 +158,11 @@ const Preview = () => {
           }
         }
 
-        // For other message types, fall back to a full refresh
+        // Fallback for other *structured* messages (if any appear later)
+        console.log(
+          'Preview: Received unhandled structured message, forcing full reload:',
+          event.data
+        );
         setRefreshKey(prev => prev + 1);
       }
     };
@@ -177,7 +192,7 @@ const Preview = () => {
           {currentUser && (
             <iframe
               ref={iframeRef}
-              key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${linksSnapshot}-${textsOrderString}-${currentUser?.photoBookOrder}-${animationSettings}`}
+              key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${linksSnapshot}-${textsOrderString}-${photosOrderString}-${currentUser?.photoBookOrder}-${animationSettings}`}
               seamless
               loading="lazy"
               title="preview"

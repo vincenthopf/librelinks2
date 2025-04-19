@@ -45,7 +45,7 @@ export const usePhotoBook = () => {
       queryClient.invalidateQueries(['photobook', currentUser?.id]);
       toast.success('Photo uploaded successfully');
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Upload error:', error);
       toast.error(error.response?.data?.message || 'Failed to upload photo');
     },
@@ -65,11 +65,11 @@ export const usePhotoBook = () => {
       });
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries(['photobook', currentUser?.id]);
       // Toast message is handled by the component to show the count
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Batch upload error:', error);
       toast.error(error.response?.data?.message || 'Failed to upload photos');
     },
@@ -87,9 +87,8 @@ export const usePhotoBook = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['photobook', currentUser?.id]);
-      toast.success('Photo updated successfully');
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Update error:', error);
       toast.error(error.response?.data?.message || 'Failed to update photo');
     },
@@ -97,7 +96,7 @@ export const usePhotoBook = () => {
 
   // Delete a photo
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
+    mutationFn: async id => {
       await axios.delete(`/api/photobook/photos/${id}`);
       return id;
     },
@@ -105,7 +104,7 @@ export const usePhotoBook = () => {
       queryClient.invalidateQueries(['photobook', currentUser?.id]);
       toast.success('Photo deleted successfully');
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Delete error:', error);
       toast.error(error.response?.data?.message || 'Failed to delete photo');
     },
@@ -113,7 +112,7 @@ export const usePhotoBook = () => {
 
   // Update layout style
   const updateLayoutMutation = useMutation({
-    mutationFn: async (layout) => {
+    mutationFn: async layout => {
       const { data } = await axios.patch('/api/users/update', {
         photoBookLayout: layout,
       });
@@ -127,14 +126,14 @@ export const usePhotoBook = () => {
       queryClient.refetchQueries(['users']);
       toast.success('Layout updated successfully');
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Layout update error:', error);
       toast.error(error.response?.data?.message || 'Failed to update layout');
     },
   });
 
   // Helper function to read file as data URL
-  const readFileAsDataURL = (file) => {
+  const readFileAsDataURL = file => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);

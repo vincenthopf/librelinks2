@@ -45,6 +45,16 @@ const PreviewMobile = ({ close }) => {
       .join('|');
   }, [userTexts]);
 
+  // Create a value that changes when photo orders change
+  const photosOrderString = useMemo(() => {
+    if (!photos) return '';
+    // Sort photos by order before creating the string for consistency
+    return [...photos]
+      .sort((a, b) => a.order - b.order)
+      .map(p => `${p.id}-${p.order}`)
+      .join('|');
+  }, [photos]);
+
   // Create a comprehensive string representation of links for dependency tracking
   const linksSnapshot = useMemo(() => {
     if (!userLinks) return '';
@@ -82,7 +92,8 @@ const PreviewMobile = ({ close }) => {
     photos?.length,
     linksSnapshot, // Use the comprehensive snapshot
     textsOrderString, // Add dependency on text orders
-    currentUser?.photoBookOrder, // Add dependency on photo book order
+    photosOrderString, // Add dependency on photo order
+    currentUser?.photoBookOrder, // Keep for now
     animationSettings, // Add dependency on animation settings
   ];
 
@@ -117,31 +128,38 @@ const PreviewMobile = ({ close }) => {
   // Restore effects
   useEffect(() => {
     const handleMessage = event => {
-      // Handle string messages (standard format)
+      // Handle string messages
       if (
         event.data &&
         typeof event.data === 'string' &&
-        ['refresh', 'update_user', 'update_links'].includes(event.data) &&
+        ['refresh', 'update_user', 'update_links'].includes(event.data) && // Re-add 'refresh'
         iframeRef.current
       ) {
-        // DO NOT force refresh via setRefreshKey
-        // Instead, FORWARD the message to the iframe
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-          try {
-            iframeRef.current.contentWindow.postMessage(event.data, '*');
-            console.log('Mobile Preview: Forwarded string message to iframe:', event.data);
-          } catch (error) {
-            console.error('Mobile Preview: Error forwarding string message:', error);
+        // Handle 'refresh' by updating the key
+        if (event.data === 'refresh') {
+          console.log('Mobile Preview: Received string refresh, forcing full reload.');
+          setRefreshKey(prev => prev + 1);
+        } else {
+          // Forward other string messages ('update_user', 'update_links')
+          if (iframeRef.current && iframeRef.current.contentWindow) {
+            try {
+              iframeRef.current.contentWindow.postMessage(event.data, '*');
+              console.log('Mobile Preview: Forwarded string message to iframe:', event.data);
+            } catch (error) {
+              console.error('Mobile Preview: Error forwarding string message:', error);
+            }
           }
         }
         return;
       }
 
-      // Handle structured messages (new format)
+      // Handle structured messages (like update_dimensions)
       if (event.data && typeof event.data === 'object' && event.data.type && iframeRef.current) {
         const { type } = event.data;
 
-        // Forward ALL structured messages to the iframe
+        // Remove explicit 'refresh' handling here
+
+        // Forward ALL structured messages (existing behavior for update_dimensions, etc.)
         if (iframeRef.current && iframeRef.current.contentWindow) {
           try {
             iframeRef.current.contentWindow.postMessage(event.data, '*');
@@ -150,8 +168,6 @@ const PreviewMobile = ({ close }) => {
             console.error('Mobile Preview: Error forwarding structured message:', error);
           }
         }
-        // Remove the special handling for 'update_dimensions' that used setRefreshKey as fallback
-        // Remove the final setRefreshKey fallback
       }
     };
 
@@ -194,7 +210,7 @@ const PreviewMobile = ({ close }) => {
       >
         <iframe
           ref={iframeRef}
-          key={`${refreshKey}-${currentUser?.handle}-${animationSettings}`}
+          key={`${refreshKey}-${currentUser?.handle}-${animationSettings}-${photosOrderString}`}
           seamless
           loading="lazy"
           title="preview"
