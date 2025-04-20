@@ -250,8 +250,6 @@ const MemoizedCard = React.memo(
                 <LinkCard
                   {...item}
                   theme={theme}
-                  fontSize={fetchedUser?.linkTitleFontSize}
-                  fontFamily={fetchedUser?.linkTitleFontFamily}
                   buttonStyle={fetchedUser?.buttonStyle}
                   faviconSize={fetchedUser?.faviconSize ?? 32}
                   cardHeight={fetchedUser?.linkCardHeight}
@@ -268,8 +266,6 @@ const MemoizedCard = React.memo(
                 <TextCard
                   {...item}
                   theme={theme}
-                  fontSize={fetchedUser?.textTitleFontSize ?? fetchedUser?.linkTitleFontSize}
-                  fontFamily={fetchedUser?.textTitleFontFamily ?? fetchedUser?.linkTitleFontFamily}
                   buttonStyle={fetchedUser?.textCardButtonStyle}
                   cardHeight={fetchedUser?.textCardHeight ?? fetchedUser?.linkCardHeight}
                   contentAnimation={contentAnimation}

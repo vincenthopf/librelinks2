@@ -9,18 +9,19 @@ import FontCard from './font-card';
 const FontSelector = () => {
   const { data: currentUser } = useCurrentUser();
   const [selectedFont, setSelectedFont] = useState('Inter');
+  const fontFromDB = currentUser?.profileNameFontFamily;
 
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (currentUser) {
-      // Use profileNameFontFamily as the reference since all will be the same
-      setSelectedFont(currentUser.profileNameFontFamily || 'Inter');
-    }
-  }, [currentUser]);
+    // First try to get font from DB, fallback to localStorage, then default to 'Inter'
+    const storedFont = fontFromDB || localStorage.getItem('selected-font') || 'Inter';
+    setSelectedFont(storedFont);
+  }, [fontFromDB]);
 
   const mutateFonts = useMutation(
-    async (font) => {
+    async font => {
+      // Only update the three fields that are actually used by the API
       await axios.patch('/api/customize', {
         profileNameFontFamily: font,
         bioFontFamily: font,
@@ -35,8 +36,11 @@ const FontSelector = () => {
     }
   );
 
-  const handleFontChange = async (font) => {
+  const handleFontChange = async font => {
     setSelectedFont(font);
+    // Store in localStorage as fallback
+    localStorage.setItem('selected-font', font);
+
     await toast.promise(mutateFonts.mutateAsync(font), {
       loading: 'Updating font',
       success: 'Font updated successfully',
@@ -47,6 +51,7 @@ const FontSelector = () => {
   const resetToDefaults = async () => {
     const defaultFont = 'Inter';
     setSelectedFont(defaultFont);
+    localStorage.setItem('selected-font', defaultFont);
 
     await toast.promise(mutateFonts.mutateAsync(defaultFont), {
       loading: 'Resetting font',
@@ -92,12 +97,11 @@ const FontSelector = () => {
       <h3 className="text-xl font-semibold">Fonts</h3>
       <div className="mt-4 rounded-2xl border bg-white p-4 w-full h-auto">
         <p className="text-gray-600 mb-4">
-          Select a font to apply to all text elements (Profile Name, Bio, and
-          Link Titles).
+          Select a font to apply to all text elements (Profile Name, Bio, and Link Titles).
         </p>
 
         <div className="font-grid">
-          {fontOptions.map((font) => (
+          {fontOptions.map(font => (
             <FontCard
               key={font}
               font={font}
