@@ -75,7 +75,7 @@ const Home = () => {
             <Link
               ref={logoContainerRef}
               href="/"
-              className="-ml-4 hover:opacity-80 transition-opacity"
+              className="-ml-4 hover:opacity-80 transition-opacity h-10"
             >
               <Lottie
                 lottieRef={logoLottieRef}
