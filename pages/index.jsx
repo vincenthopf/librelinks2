@@ -164,7 +164,7 @@ const Home = () => {
         </section>
 
         <div className="py-8 text-center text-gray-500 text-sm">
-          <p>Designed in California. Built for Creators.</p>
+          <p>Designed in New York. Built for Creators.</p>
         </div>
       </div>
     </>
