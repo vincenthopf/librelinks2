@@ -122,7 +122,6 @@ const PreloadCard = React.memo(({ item, theme, fetchedUser }) => {
         alwaysExpandEmbed={true}
         buttonStyle={fetchedUser?.buttonStyle}
         fontSize={fetchedUser?.linkTitleFontSize}
-        fontFamily={fetchedUser?.linkTitleFontFamily}
         cardHeight={fetchedUser?.linkCardHeight}
         faviconSize={fetchedUser?.faviconSize}
       />
@@ -253,6 +252,8 @@ const MemoizedCard = React.memo(
                   buttonStyle={fetchedUser?.buttonStyle}
                   faviconSize={fetchedUser?.faviconSize ?? 32}
                   cardHeight={fetchedUser?.linkCardHeight}
+                  fontSize={fetchedUser?.linkTitleFontSize || 14}
+                  fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
                   alwaysExpandEmbed={expandedState || position !== 'active'}
                   toggleExpand={() => toggleExpand(item.id)}
                   registerClicks={
@@ -268,6 +269,8 @@ const MemoizedCard = React.memo(
                   theme={theme}
                   buttonStyle={fetchedUser?.textCardButtonStyle}
                   cardHeight={fetchedUser?.textCardHeight ?? fetchedUser?.linkCardHeight}
+                  fontSize={fetchedUser?.linkTitleFontSize || 14}
+                  fontFamily={fetchedUser?.linkTitleFontFamily || 'Inter'}
                   contentAnimation={contentAnimation}
                 />
               )}
@@ -278,11 +281,60 @@ const MemoizedCard = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    return (
-      prevProps.position === nextProps.position &&
-      prevProps.expandedState === nextProps.expandedState &&
-      prevProps.item.id === nextProps.item.id
-    );
+    // Check essential props first
+    if (
+      prevProps.position !== nextProps.position ||
+      prevProps.expandedState !== nextProps.expandedState ||
+      prevProps.item.id !== nextProps.item.id ||
+      prevProps.item.type !== nextProps.item.type // Check item type too
+    ) {
+      return false; // Re-render if these change
+    }
+
+    // Deep compare relevant fetchedUser properties
+    const relevantUserProps = [
+      'buttonStyle',
+      'textCardButtonStyle',
+      'linkTitleFontSize',
+      'linkTitleFontFamily',
+      'linkCardHeight',
+      'textCardHeight',
+      'faviconSize',
+      'linkAlwaysExpandEmbed', // Check if embed expansion changed
+    ];
+
+    for (const prop of relevantUserProps) {
+      if (prevProps.fetchedUser?.[prop] !== nextProps.fetchedUser?.[prop]) {
+        return false; // Re-render if a relevant user prop changed
+      }
+    }
+
+    // Deep compare theme properties (simple check for palette array length and first/last elements)
+    if (
+      prevProps.theme?.primary !== nextProps.theme?.primary ||
+      prevProps.theme?.secondary !== nextProps.theme?.secondary ||
+      prevProps.theme?.accent !== nextProps.theme?.accent ||
+      prevProps.theme?.neutral !== nextProps.theme?.neutral ||
+      prevProps.theme?.embedBackground !== nextProps.theme?.embedBackground
+    ) {
+      return false; // Re-render if theme changed
+    }
+
+    // If item is photobook, compare renderPhotoBook function reference (basic check)
+    if (
+      prevProps.item.type === 'photobook' &&
+      prevProps.renderPhotoBook !== nextProps.renderPhotoBook
+    ) {
+      return false;
+    }
+
+    // Compare contentAnimation object (simple JSON check)
+    if (JSON.stringify(prevProps.contentAnimation) !== JSON.stringify(nextProps.contentAnimation)) {
+      return false;
+    }
+
+    // If none of the above changed, don't re-render
+    return true;
   }
 );
 
