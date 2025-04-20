@@ -140,11 +140,26 @@ const PaddingSelector = () => {
             await axios.patch('/api/users/update', newPaddingValues);
             toast.success('Padding saved successfully!', { id: toastIdRef.current });
             toastIdRef.current = null;
-            queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-            if (currentUser?.handle) {
-              queryClient.invalidateQueries({ queryKey: ['users', currentUser.handle] });
-            }
+
+            // Invalidate and wait for refetch of both queries
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['currentUser'] }),
+              queryClient.invalidateQueries({ queryKey: ['users'] }),
+              currentUser?.handle &&
+                queryClient.invalidateQueries({ queryKey: ['users', currentUser.handle] }),
+            ]);
+
+            // Force refetch to ensure we have latest data
+            await Promise.all([
+              queryClient.refetchQueries({ queryKey: ['currentUser'] }),
+              queryClient.refetchQueries({ queryKey: ['users'] }),
+              currentUser?.handle &&
+                queryClient.refetchQueries({ queryKey: ['users', currentUser.handle] }),
+            ]);
+
+            // Signal refresh after queries are refetched
             signalIframe('update_user');
+            signalIframe('refresh');
           } else {
             // If no actual values changed, dismiss the loading toast
             if (toastIdRef.current) {
@@ -191,7 +206,7 @@ const PaddingSelector = () => {
       }
 
       setPaddingValues(prev => ({ ...prev, [type]: clampedValue }));
-      signalIframe('refresh');
+      // Remove signalIframe here since it will be handled after the API update
       debouncedApiUpdate({ [type]: clampedValue });
     },
     [debouncedApiUpdate]

@@ -49,7 +49,7 @@ const LinkCard = props => {
     background: isTransparent ? 'transparent' : themeSecondary,
     display: props.archived ? 'none' : 'flex',
     boxShadow: hasShadowProp ? `5px 5px 0 0 ${themeNeutral}` : '',
-    minHeight: `${props.cardHeight || 40}px`,
+    height: `${props.cardHeight || 40}px`,
   };
 
   // Apply border styles conditionally and explicitly

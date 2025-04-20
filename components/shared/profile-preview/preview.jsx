@@ -332,8 +332,17 @@ const Preview = () => {
         {/* Apply conditional style HERE to the inner div when stackView is true */}
         <div
           key={refreshKey} // Add key here to ensure re-render on dependency change
-          className={`absolute inset-0 z-10 flex ${currentUser?.stackView ? 'flex-col p-4' : 'items-center justify-center'}`}
-          style={currentUser?.stackView ? stackViewContainerStyle : {}}
+          className={`absolute inset-0 z-10 flex ${currentUser?.stackView ? 'flex-col' : 'items-center justify-center'}`} // Remove p-4
+          style={
+            currentUser?.stackView
+              ? {
+                  ...stackViewContainerStyle,
+                  // Apply horizontal padding dynamically
+                  paddingLeft: `${currentUser?.pageHorizontalMargin ?? 20}px`,
+                  paddingRight: `${currentUser?.pageHorizontalMargin ?? 20}px`,
+                }
+              : {}
+          }
         >
           {currentUser && (
             <>
@@ -342,7 +351,11 @@ const Preview = () => {
                   {/* Profile Header Section */}
                   <div
                     className="relative flex flex-col items-center w-full flex-shrink-0"
-                    style={{ paddingBottom: '1rem' }}
+                    style={{
+                      // Apply headToPicturePadding dynamically to paddingTop
+                      paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`,
+                      paddingBottom: '1rem', // Keep existing paddingBottom or adjust if needed
+                    }}
                   >
                     {/* Avatar */}
                     <div

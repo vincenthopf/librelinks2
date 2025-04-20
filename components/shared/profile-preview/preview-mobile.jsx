@@ -372,90 +372,101 @@ const PreviewMobile = ({ close }) => {
       <section
         key={refreshKey} // Ensure section re-renders when key changes
         style={sectionStyle}
-        className="h-[100vh] w-full overflow-y-auto relative flex flex-col items-center p-4"
+        className="h-[100vh] w-full overflow-y-auto relative flex flex-col items-center"
       >
         {currentUser?.stackView ? (
           <>
             <div
-              className="relative flex flex-col items-center w-full flex-shrink-0"
-              style={{ paddingBottom: '1rem' }}
+              className="w-full flex flex-col items-center"
+              style={{
+                paddingLeft: `${currentUser?.pageHorizontalMargin ?? 20}px`,
+                paddingRight: `${currentUser?.pageHorizontalMargin ?? 20}px`,
+              }}
             >
               <div
-                className={`relative ${currentUser?.frameAnimation?.type && currentUser?.frameAnimation?.enabled ? `animate-frame-${currentUser.frameAnimation.type}` : ''}`}
-                style={{ zIndex: 5 }}
-              >
-                <UserAvatarSetting isPreview={true} handle={currentUser?.handle} />
-              </div>
-              <div
-                className={`relative text-center ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
+                className="relative flex flex-col items-center w-full flex-shrink-0"
                 style={{
-                  zIndex: 15,
-                  marginTop: `${currentUser?.pictureToNamePadding || 16}px`,
+                  paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`,
+                  paddingBottom: '1rem',
                 }}
               >
-                <p
-                  style={{
-                    color: theme.accent,
-                    fontSize: `${currentUser?.profileNameFontSize || 16}px`,
-                    fontFamily: currentUser?.profileNameFontFamily || 'Inter',
-                  }}
-                  className="font-bold text-white mb-1"
+                <div
+                  className={`relative ${currentUser?.frameAnimation?.type && currentUser?.frameAnimation?.enabled ? `animate-frame-${currentUser.frameAnimation.type}` : ''}`}
+                  style={{ zIndex: 5 }}
                 >
-                  {currentUser?.name}
-                </p>
-                {currentUser?.bio && (
-                  <div
-                    className="w-full"
+                  <UserAvatarSetting isPreview={true} handle={currentUser?.handle} />
+                </div>
+                <div
+                  className={`relative text-center ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
+                  style={{
+                    zIndex: 15,
+                    marginTop: `${currentUser?.pictureToNamePadding || 16}px`,
+                  }}
+                >
+                  <p
                     style={{
-                      marginTop: `${currentUser?.nameToBioPadding || 10}px`,
+                      color: theme.accent,
+                      fontSize: `${currentUser?.profileNameFontSize || 16}px`,
+                      fontFamily: currentUser?.profileNameFontFamily || 'Inter',
+                    }}
+                    className="font-bold text-white mb-1"
+                  >
+                    {currentUser?.name}
+                  </p>
+                  {currentUser?.bio && (
+                    <div
+                      className="w-full"
+                      style={{
+                        marginTop: `${currentUser?.nameToBioPadding || 10}px`,
+                      }}
+                    >
+                      <p
+                        style={{
+                          color: theme.accent,
+                          fontSize: `${currentUser?.bioFontSize || 14}px`,
+                          fontFamily: currentUser?.bioFontFamily || 'Inter',
+                        }}
+                        className="break-words whitespace-pre-wrap text-sm"
+                      >
+                        {currentUser?.bio}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {socialLinks.length > 0 && (
+                  <div
+                    className={`flex flex-wrap justify-center gap-2 ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
+                    style={{
+                      marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`,
                     }}
                   >
-                    <p
-                      style={{
-                        color: theme.accent,
-                        fontSize: `${currentUser?.bioFontSize || 14}px`,
-                        fontFamily: currentUser?.bioFontFamily || 'Inter',
-                      }}
-                      className="break-words whitespace-pre-wrap text-sm"
-                    >
-                      {currentUser?.bio}
-                    </p>
+                    {socialLinks.map(({ id, title, url }) => (
+                      <SocialCards
+                        key={id}
+                        title={title}
+                        url={url}
+                        color={theme.accent}
+                        socialIconSize={currentUser?.socialIconSize ?? 30}
+                        registerClicks={() => handleRegisterClick(id, url, title)}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
-              {socialLinks.length > 0 && (
-                <div
-                  className={`flex flex-wrap justify-center gap-2 ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
-                  style={{
-                    marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`,
-                  }}
-                >
-                  {socialLinks.map(({ id, title, url }) => (
-                    <SocialCards
-                      key={id}
-                      title={title}
-                      url={url}
-                      color={theme.accent}
-                      socialIconSize={currentUser?.socialIconSize ?? 30}
-                      registerClicks={() => handleRegisterClick(id, url, title)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-            {/* --- Preload all embed cards for reliability --- */}
-            {combinedItems.map(item => (
-              <PreloadCard key={item.id} item={item} theme={theme} fetchedUser={currentUser} />
-            ))}
-            <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
-              <StackedCardsView
-                items={combinedItems}
-                fetchedUser={currentUser}
-                theme={theme}
-                registerClicks={handleRegisterClick}
-                renderPhotoBook={renderPhotoBook}
-                contentAnimation={currentUser?.contentAnimation}
-              />
+              {/* --- Preload all embed cards for reliability --- */}
+              {combinedItems.map(item => (
+                <PreloadCard key={item.id} item={item} theme={theme} fetchedUser={currentUser} />
+              ))}
+              <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
+                <StackedCardsView
+                  items={combinedItems}
+                  fetchedUser={currentUser}
+                  theme={theme}
+                  registerClicks={handleRegisterClick}
+                  renderPhotoBook={renderPhotoBook}
+                  contentAnimation={currentUser?.contentAnimation}
+                />
+              </div>
             </div>
           </>
         ) : (
