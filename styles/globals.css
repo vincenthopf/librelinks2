@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter&family=Roboto&family=Playfair+Display:wght@400;900&family=Lato&family=Bebas+Neue&family=Open+Sans&family=Cinzel&family=Space+Mono&family=Comfortaa&family=Alegreya&family=Oswald&family=Barlow&family=Lora&family=Montserrat&family=Poppins&family=Raleway&family=Source+Sans+Pro&family=Ubuntu&family=Merriweather&family=Nunito&family=Quicksand&family=Josefin+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&family=Playfair+Display:wght@400;900&family=Lato:wght@400;700&family=Bebas+Neue&family=Open+Sans:wght@400;700&family=Cinzel&family=Space+Mono&family=Comfortaa&family=Alegreya&family=Oswald:wght@400;700&family=Barlow:wght@400;700&family=Lora:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=Ubuntu:wght@400;700&family=Merriweather:wght@400;700&family=Nunito:wght@400;700&family=Quicksand:wght@400;700&family=Josefin+Sans:wght@400;700&display=swap');
 
 /* @import url("https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap"); */
 
@@ -7,6 +7,10 @@
 @tailwind utilities;
 * {
   font-family: 'Inter', sans-serif;
+  /* Improve font rendering on macOS and iOS */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always; /* Standard property */
 }
 
 /* Font family classes for custom fonts */
