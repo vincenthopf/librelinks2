@@ -188,11 +188,15 @@ const Preview = () => {
     console.log(`Preview click registered for: ${title} (${id})`);
   };
 
-  // --- useEffect for Re-rendering ---
+  // --- useEffect for Content Structure Changes ---
+  // This effect monitors changes in the actual items (links, texts, photos) and their order.
+  // We might need to trigger a refreshKey update here ONLY if StackedCardsView
+  // fails to update correctly just from prop changes.
   useEffect(() => {
-    console.log('Preview dependencies changed, triggering refresh.');
-    setRefreshKey(prev => prev + 1);
-  }, [comprehensiveUserSnapshot, contentStructureSnapshot]);
+    console.log('Preview content structure snapshot changed:', contentStructureSnapshot);
+    // Potential future addition if needed:
+    // setRefreshKey(prev => prev + 1);
+  }, [contentStructureSnapshot]); // Depend ONLY on content structure
 
   // useEffect for ResizeObserver (keep as is)
   useEffect(() => {
@@ -211,57 +215,68 @@ const Preview = () => {
     return () => observer.disconnect();
   }, []);
 
-  // useEffect for Message Handling (keep as is, maybe simplify refresh logic?)
+  // useEffect for Message Handling
   useEffect(() => {
     const handleMessage = event => {
       // Handle string messages
-      if (
-        event.data &&
-        typeof event.data === 'string' &&
-        ['refresh', 'update_user', 'update_links'].includes(event.data) && // Re-add 'refresh'
-        iframeRef.current
-      ) {
-        console.log('Preview: Received string message, forcing full reload:', event.data);
-        setRefreshKey(prev => prev + 1);
-        return;
+      if (event.data && typeof event.data === 'string') {
+        // Explicit 'refresh' message still triggers full refresh
+        if (event.data === 'refresh') {
+          console.log('Preview: Received string refresh, forcing full reload.');
+          setRefreshKey(prev => prev + 1);
+          return;
+        }
+        // Forward other specific string messages if iframe is active
+        if (
+          ['update_user', 'update_links'].includes(event.data) &&
+          iframeRef.current &&
+          iframeRef.current.contentWindow
+        ) {
+          try {
+            iframeRef.current.contentWindow.postMessage(event.data, '*');
+            console.log('Forwarded string message to iframe:', event.data);
+            // No refresh needed here for iframe mode
+          } catch (error) {
+            console.error('Error forwarding string message:', error);
+          }
+          return;
+        }
       }
 
       // Handle structured messages (like update_dimensions)
-      if (event.data && typeof event.data === 'object' && event.data.type && iframeRef.current) {
+      if (
+        event.data &&
+        typeof event.data === 'object' &&
+        event.data.type &&
+        iframeRef.current &&
+        iframeRef.current.contentWindow
+      ) {
         const { type } = event.data;
 
-        // Special handling for dimension updates
         if (type === 'update_dimensions') {
-          // For dimension updates, we don't need to refresh the entire iframe
-          // Instead, we can forward the message to the iframe content
-          if (iframeRef.current && iframeRef.current.contentWindow) {
-            try {
-              // Forward the dimension update to the iframe content
-              iframeRef.current.contentWindow.postMessage(event.data, '*');
-              console.log('Forwarded dimension update to iframe:', event.data);
-
-              // Clear any existing timeout
-              if (dimensionUpdateTimeoutRef.current) {
-                clearTimeout(dimensionUpdateTimeoutRef.current);
-              }
-
-              // Set a fallback refresh after a delay to ensure synchronization
-              // This will only happen if the forwarded message doesn't work properly
-              dimensionUpdateTimeoutRef.current = setTimeout(() => {
-                console.log('Fallback refresh for dimension update');
-                setRefreshKey(prev => prev + 1);
-                dimensionUpdateTimeoutRef.current = null;
-              }, 500);
-
-              return;
-            } catch (error) {
-              console.error('Error forwarding dimension update:', error);
-              // Fall through to full refresh on error
+          // Forward the dimension update to the iframe content
+          try {
+            iframeRef.current.contentWindow.postMessage(event.data, '*');
+            console.log('Forwarded dimension update to iframe:', event.data);
+            // Clear any existing timeout
+            if (dimensionUpdateTimeoutRef.current) {
+              clearTimeout(dimensionUpdateTimeoutRef.current);
             }
+            // REMOVE the fallback refresh timeout for dimension updates
+            // dimensionUpdateTimeoutRef.current = setTimeout(() => {
+            //   console.log('Fallback refresh for dimension update');
+            //   setRefreshKey(prev => prev + 1);
+            //   dimensionUpdateTimeoutRef.current = null;
+            // }, 500);
+            return;
+          } catch (error) {
+            console.error('Error forwarding dimension update:', error);
+            // Fall through ONLY if forwarding fails
           }
         }
 
-        // Fallback for other *structured* messages (if any appear later)
+        // Fallback for other *structured* messages - still refresh for safety?
+        // Consider if specific structured messages can also be forwarded instead.
         console.log(
           'Preview: Received unhandled structured message, forcing full reload:',
           event.data
@@ -331,8 +346,7 @@ const Preview = () => {
       <div className="relative border-[2px] lg:border-[5px] border-black rounded-[2rem] max-w-80 lg:max-w-96 xl:max-w-[28rem] aspect-[9/19] overflow-hidden max-w-sm mx-auto z-0">
         {/* Apply conditional style HERE to the inner div when stackView is true */}
         <div
-          key={refreshKey} // Add key here to ensure re-render on dependency change
-          className={`absolute inset-0 z-10 flex ${currentUser?.stackView ? 'flex-col' : 'items-center justify-center'}`} // Remove p-4
+          className={`absolute inset-0 z-10 flex ${currentUser?.stackView ? 'flex-col' : 'items-center justify-center'}`}
           style={
             currentUser?.stackView
               ? {
@@ -442,7 +456,7 @@ const Preview = () => {
               ) : (
                 <iframe
                   ref={iframeRef}
-                  // Key needs comprehensive snapshot if iframe updates are needed without full refresh
+                  // Keep the key here for iframe mode as it needs full state snapshot
                   key={`${refreshKey}-${comprehensiveUserSnapshot}-${contentStructureSnapshot}`}
                   seamless
                   loading="lazy"

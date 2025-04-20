@@ -217,11 +217,13 @@ const PreviewMobile = ({ close }) => {
 
   const nonSocialLinks = useMemo(() => userLinks?.filter(link => !link.isSocial), [userLinks]);
 
-  // Restore effects
+  // --- useEffect for Content Structure Changes ---
+  // Monitor changes in items (links, texts, photos) and their order.
   useEffect(() => {
-    console.log('Mobile Preview dependencies changed, triggering refresh.');
-    setRefreshKey(prev => prev + 1);
-  }, [comprehensiveUserSnapshot, contentStructureSnapshot]);
+    console.log('Mobile Preview content structure snapshot changed:', contentStructureSnapshot);
+    // Like in preview.jsx, only add setRefreshKey here if prop updates alone are insufficient
+    // setRefreshKey(prev => prev + 1);
+  }, [contentStructureSnapshot]); // Depend ONLY on content structure
 
   useEffect(() => {
     if (currentUser && userLinks) {
@@ -370,7 +372,6 @@ const PreviewMobile = ({ close }) => {
   return (
     <>
       <section
-        key={refreshKey} // Ensure section re-renders when key changes
         style={sectionStyle}
         className="h-[100vh] w-full overflow-y-auto relative flex flex-col items-center"
       >
