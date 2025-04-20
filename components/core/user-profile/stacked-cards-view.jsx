@@ -4,7 +4,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LinkCard from './links-card';
 import TextCard from './text-card';
-import { ChevronLeft, ChevronRight } from 'lucide-react'; // Import arrows
+import { ArrowBigLeftDash, ArrowBigRightDash } from 'lucide-react'; // Import new arrows
 import { useEffect, useRef, useState } from 'react';
 
 // Define animation variants based on contentAnimation types
@@ -388,17 +388,17 @@ export function StackedCardsView({
         <div className="flex gap-4 w-full justify-center py-2 mb-4 z-10">
           <button
             onClick={handlePrev}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow"
+            className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow rounded-md"
             aria-label="Previous Card"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <ArrowBigLeftDash className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
           <button
             onClick={handleNext}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow"
+            className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow rounded-md"
             aria-label="Next Card"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <ArrowBigRightDash className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
       )}
