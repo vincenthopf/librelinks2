@@ -63,6 +63,69 @@ const PreviewMobile = ({ close }) => {
   const { data: userLinks } = useLinks(currentUser?.id);
   const { data: userTexts } = useTexts(currentUser?.id);
 
+  // --- Comprehensive Dependency Object ---
+  // Create a single object or string that captures ALL relevant currentUser state
+  // This ensures the useEffect hook triggers on any customization change.
+  const comprehensiveUserSnapshot = useMemo(() => {
+    if (!currentUser) return '{}';
+    // Select ALL properties that affect visual rendering
+    const relevantProps = {
+      handle: currentUser.handle,
+      name: currentUser.name,
+      bio: currentUser.bio,
+      themePalette: currentUser.themePalette,
+      backgroundImage: currentUser.backgroundImage,
+      buttonStyle: currentUser.buttonStyle,
+      textCardButtonStyle: currentUser.textCardButtonStyle,
+      animationSettings: {
+        frame: currentUser.frameAnimation,
+        content: currentUser.contentAnimation,
+      },
+      padding: currentUser.customPadding,
+      fonts: {
+        profileName: currentUser.profileNameFontFamily,
+        bio: currentUser.bioFontFamily,
+        linkTitle: currentUser.linkTitleFontFamily,
+      },
+      sizes: {
+        profileName: currentUser.profileNameFontSize,
+        bio: currentUser.bioFontSize,
+        linkTitle: currentUser.linkTitleFontSize,
+        favicon: currentUser.faviconSize,
+        socialIcon: currentUser.socialIconSize,
+        cardHeight: currentUser.linkCardHeight,
+      },
+      paddings: {
+        headToPicture: currentUser.headToPicturePadding,
+        pictureToName: currentUser.pictureToNamePadding,
+        nameToBio: currentUser.nameToBioPadding,
+        bioToSocial: currentUser.bioToSocialPadding,
+        betweenCards: currentUser.betweenCardsPadding,
+        pageHorizontal: currentUser.pageHorizontalMargin,
+      },
+      stackView: currentUser.stackView,
+      photoBookLayout: currentUser.photoBookLayout,
+      photoBookOrder: currentUser.photoBookOrder,
+      linkAlwaysExpandEmbed: currentUser.linkAlwaysExpandEmbed,
+      // Add any other relevant visual settings here...
+    };
+    return JSON.stringify(relevantProps);
+  }, [currentUser]); // Depend only on the main currentUser object
+
+  // Snapshot of link/text/photo structure and order
+  const contentStructureSnapshot = useMemo(() => {
+    const links = userLinks
+      ? JSON.stringify(userLinks.map(l => ({ id: l.id, order: l.order })))
+      : '[]';
+    const texts = userTexts
+      ? JSON.stringify(userTexts.map(t => ({ id: t.id, order: t.order })))
+      : '[]';
+    const photoItems = photos
+      ? JSON.stringify(photos.map(p => ({ id: p.id, order: p.order })))
+      : '[]';
+    return `${links}|${texts}|${photoItems}`;
+  }, [userLinks, userTexts, photos]);
+
   // Create a value that changes when link orders change
   const linksOrderString = useMemo(() => {
     if (!userLinks) return '';
@@ -142,8 +205,9 @@ const PreviewMobile = ({ close }) => {
       secondary: currentUser?.themePalette?.palette?.[1] || '#f8f8f8',
       accent: currentUser?.themePalette?.palette?.[2] || '#000000',
       neutral: currentUser?.themePalette?.palette?.[3] || '#888888',
+      embedBackground: currentUser?.themePalette?.embedBackground || 'transparent',
     }),
-    [currentUser?.themePalette?.palette]
+    [currentUser?.themePalette]
   );
 
   const socialLinks = useMemo(
@@ -155,8 +219,9 @@ const PreviewMobile = ({ close }) => {
 
   // Restore effects
   useEffect(() => {
+    console.log('Mobile Preview dependencies changed, triggering refresh.');
     setRefreshKey(prev => prev + 1);
-  }, refreshDependencies);
+  }, [comprehensiveUserSnapshot, contentStructureSnapshot]);
 
   useEffect(() => {
     if (currentUser && userLinks) {
@@ -289,10 +354,24 @@ const PreviewMobile = ({ close }) => {
   const baseURL = getCurrentBaseURL();
   const url = `${baseURL}/${currentUser.handle}?isIframe=true&photoBookLayout=${currentUser.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
 
+  // --- Conditional Background Style ---
+  const sectionStyle = {
+    background: theme.primary, // Always apply primary theme color
+    ...(currentUser?.stackView &&
+      currentUser?.backgroundImage && {
+        backgroundImage: `url(${currentUser.backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+      }),
+  };
+
   return (
     <>
       <section
-        style={{ background: theme.primary }}
+        key={refreshKey} // Ensure section re-renders when key changes
+        style={sectionStyle}
         className="h-[100vh] w-full overflow-y-auto relative flex flex-col items-center p-4"
       >
         {currentUser?.stackView ? (
@@ -382,7 +461,7 @@ const PreviewMobile = ({ close }) => {
         ) : (
           <iframe
             ref={iframeRef}
-            key={`${refreshKey}-${currentUser?.handle}-${currentUser?.stackView}-${animationSettings}-${photosOrderString}`}
+            key={`${refreshKey}-${comprehensiveUserSnapshot}-${contentStructureSnapshot}`}
             seamless
             loading="lazy"
             title="preview"

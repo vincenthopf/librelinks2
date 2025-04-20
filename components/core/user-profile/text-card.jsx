@@ -1,5 +1,33 @@
 import { useState } from 'react';
 
+// Helper function (assuming a similar helper exists or can be added/imported)
+// This should ideally be shared with LinkCard and ProfilePage
+const getContentAnimationProps = (contentAnimation, index = 0) => {
+  // index defaults to 0 if not provided
+  if (!contentAnimation || !contentAnimation.type || contentAnimation.type === 'none') {
+    return {
+      className: '',
+      style: {},
+    };
+  }
+  const {
+    type,
+    duration = 0.5,
+    delay = 0,
+    staggered = false,
+    staggerAmount = 0.1,
+  } = contentAnimation;
+  return {
+    className: `animate-${type}`,
+    style: {
+      animationDuration: `${duration}s`,
+      animationDelay: `${delay + (staggered ? index * staggerAmount : 0)}s`,
+      opacity: 0,
+      animationFillMode: 'forwards',
+    },
+  };
+};
+
 /**
  * TextCard component for displaying text items on the user profile page
  *
@@ -22,10 +50,10 @@ const TextCard = props => {
   // Use textCardButtonStyle if available, otherwise fall back to buttonStyle
   const buttonStyle = props.textCardButtonStyle || props.buttonStyle;
 
-  const isTransparent = buttonStyle.includes('bg-transparent');
-  const hasShadowProp = buttonStyle.includes('shadow');
-  const isHorizontalOnly = buttonStyle.includes('horizontal-only');
-  const isBottomOnly = buttonStyle.includes('bottom-only');
+  const isTransparent = buttonStyle?.includes('bg-transparent');
+  const hasShadowProp = buttonStyle?.includes('shadow');
+  const isHorizontalOnly = buttonStyle?.includes('horizontal-only');
+  const isBottomOnly = buttonStyle?.includes('bottom-only');
 
   const style = {
     background: isTransparent ? 'transparent' : props.theme.secondary,
@@ -50,9 +78,10 @@ const TextCard = props => {
     style.border = `1.5px solid ${props.theme.neutral}`;
   }
 
-  // Apply animation styles if provided
-  const animationStyles = props.animationStyle || {};
-  const animationClass = props.className || '';
+  // Get animation props from contentAnimation prop
+  const animationProps = getContentAnimationProps(props.contentAnimation);
+  const animationClass = animationProps.className || '';
+  const animationStyles = animationProps.style || {};
 
   // Merge animation styles with card styles
   const combinedStyles = { ...style, ...animationStyles };

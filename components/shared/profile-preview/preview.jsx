@@ -15,7 +15,6 @@ import { SocialCards } from '@/components/core/user-profile/social-cards';
 const Preview = () => {
   const { data: currentUser } = useCurrentUser();
   const baseURL = getCurrentBaseURL();
-  const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
   const iframeRef = useRef(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const dimensionUpdateTimeoutRef = useRef(null);
@@ -23,6 +22,68 @@ const Preview = () => {
   const { data: userLinks } = useLinks(currentUser?.id);
   const { data: userTexts } = useTexts(currentUser?.id);
   const { photos } = usePhotoBook();
+
+  // --- Comprehensive Dependency Object ---
+  // Create a single object or string that captures ALL relevant currentUser state
+  const comprehensiveUserSnapshot = useMemo(() => {
+    if (!currentUser) return '{}';
+    // Select ALL properties that affect visual rendering
+    const relevantProps = {
+      handle: currentUser.handle,
+      name: currentUser.name,
+      bio: currentUser.bio,
+      themePalette: currentUser.themePalette,
+      backgroundImage: currentUser.backgroundImage,
+      buttonStyle: currentUser.buttonStyle,
+      textCardButtonStyle: currentUser.textCardButtonStyle,
+      animationSettings: {
+        frame: currentUser.frameAnimation,
+        content: currentUser.contentAnimation,
+      },
+      padding: currentUser.customPadding,
+      fonts: {
+        profileName: currentUser.profileNameFontFamily,
+        bio: currentUser.bioFontFamily,
+        linkTitle: currentUser.linkTitleFontFamily,
+      },
+      sizes: {
+        profileName: currentUser.profileNameFontSize,
+        bio: currentUser.bioFontSize,
+        linkTitle: currentUser.linkTitleFontSize,
+        favicon: currentUser.faviconSize,
+        socialIcon: currentUser.socialIconSize,
+        cardHeight: currentUser.linkCardHeight,
+      },
+      paddings: {
+        headToPicture: currentUser.headToPicturePadding,
+        pictureToName: currentUser.pictureToNamePadding,
+        nameToBio: currentUser.nameToBioPadding,
+        bioToSocial: currentUser.bioToSocialPadding,
+        betweenCards: currentUser.betweenCardsPadding,
+        pageHorizontal: currentUser.pageHorizontalMargin,
+      },
+      stackView: currentUser.stackView,
+      photoBookLayout: currentUser.photoBookLayout,
+      photoBookOrder: currentUser.photoBookOrder,
+      linkAlwaysExpandEmbed: currentUser.linkAlwaysExpandEmbed,
+      // Add any other relevant visual settings here...
+    };
+    return JSON.stringify(relevantProps);
+  }, [currentUser]); // Depend only on the main currentUser object
+
+  // Snapshot of link/text/photo structure and order
+  const contentStructureSnapshot = useMemo(() => {
+    const links = userLinks
+      ? JSON.stringify(userLinks.map(l => ({ id: l.id, order: l.order })))
+      : '[]';
+    const texts = userTexts
+      ? JSON.stringify(userTexts.map(t => ({ id: t.id, order: t.order })))
+      : '[]';
+    const photoItems = photos
+      ? JSON.stringify(photos.map(p => ({ id: p.id, order: p.order })))
+      : '[]';
+    return `${links}|${texts}|${photoItems}`;
+  }, [userLinks, userTexts, photos]);
 
   // Define theme based on currentUser
   const theme = useMemo(
@@ -96,19 +157,44 @@ const Preview = () => {
     return `${frameAnimString}|${contentAnimString}`;
   }, [currentUser?.frameAnimation, currentUser?.contentAnimation]);
 
-  const refreshDependencies = [
-    currentUser?.handle,
-    currentUser?.photoBookLayout,
-    currentUser?.stackView,
-    userTexts?.length,
-    photos?.length,
-    linksSnapshot, // Use the comprehensive snapshot
-    textsOrderString, // Add dependency on text orders
-    photosOrderString, // Add dependency on photo order
-    currentUser?.photoBookOrder, // Keep this? Or remove? Let's keep for now.
-    animationSettings, // Add dependency on animation settings
-  ];
+  // Filter social links from userLinks
+  const socialLinks = useMemo(
+    () => userLinks?.filter(link => link.isSocial && !link.archived) || [],
+    [userLinks]
+  );
 
+  // Combine and sort items for stacked view (links, texts, photobook)
+  const combinedItems = useMemo(() => {
+    const links = userLinks?.filter(link => !link.isSocial && !link.archived) || [];
+    const texts = userTexts?.filter(text => !text.archived) || [];
+    let allItems = [...links, ...texts].sort((a, b) => a.order - b.order);
+    const shouldShowPhotoBook =
+      currentUser?.photoBookOrder !== null &&
+      currentUser?.photoBookOrder !== undefined &&
+      photos &&
+      photos.length > 0;
+
+    if (shouldShowPhotoBook) {
+      const photoBookPosition = Math.min(Math.max(0, currentUser.photoBookOrder), allItems.length);
+      const itemsBefore = allItems.slice(0, photoBookPosition);
+      const itemsAfter = allItems.slice(photoBookPosition);
+      // Ensure the photobook item has a unique ID and type
+      allItems = [...itemsBefore, { id: 'photobook-preview', type: 'photobook' }, ...itemsAfter];
+    }
+    return allItems;
+  }, [userLinks, userTexts, photos, currentUser?.photoBookOrder]);
+
+  const handleRegisterClick = (id, url, title) => {
+    console.log(`Preview click registered for: ${title} (${id})`);
+  };
+
+  // --- useEffect for Re-rendering ---
+  useEffect(() => {
+    console.log('Preview dependencies changed, triggering refresh.');
+    setRefreshKey(prev => prev + 1);
+  }, [comprehensiveUserSnapshot, contentStructureSnapshot]);
+
+  // useEffect for ResizeObserver (keep as is)
   useEffect(() => {
     if (!iframeRef.current) return;
 
@@ -125,10 +211,7 @@ const Preview = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    setRefreshKey(prev => prev + 1);
-  }, refreshDependencies);
-
+  // useEffect for Message Handling (keep as is, maybe simplify refresh logic?)
   useEffect(() => {
     const handleMessage = event => {
       // Handle string messages
@@ -223,48 +306,40 @@ const Preview = () => {
     }
   }, [photos, currentUser?.photoBookLayout, theme]);
 
-  // Combine and sort items for stacked view (links, texts, photobook)
-  const combinedItems = useMemo(() => {
-    const links = userLinks?.filter(link => !link.isSocial && !link.archived) || [];
-    const texts = userTexts?.filter(text => !text.archived) || [];
-    let allItems = [...links, ...texts].sort((a, b) => a.order - b.order);
-    const shouldShowPhotoBook =
-      currentUser?.photoBookOrder !== null &&
-      currentUser?.photoBookOrder !== undefined &&
-      photos &&
-      photos.length > 0;
+  // Construct iframe URL (still needed for iframe mode)
+  const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
 
-    if (shouldShowPhotoBook) {
-      const photoBookPosition = Math.min(Math.max(0, currentUser.photoBookOrder), allItems.length);
-      const itemsBefore = allItems.slice(0, photoBookPosition);
-      const itemsAfter = allItems.slice(photoBookPosition);
-      // Ensure the photobook item has a unique ID and type
-      allItems = [...itemsBefore, { id: 'photobook-preview', type: 'photobook' }, ...itemsAfter];
-    }
-    return allItems;
-  }, [userLinks, userTexts, photos, currentUser?.photoBookOrder]);
-
-  // Filter social links from userLinks
-  const socialLinks = useMemo(
-    () => userLinks?.filter(link => link.isSocial && !link.archived) || [],
-    [userLinks]
-  );
-
-  const handleRegisterClick = (id, url, title) => {
-    console.log(`Preview click registered for: ${title} (${id})`);
+  // --- Conditional Background Style for Stacked View ---
+  const stackViewContainerStyle = {
+    // Apply background color and image only when stackView is true
+    ...(currentUser?.stackView && {
+      background: theme.primary,
+      ...(currentUser.backgroundImage && {
+        backgroundImage: `url(${currentUser.backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed', // Match public page style
+      }),
+    }),
+    // Ensure overflow for scrolling when content exceeds height
+    overflowY: 'auto',
   };
 
   return (
     <>
       <div className="relative border-[2px] lg:border-[5px] border-black rounded-[2rem] max-w-80 lg:max-w-96 xl:max-w-[28rem] aspect-[9/19] overflow-hidden max-w-sm mx-auto z-0">
+        {/* Apply conditional style HERE to the inner div when stackView is true */}
         <div
-          className={`absolute inset-0 z-10 flex ${currentUser?.stackView ? 'flex-col p-4 overflow-y-auto' : 'items-center justify-center'}`}
+          key={refreshKey} // Add key here to ensure re-render on dependency change
+          className={`absolute inset-0 z-10 flex ${currentUser?.stackView ? 'flex-col p-4' : 'items-center justify-center'}`}
+          style={currentUser?.stackView ? stackViewContainerStyle : {}}
         >
           {currentUser && (
             <>
               {currentUser.stackView ? (
                 <>
-                  {/* --- Profile Header --- */}
+                  {/* Profile Header Section */}
                   <div
                     className="relative flex flex-col items-center w-full flex-shrink-0"
                     style={{ paddingBottom: '1rem' }}
@@ -339,15 +414,12 @@ const Preview = () => {
                     )}
                   </div>
 
-                  {/* --- Stacked Cards View --- */}
-                  {/* Allow this container to grow and potentially cause scroll */}
+                  {/* Stacked Cards View Section */}
                   <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
-                    {' '}
-                    {/* Ensure min-height */}
                     <StackedCardsView
                       items={combinedItems}
-                      fetchedUser={currentUser}
-                      theme={theme}
+                      fetchedUser={currentUser} // Pass latest currentUser
+                      theme={theme} // Pass latest theme
                       registerClicks={handleRegisterClick}
                       renderPhotoBook={renderPhotoBook}
                       contentAnimation={currentUser?.contentAnimation}
@@ -357,7 +429,8 @@ const Preview = () => {
               ) : (
                 <iframe
                   ref={iframeRef}
-                  key={`${refreshKey}-${currentUser.handle}-${currentUser.photoBookLayout}-${currentUser.stackView}-${linksSnapshot}-${textsOrderString}-${photosOrderString}-${currentUser?.photoBookOrder}-${animationSettings}`}
+                  // Key needs comprehensive snapshot if iframe updates are needed without full refresh
+                  key={`${refreshKey}-${comprehensiveUserSnapshot}-${contentStructureSnapshot}`}
                   seamless
                   loading="lazy"
                   title="preview"

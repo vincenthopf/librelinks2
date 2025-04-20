@@ -132,7 +132,7 @@ const PreloadCard = React.memo(({ item, theme, fetchedUser }) => {
 
 PreloadCard.displayName = 'PreloadCard';
 
-// Enhanced MemoizedCard with multiple loading strategies
+// Enhanced MemoizedCard with multiple loading strategies & prop passing
 const MemoizedCard = React.memo(
   ({
     item,
@@ -220,6 +220,10 @@ const MemoizedCard = React.memo(
 
     const cardStyle = cardPositions[position];
 
+    // Determine background color for the card's wrapper
+    // Use theme secondary if available, otherwise transparent
+    const cardWrapperBackground = theme?.secondary || 'transparent';
+
     return (
       <>
         {/* Preload instance */}
@@ -232,13 +236,13 @@ const MemoizedCard = React.memo(
           ref={cardRef}
           animate={cardStyle}
           transition={{ duration: 0.4, ease: 'easeInOut' }}
-          className="absolute left-0 right-0 mx-auto top-0 w-full max-w-[calc(100%-40px)] h-auto select-none"
+          className="absolute left-0 right-0 mx-auto top-0 w-full h-auto select-none"
           style={{
             originX: 0.5,
             originY: 1,
           }}
         >
-          <div className="relative w-full h-full rounded-xl border border-gray-200 shadow-lg bg-white dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
+          <div className="relative w-full h-full">
             <div className="w-full h-full">
               {item.type === 'photobook' ? (
                 <div className="h-full w-full">{renderPhotoBook()}</div>
@@ -251,7 +255,7 @@ const MemoizedCard = React.memo(
                   buttonStyle={fetchedUser?.buttonStyle}
                   faviconSize={fetchedUser?.faviconSize ?? 32}
                   cardHeight={fetchedUser?.linkCardHeight}
-                  alwaysExpandEmbed={expandedState || position !== 'active'} // Always expand if not active
+                  alwaysExpandEmbed={expandedState || position !== 'active'}
                   toggleExpand={() => toggleExpand(item.id)}
                   registerClicks={
                     position === 'active'
@@ -259,22 +263,16 @@ const MemoizedCard = React.memo(
                       : undefined
                   }
                   contentAnimation={contentAnimation}
-                  animationStyle={{
-                    opacity: position === 'active' ? 1 : 0,
-                    transition: 'opacity 0.3s ease',
-                  }}
                 />
               ) : (
                 <TextCard
                   {...item}
                   theme={theme}
-                  fontSize={fetchedUser?.linkTitleFontSize}
-                  fontFamily={fetchedUser?.linkTitleFontFamily}
+                  fontSize={fetchedUser?.textTitleFontSize ?? fetchedUser?.linkTitleFontSize}
+                  fontFamily={fetchedUser?.textTitleFontFamily ?? fetchedUser?.linkTitleFontFamily}
                   buttonStyle={fetchedUser?.textCardButtonStyle}
-                  style={{
-                    opacity: position === 'active' ? 1 : 0,
-                    transition: 'opacity 0.3s ease',
-                  }}
+                  cardHeight={fetchedUser?.textCardHeight ?? fetchedUser?.linkCardHeight}
+                  contentAnimation={contentAnimation}
                 />
               )}
             </div>
@@ -336,10 +334,10 @@ export function StackedCardsView({
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-start p-4">
-      {/* Navigation Buttons */}
+    <div className="relative w-full flex-grow flex flex-col items-center justify-start p-0 min-h-[450px]">
+      {/* Navigation Buttons: Added margin-bottom */}
       {items.length > 1 && (
-        <div className="flex gap-4 w-full justify-center py-2 z-10">
+        <div className="flex gap-4 w-full justify-center py-2 mb-4 z-10">
           <button
             onClick={handlePrev}
             className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow"
@@ -357,8 +355,10 @@ export function StackedCardsView({
         </div>
       )}
 
-      {/* Card Container - All cards are rendered, position determines visibility */}
-      <div className="relative w-full flex-grow flex items-center justify-center h-[calc(100%-60px)]">
+      {/* Card Container: Adjusted height calculation */}
+      <div className="relative w-full flex-grow flex items-center justify-center h-[calc(100%-80px)]">
+        {' '}
+        {/* Adjust height calculation based on button space */}
         {items.map((item, index) => {
           // Skip null items
           if (!item) return null;
