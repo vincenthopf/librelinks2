@@ -4,6 +4,15 @@ import cloudinary from '@/lib/cloudinary';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 
+// Increase API route body size limit for image uploads
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Set limit to 10MB
+    },
+  },
+};
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 

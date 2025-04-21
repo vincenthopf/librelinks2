@@ -239,24 +239,33 @@ const PreviewMobile = ({ close }) => {
         event.data &&
         typeof event.data === 'string' &&
         ['refresh', 'update_user', 'update_links'].includes(event.data) && // Re-add 'refresh'
-        iframeRef.current
+        // NOTE: No longer checking iframeRef.current here for 'update_user' in Stacked View
+        (iframeRef.current || currentUser?.stackView)
       ) {
-        // Handle 'refresh' by updating the key
+        // Handle 'refresh' by updating the key (primarily for iframe)
         if (event.data === 'refresh') {
           console.log('Mobile Preview: Received string refresh, forcing full reload.');
           setRefreshKey(prev => prev + 1);
+          // Handle 'update_user' or 'update_links'
         } else {
-          // Forward other string messages ('update_user', 'update_links')
-          if (iframeRef.current && iframeRef.current.contentWindow) {
+          // If NOT in Stacked View, forward message to iframe
+          if (!currentUser?.stackView && iframeRef.current && iframeRef.current.contentWindow) {
             try {
               iframeRef.current.contentWindow.postMessage(event.data, '*');
               console.log('Mobile Preview: Forwarded string message to iframe:', event.data);
             } catch (error) {
               console.error('Mobile Preview: Error forwarding string message:', error);
             }
+            // If IN Stacked View and message is 'update_user', rely on data propagation (NO explicit refreshKey change)
+          } else if (currentUser?.stackView && event.data === 'update_user') {
+            console.log(
+              'Mobile Preview: Received update_user in Stacked View. Relying on data update.'
+            );
+            // NO ACTION NEEDED HERE - Let useCurrentUser update trigger re-render
           }
+          // Note: 'update_links' in Stacked View might need specific handling if required later
         }
-        return;
+        return; // Message handled (or intentionally ignored for Stacked View data propagation)
       }
 
       // Handle structured messages (like update_dimensions)
@@ -357,17 +366,24 @@ const PreviewMobile = ({ close }) => {
   const url = `${baseURL}/${currentUser.handle}?isIframe=true&photoBookLayout=${currentUser.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
 
   // --- Conditional Background Style ---
-  const sectionStyle = {
-    background: theme.primary, // Always apply primary theme color
-    ...(currentUser?.stackView &&
-      currentUser?.backgroundImage && {
-        backgroundImage: `url(${currentUser.backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed',
-      }),
-  };
+  const sectionStyle = {};
+
+  if (currentUser?.stackView) {
+    // Set base background color from theme first
+    sectionStyle.backgroundColor = theme.primary;
+
+    // If background image exists, add it
+    if (currentUser.backgroundImage) {
+      sectionStyle.backgroundImage = `url(${currentUser.backgroundImage})`;
+      sectionStyle.backgroundSize = 'cover';
+      sectionStyle.backgroundPosition = 'center center';
+      sectionStyle.backgroundRepeat = 'no-repeat';
+      sectionStyle.backgroundAttachment = 'fixed';
+    }
+  } else {
+    // Apply only the primary theme color if not stackView
+    sectionStyle.backgroundColor = theme.primary;
+  }
 
   return (
     <>
