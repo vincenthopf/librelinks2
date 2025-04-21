@@ -367,8 +367,8 @@ const Preview = () => {
                     className="relative flex flex-col items-center w-full flex-shrink-0"
                     style={{
                       // Apply headToPicturePadding dynamically to paddingTop
-                      paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`,
-                      paddingBottom: '1rem', // Keep existing paddingBottom or adjust if needed
+                      paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`, // Default: 40
+                      paddingBottom: `${currentUser?.betweenCardsPadding ?? 16}px`, // Default: 16
                     }}
                   >
                     {/* Avatar */}
@@ -384,7 +384,7 @@ const Preview = () => {
                       className={`relative text-center ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
                       style={{
                         zIndex: 15,
-                        marginTop: `${currentUser?.pictureToNamePadding || 16}px`,
+                        marginTop: `${currentUser?.pictureToNamePadding ?? 16}px`, // Default: 16
                         // Add animation styles if needed, simplified for preview
                       }}
                     >
@@ -394,7 +394,7 @@ const Preview = () => {
                           fontSize: `${currentUser?.profileNameFontSize || 16}px`,
                           fontFamily: currentUser?.profileNameFontFamily || 'Inter',
                         }}
-                        className="font-bold text-white mb-1"
+                        className="font-bold text-white"
                       >
                         {currentUser?.name}
                       </p>
@@ -402,7 +402,7 @@ const Preview = () => {
                         <div
                           className="w-full"
                           style={{
-                            marginTop: `${currentUser?.nameToBioPadding || 10}px`,
+                            marginTop: `${currentUser?.nameToBioPadding ?? 10}px`, // Default: 10
                           }}
                         >
                           <p
@@ -411,7 +411,7 @@ const Preview = () => {
                               fontSize: `${currentUser?.bioFontSize || 14}px`,
                               fontFamily: currentUser?.bioFontFamily || 'Inter',
                             }}
-                            className="break-words whitespace-pre-wrap text-sm"
+                            className="break-words whitespace-pre-wrap"
                           >
                             {currentUser?.bio}
                           </p>
@@ -423,7 +423,7 @@ const Preview = () => {
                       <div
                         className={`flex flex-wrap justify-center gap-2 ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
                         style={{
-                          marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`,
+                          marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`, // Default: 16
                           // Add animation styles if needed, simplified for preview
                         }}
                       >
@@ -442,7 +442,10 @@ const Preview = () => {
                   </div>
 
                   {/* Stacked Cards View Section */}
-                  <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
+                  <div
+                    className="flex-grow w-full flex items-center justify-center"
+                    style={{ minHeight: '450px' }}
+                  >
                     <StackedCardsView
                       items={combinedItems}
                       fetchedUser={currentUser} // Pass latest currentUser

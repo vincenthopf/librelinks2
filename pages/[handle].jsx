@@ -401,20 +401,19 @@ const ProfilePage = () => {
           backgroundImage: fetchedUser?.backgroundImage
             ? `url(${fetchedUser.backgroundImage})`
             : 'none',
-          paddingTop: fetchedUser?.customPadding?.paddingTop || '2rem', // Default 2rem
-          paddingBottom: fetchedUser?.customPadding?.paddingBottom || '2rem', // Default 2rem
-          paddingLeft: fetchedUser?.customPadding?.paddingSide || '0.75rem', // Default 0.75rem
-          paddingRight: fetchedUser?.customPadding?.paddingSide || '0.75rem', // Default 0.75rem
+          paddingBottom: fetchedUser?.customPadding?.paddingBottom || '32px', // Default 32px (was 2rem)
+          paddingLeft: fetchedUser?.customPadding?.paddingSide || '12px', // Default 12px (was 0.75rem)
+          paddingRight: fetchedUser?.customPadding?.paddingSide || '12px', // Default 12px (was 0.75rem)
         }}
         className={`flex flex-col items-center relative min-h-screen`}
       >
         <div
           className={`flex items-center w-full flex-col mx-auto max-w-3xl justify-center`}
           style={{
-            paddingLeft: `${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 20}px`,
-            paddingRight: `${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 20}px`,
-            paddingTop: `${fetchedUser?.headToPicturePadding || 40}px`,
-            paddingBottom: `${fetchedUser?.headToPicturePadding || 40}px`,
+            paddingLeft: `${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 20}px`, // Default: 20
+            paddingRight: `${typeof fetchedUser?.pageHorizontalMargin === 'number' ? fetchedUser.pageHorizontalMargin : 20}px`, // Default: 20
+            paddingTop: `${fetchedUser?.headToPicturePadding ?? 40}px`, // Default: 40
+            paddingBottom: `${fetchedUser?.betweenCardsPadding ?? 16}px`, // Default: 16
           }}
         >
           {(isLinksFetching || isUserFetching) && (
@@ -440,7 +439,7 @@ const ProfilePage = () => {
               className={`relative ${fetchedUser?.contentAnimation?.type ? `animate-${fetchedUser.contentAnimation.type}` : ''}`}
               style={{
                 zIndex: 15,
-                marginTop: `${fetchedUser?.pictureToNamePadding || 16}px`,
+                marginTop: `${fetchedUser?.pictureToNamePadding ?? 16}px`,
                 ...(fetchedUser?.contentAnimation?.type && {
                   animationDuration: `${fetchedUser.contentAnimation.duration || 0.5}s`,
                   animationDelay: `${(fetchedUser.contentAnimation.delay || 0) + (fetchedUser.contentAnimation.staggered ? 0.1 : 0)}s`,
@@ -455,7 +454,7 @@ const ProfilePage = () => {
                   fontSize: `${fetchedUser?.profileNameFontSize || 16}px`,
                   fontFamily: fetchedUser?.profileNameFontFamily || 'Inter',
                 }}
-                className="font-bold text-white text-center mb-2 lg:mt-4"
+                className="font-bold text-white text-center"
               >
                 {fetchedUser?.name}
               </p>
@@ -464,7 +463,7 @@ const ProfilePage = () => {
                 <div
                   className="w-full"
                   style={{
-                    marginTop: `${fetchedUser?.nameToBioPadding || 10}px`,
+                    marginTop: `${fetchedUser?.nameToBioPadding ?? 10}px`,
                   }}
                 >
                   <p
@@ -473,7 +472,7 @@ const ProfilePage = () => {
                       fontSize: `${fetchedUser?.bioFontSize || 14}px`,
                       fontFamily: fetchedUser?.bioFontFamily || 'Inter',
                     }}
-                    className="text-center mb-4 break-words whitespace-pre-wrap"
+                    className="text-center break-words whitespace-pre-wrap"
                   >
                     {fetchedUser?.bio}
                   </p>
@@ -484,9 +483,10 @@ const ProfilePage = () => {
 
           {/* Social icons with animation */}
           <div
-            className={`min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4 ${fetchedUser?.contentAnimation?.type ? `animate-${fetchedUser.contentAnimation.type}` : ''}`}
+            className={`min-w-max flex flex-wrap gap-2 lg:w-fit lg:gap-4 ${fetchedUser?.contentAnimation?.type ? `animate-${fetchedUser.contentAnimation.type}` : ''}`}
             style={{
               marginTop: `${fetchedUser?.bioToSocialPadding ?? 16}px`,
+              marginBottom: `${fetchedUser?.betweenCardsPadding ?? 16}px`,
               ...(fetchedUser?.contentAnimation?.type && {
                 animationDuration: `${fetchedUser.contentAnimation.duration || 0.5}s`,
                 animationDelay: `${(fetchedUser.contentAnimation.delay || 0) + (fetchedUser.contentAnimation.staggered ? 0.2 : 0)}s`,
@@ -516,7 +516,7 @@ const ProfilePage = () => {
             <div
               className="flex flex-col items-center w-full mx-auto max-w-3xl pb-10"
               style={{
-                gap: `${fetchedUser?.betweenCardsPadding !== undefined ? fetchedUser.betweenCardsPadding : 16}px`,
+                gap: `${fetchedUser?.betweenCardsPadding ?? 16}px`,
               }}
             >
               {queryStackView === 'true' ||

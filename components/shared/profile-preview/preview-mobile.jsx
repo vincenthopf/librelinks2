@@ -388,7 +388,7 @@ const PreviewMobile = ({ close }) => {
                 className="relative flex flex-col items-center w-full flex-shrink-0"
                 style={{
                   paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`,
-                  paddingBottom: '1rem',
+                  paddingBottom: `${currentUser?.betweenCardsPadding ?? 16}px`,
                 }}
               >
                 <div
@@ -401,7 +401,7 @@ const PreviewMobile = ({ close }) => {
                   className={`relative text-center ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
                   style={{
                     zIndex: 15,
-                    marginTop: `${currentUser?.pictureToNamePadding || 16}px`,
+                    marginTop: `${currentUser?.pictureToNamePadding ?? 16}px`,
                   }}
                 >
                   <p
@@ -410,7 +410,7 @@ const PreviewMobile = ({ close }) => {
                       fontSize: `${currentUser?.profileNameFontSize || 16}px`,
                       fontFamily: currentUser?.profileNameFontFamily || 'Inter',
                     }}
-                    className="font-bold text-white mb-1"
+                    className="font-bold text-white"
                   >
                     {currentUser?.name}
                   </p>
@@ -418,7 +418,7 @@ const PreviewMobile = ({ close }) => {
                     <div
                       className="w-full"
                       style={{
-                        marginTop: `${currentUser?.nameToBioPadding || 10}px`,
+                        marginTop: `${currentUser?.nameToBioPadding ?? 10}px`,
                       }}
                     >
                       <p
@@ -427,7 +427,7 @@ const PreviewMobile = ({ close }) => {
                           fontSize: `${currentUser?.bioFontSize || 14}px`,
                           fontFamily: currentUser?.bioFontFamily || 'Inter',
                         }}
-                        className="break-words whitespace-pre-wrap text-sm"
+                        className="break-words whitespace-pre-wrap"
                       >
                         {currentUser?.bio}
                       </p>
@@ -458,7 +458,10 @@ const PreviewMobile = ({ close }) => {
               {combinedItems.map(item => (
                 <PreloadCard key={item.id} item={item} theme={theme} fetchedUser={currentUser} />
               ))}
-              <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
+              <div
+                className="flex-grow w-full flex items-center justify-center"
+                style={{ minHeight: '450px' }}
+              >
                 <StackedCardsView
                   items={combinedItems}
                   fetchedUser={currentUser}
