@@ -19,6 +19,17 @@ const Preview = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const dimensionUpdateTimeoutRef = useRef(null);
 
+  // *** DEBUG LOGGING ***
+  console.log(
+    'Preview Render - Key:',
+    refreshKey,
+    'StackView:',
+    currentUser?.stackView,
+    'BG Image:',
+    currentUser?.backgroundImage
+  );
+  // *** END DEBUG LOGGING ***
+
   const { data: userLinks } = useLinks(currentUser?.id);
   const { data: userTexts } = useTexts(currentUser?.id);
   const { photos } = usePhotoBook();
@@ -218,17 +229,42 @@ const Preview = () => {
   // useEffect for Message Handling
   useEffect(() => {
     const handleMessage = event => {
+      // *** DEBUG LOGGING ***
+      console.log(
+        'Preview handleMessage - Received:',
+        event.data,
+        'Current StackView:',
+        currentUser?.stackView
+      );
+      // *** END DEBUG LOGGING ***
+
       // Handle string messages
       if (event.data && typeof event.data === 'string') {
-        // Explicit 'refresh' message still triggers full refresh
+        // Explicit 'refresh' message always triggers full refresh
         if (event.data === 'refresh') {
           console.log('Preview: Received string refresh, forcing full reload.');
           setRefreshKey(prev => prev + 1);
           return;
         }
+
+        // Update user message might need to trigger refresh in Stacked View
+        if (event.data === 'update_user') {
+          console.log('Preview: Received update_user message.');
+          if (iframeRef.current && iframeRef.current.contentWindow) {
+            // Forward to iframe if not in Stacked View
+            try {
+              iframeRef.current.contentWindow.postMessage(event.data, '*');
+              console.log('Forwarded string message to iframe:', event.data);
+            } catch (error) {
+              console.error('Error forwarding string message:', error);
+            }
+          }
+          return;
+        }
+
         // Forward other specific string messages if iframe is active
         if (
-          ['update_user', 'update_links'].includes(event.data) &&
+          ['update_links'].includes(event.data) &&
           iframeRef.current &&
           iframeRef.current.contentWindow
         ) {
@@ -325,21 +361,24 @@ const Preview = () => {
   const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
 
   // --- Conditional Background Style for Stacked View ---
-  const stackViewContainerStyle = {
-    // Apply background color and image only when stackView is true
-    ...(currentUser?.stackView && {
-      background: theme.primary,
-      ...(currentUser.backgroundImage && {
-        backgroundImage: `url(${currentUser.backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed', // Match public page style
-      }),
-    }),
-    // Ensure overflow for scrolling when content exceeds height
-    overflowY: 'auto',
-  };
+  const stackViewContainerStyle = {};
+
+  if (currentUser?.stackView) {
+    // Set base background color from theme first
+    stackViewContainerStyle.backgroundColor = theme.primary;
+
+    // If background image exists, add it
+    if (currentUser.backgroundImage) {
+      stackViewContainerStyle.backgroundImage = `url(${currentUser.backgroundImage})`;
+      stackViewContainerStyle.backgroundSize = 'cover';
+      stackViewContainerStyle.backgroundPosition = 'center center';
+      stackViewContainerStyle.backgroundRepeat = 'no-repeat';
+      stackViewContainerStyle.backgroundAttachment = 'fixed'; // Match public page style
+    }
+
+    // Ensure overflow for scrolling
+    stackViewContainerStyle.overflowY = 'auto';
+  }
 
   return (
     <>
@@ -367,8 +406,8 @@ const Preview = () => {
                     className="relative flex flex-col items-center w-full flex-shrink-0"
                     style={{
                       // Apply headToPicturePadding dynamically to paddingTop
-                      paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`,
-                      paddingBottom: '1rem', // Keep existing paddingBottom or adjust if needed
+                      paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`, // Default: 40
+                      paddingBottom: `${currentUser?.betweenCardsPadding ?? 16}px`, // Default: 16
                     }}
                   >
                     {/* Avatar */}
@@ -384,7 +423,7 @@ const Preview = () => {
                       className={`relative text-center ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
                       style={{
                         zIndex: 15,
-                        marginTop: `${currentUser?.pictureToNamePadding || 16}px`,
+                        marginTop: `${currentUser?.pictureToNamePadding ?? 16}px`, // Default: 16
                         // Add animation styles if needed, simplified for preview
                       }}
                     >
@@ -394,7 +433,7 @@ const Preview = () => {
                           fontSize: `${currentUser?.profileNameFontSize || 16}px`,
                           fontFamily: currentUser?.profileNameFontFamily || 'Inter',
                         }}
-                        className="font-bold text-white mb-1"
+                        className="font-bold text-white"
                       >
                         {currentUser?.name}
                       </p>
@@ -402,7 +441,7 @@ const Preview = () => {
                         <div
                           className="w-full"
                           style={{
-                            marginTop: `${currentUser?.nameToBioPadding || 10}px`,
+                            marginTop: `${currentUser?.nameToBioPadding ?? 10}px`, // Default: 10
                           }}
                         >
                           <p
@@ -411,7 +450,7 @@ const Preview = () => {
                               fontSize: `${currentUser?.bioFontSize || 14}px`,
                               fontFamily: currentUser?.bioFontFamily || 'Inter',
                             }}
-                            className="break-words whitespace-pre-wrap text-sm"
+                            className="break-words whitespace-pre-wrap"
                           >
                             {currentUser?.bio}
                           </p>
@@ -423,7 +462,7 @@ const Preview = () => {
                       <div
                         className={`flex flex-wrap justify-center gap-2 ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
                         style={{
-                          marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`,
+                          marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`, // Default: 16
                           // Add animation styles if needed, simplified for preview
                         }}
                       >
@@ -442,7 +481,10 @@ const Preview = () => {
                   </div>
 
                   {/* Stacked Cards View Section */}
-                  <div className="flex-grow w-full flex items-center justify-center min-h-[450px]">
+                  <div
+                    className="flex-grow w-full flex items-center justify-center"
+                    style={{ minHeight: '450px' }}
+                  >
                     <StackedCardsView
                       items={combinedItems}
                       fetchedUser={currentUser} // Pass latest currentUser

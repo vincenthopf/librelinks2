@@ -381,11 +381,24 @@ export function StackedCardsView({
   // Don't render anything if no items
   if (!items || items.length === 0) return null;
 
+  // Calculate dynamic spacing based on user preferences
+  const betweenCardsPadding = fetchedUser?.betweenCardsPadding ?? 16;
+
   return (
-    <div className="relative w-full flex-grow flex flex-col items-center justify-start p-0 min-h-[450px]">
-      {/* Navigation Buttons: Added margin-bottom */}
+    <div
+      className="relative w-full flex-grow flex flex-col items-center justify-start p-0"
+      style={{ minHeight: '450px' }}
+    >
+      {/* Navigation Buttons: Use dynamic spacing */}
       {items.length > 1 && (
-        <div className="flex gap-4 w-full justify-center py-2 mb-4 z-10">
+        <div
+          className="flex gap-4 w-full justify-center z-10"
+          style={{
+            paddingTop: '8px',
+            paddingBottom: '8px',
+            marginBottom: `${betweenCardsPadding}px`,
+          }}
+        >
           <button
             onClick={handlePrev}
             className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow rounded-md"
@@ -403,10 +416,13 @@ export function StackedCardsView({
         </div>
       )}
 
-      {/* Card Container: Adjusted height calculation */}
-      <div className="relative w-full flex-grow flex items-center justify-center h-[calc(100%-80px)]">
-        {' '}
-        {/* Adjust height calculation based on button space */}
+      {/* Card Container: Use dynamic height calculation based on user preferences */}
+      <div
+        className="relative w-full flex-grow flex items-center justify-center"
+        style={{
+          height: items.length > 1 ? `calc(100% - ${betweenCardsPadding + 40}px)` : '100%',
+        }}
+      >
         {items.map((item, index) => {
           // Skip null items
           if (!item) return null;

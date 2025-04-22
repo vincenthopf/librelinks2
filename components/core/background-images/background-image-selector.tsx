@@ -353,9 +353,10 @@ const BackgroundImageSelector: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([QUERY_KEYS.currentUser]);
+      // queryClient.invalidateQueries([QUERY_KEYS.currentUser]); // Invalidate specific key
+      queryClient.invalidateQueries(['users']); // Invalidate the key used by the .js hook version
       queryClient.invalidateQueries([QUERY_KEYS.userBackgroundImages]);
-      signalIframe();
+      // signalIframe('update_user'); // Remove signal for now
     },
     onError: error => {
       console.error('Error updating background mutation:', error);
