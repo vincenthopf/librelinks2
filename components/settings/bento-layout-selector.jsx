@@ -281,7 +281,7 @@ const BentoLayoutSelector = ({ theme }) => {
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="grid grid-cols-3 auto-rows-[120px] gap-4"
+              className="grid grid-cols-4 auto-rows-[60px] gap-4"
             >
               {bentoItems.map((item, index) => {
                 // Get the display span for this item in the editor grid
