@@ -500,22 +500,15 @@ const Preview = () => {
                       />
                     ) : currentUser.viewMode === 'bento' ? (
                       <BentoCardsView
-                        // Pass ALL links and texts, not just the filtered combinedItems
-                        items={[
-                          ...(userLinks?.filter(link => !link.archived) || []).map(l => ({
-                            ...l,
-                            type: 'link',
-                          })),
-                          ...(userTexts?.filter(text => !text.archived) || []).map(t => ({
-                            ...t,
-                            type: 'text',
-                          })),
-                        ]}
-                        photos={photos} // Pass the separate photos array
-                        fetchedUser={currentUser} // Pass the full user object with bentoItems
+                        // Pass raw data for Bento view
+                        userLinks={userLinks}
+                        userTexts={userTexts}
+                        photos={photos}
+                        fetchedUser={currentUser}
                         theme={theme}
                         registerClicks={handleRegisterClick}
-                        renderPhotoBook={renderPhotoBook} // Needed if photobook item exists
+                        // renderPhotoBook might not be needed directly here if handled by mapContentToBentoItems
+                        // renderPhotoBook={renderPhotoBook}
                       />
                     ) : null}
                   </div>

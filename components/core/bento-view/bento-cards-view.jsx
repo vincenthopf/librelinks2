@@ -7,7 +7,8 @@ import GalleryModal from './gallery-modal';
 import { mapContentToBentoItems } from '@/utils/bento-helpers';
 
 const BentoCardsView = ({
-  items, // Combined links & texts (pre-sorted)
+  userLinks,
+  userTexts,
   fetchedUser,
   theme,
   registerClicks,
@@ -23,10 +24,6 @@ const BentoCardsView = ({
   useEffect(() => {
     if (!fetchedUser) return;
 
-    // Extract links and texts from the combined 'items' array
-    const links = items.filter(i => i.type === 'link');
-    const texts = items.filter(i => i.type === 'text');
-
     // Parse user's saved bento settings
     let userBentoSettings = [];
     try {
@@ -41,16 +38,16 @@ const BentoCardsView = ({
 
     // Map content using the updated utility function
     const mappedItems = mapContentToBentoItems(
-      links,
-      texts,
+      userLinks,
+      userTexts,
       photos,
-      userBentoSettings, // Pass the user's layout structure
+      userBentoSettings,
       theme,
       null // photoBookOrder is deprecated when using userBentoSettings
     );
 
     setBentoItems(mappedItems);
-  }, [items, fetchedUser, photos, theme]); // Re-run when inputs change
+  }, [userLinks, userTexts, fetchedUser, photos, theme]); // Update dependencies
 
   // Handle item click
   const handleItemClick = item => {
@@ -90,8 +87,7 @@ const BentoCardsView = ({
           />
         ) : (
           <motion.div
-            // Synchronized grid layout with BentoLayoutSelector
-            className="grid grid-cols-3 gap-3 auto-rows-[60px]"
+            className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 auto-rows-[60px]"
             initial="hidden"
             animate="visible"
             exit="hidden"
@@ -103,15 +99,14 @@ const BentoCardsView = ({
               },
             }}
             style={{
-              // Ensure gap uses the correct user setting (but className takes precedence)
-              gap: `${fetchedUser?.betweenCardsPadding ?? 12}px`, // Use 12px (gap-3) as default
+              // Ensure gap uses the correct user setting
+              gap: `${fetchedUser?.betweenCardsPadding ?? 16}px`,
             }}
           >
             {bentoItems.map((item, index) => (
               <motion.div
                 key={item.id} // Use item.id from the mapped data
                 layoutId={`media-${item.id}`}
-                // Use the full responsive span class directly
                 className={`relative overflow-hidden rounded-xl cursor-pointer ${item.span}`}
                 onClick={() => handleItemClick(item)}
                 variants={{
@@ -129,6 +124,12 @@ const BentoCardsView = ({
                   },
                 }}
                 whileHover={{ scale: 1.02 }}
+                // Drag properties removed - handled in editor
+                // drag
+                // dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                // dragElastic={1}
+                // onDragStart={() => setIsDragging(true)}
+                // onDragEnd={(e, info) => handleDragEnd(e, info, index)}
                 style={{
                   // Ensure border radius uses the correct user setting
                   borderRadius:
