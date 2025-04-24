@@ -5,6 +5,7 @@ import useLinks from '@/hooks/useLinks';
 import useTexts from '@/hooks/useTexts';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { StackedCardsView } from '@/components/core/user-profile/stacked-cards-view';
+import BentoCardsView from '@/components/core/bento-view/bento-cards-view';
 import PortfolioLayout from '@/components/core/photo-book/layouts/portfolio-layout';
 import MasonryLayout from '@/components/core/photo-book/layouts/masonry-layout';
 import GridLayout from '@/components/core/photo-book/layouts/grid-layout';
@@ -23,8 +24,8 @@ const Preview = () => {
   console.log(
     'Preview Render - Key:',
     refreshKey,
-    'StackView:',
-    currentUser?.stackView,
+    'ViewMode:',
+    currentUser?.viewMode,
     'BG Image:',
     currentUser?.backgroundImage
   );
@@ -73,7 +74,8 @@ const Preview = () => {
         betweenCards: currentUser.betweenCardsPadding,
         pageHorizontal: currentUser.pageHorizontalMargin,
       },
-      stackView: currentUser.stackView,
+      viewMode: currentUser.viewMode,
+      bentoItems: currentUser.bentoItems,
       photoBookLayout: currentUser.photoBookLayout,
       photoBookOrder: currentUser.photoBookOrder,
       linkAlwaysExpandEmbed: currentUser.linkAlwaysExpandEmbed,
@@ -201,8 +203,8 @@ const Preview = () => {
 
   // --- useEffect for Content Structure Changes ---
   // This effect monitors changes in the actual items (links, texts, photos) and their order.
-  // We might need to trigger a refreshKey update here ONLY if StackedCardsView
-  // fails to update correctly just from prop changes.
+  // We might need to trigger a refreshKey update here ONLY if view components
+  // fail to update correctly just from prop changes.
   useEffect(() => {
     console.log('Preview content structure snapshot changed:', contentStructureSnapshot);
     // Potential future addition if needed:
@@ -233,8 +235,8 @@ const Preview = () => {
       console.log(
         'Preview handleMessage - Received:',
         event.data,
-        'Current StackView:',
-        currentUser?.stackView
+        'Current ViewMode:',
+        currentUser?.viewMode
       );
       // *** END DEBUG LOGGING ***
 
@@ -247,11 +249,11 @@ const Preview = () => {
           return;
         }
 
-        // Update user message might need to trigger refresh in Stacked View
+        // Update user message might need to trigger refresh
         if (event.data === 'update_user') {
           console.log('Preview: Received update_user message.');
           if (iframeRef.current && iframeRef.current.contentWindow) {
-            // Forward to iframe if not in Stacked View
+            // Forward to iframe if in Normal View
             try {
               iframeRef.current.contentWindow.postMessage(event.data, '*');
               console.log('Forwarded string message to iframe:', event.data);
@@ -298,12 +300,6 @@ const Preview = () => {
             if (dimensionUpdateTimeoutRef.current) {
               clearTimeout(dimensionUpdateTimeoutRef.current);
             }
-            // REMOVE the fallback refresh timeout for dimension updates
-            // dimensionUpdateTimeoutRef.current = setTimeout(() => {
-            //   console.log('Fallback refresh for dimension update');
-            //   setRefreshKey(prev => prev + 1);
-            //   dimensionUpdateTimeoutRef.current = null;
-            // }, 500);
             return;
           } catch (error) {
             console.error('Error forwarding dimension update:', error);
@@ -358,38 +354,38 @@ const Preview = () => {
   }, [photos, currentUser?.photoBookLayout, theme]);
 
   // Construct iframe URL (still needed for iframe mode)
-  const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
+  const url = `${baseURL}/${currentUser?.handle}?isIframe=true&photoBookLayout=${currentUser?.photoBookLayout || 'grid'}&viewMode=${currentUser?.viewMode || 'normal'}`;
 
-  // --- Conditional Background Style for Stacked View ---
-  const stackViewContainerStyle = {};
+  // --- Conditional Background Style for Custom Views ---
+  const customViewContainerStyle = {};
 
-  if (currentUser?.stackView) {
+  if (currentUser?.viewMode === 'stacked' || currentUser?.viewMode === 'bento') {
     // Set base background color from theme first
-    stackViewContainerStyle.backgroundColor = theme.primary;
+    customViewContainerStyle.backgroundColor = theme.primary;
 
     // If background image exists, add it
     if (currentUser.backgroundImage) {
-      stackViewContainerStyle.backgroundImage = `url(${currentUser.backgroundImage})`;
-      stackViewContainerStyle.backgroundSize = 'cover';
-      stackViewContainerStyle.backgroundPosition = 'center center';
-      stackViewContainerStyle.backgroundRepeat = 'no-repeat';
-      stackViewContainerStyle.backgroundAttachment = 'fixed'; // Match public page style
+      customViewContainerStyle.backgroundImage = `url(${currentUser.backgroundImage})`;
+      customViewContainerStyle.backgroundSize = 'cover';
+      customViewContainerStyle.backgroundPosition = 'center center';
+      customViewContainerStyle.backgroundRepeat = 'no-repeat';
+      customViewContainerStyle.backgroundAttachment = 'fixed'; // Match public page style
     }
 
     // Ensure overflow for scrolling
-    stackViewContainerStyle.overflowY = 'auto';
+    customViewContainerStyle.overflowY = 'auto';
   }
 
   return (
     <>
       <div className="relative border-[2px] lg:border-[5px] border-black rounded-[2rem] max-w-80 lg:max-w-96 xl:max-w-[28rem] aspect-[9/19] overflow-hidden max-w-sm mx-auto z-0">
-        {/* Apply conditional style HERE to the inner div when stackView is true */}
+        {/* Apply conditional style HERE to the inner div when using custom views */}
         <div
-          className={`absolute inset-0 z-10 flex ${currentUser?.stackView ? 'flex-col' : 'items-center justify-center'}`}
+          className={`absolute inset-0 z-10 flex ${currentUser?.viewMode !== 'normal' ? 'flex-col' : 'items-center justify-center'}`}
           style={
-            currentUser?.stackView
+            currentUser?.viewMode !== 'normal'
               ? {
-                  ...stackViewContainerStyle,
+                  ...customViewContainerStyle,
                   // Apply horizontal padding dynamically
                   paddingLeft: `${currentUser?.pageHorizontalMargin ?? 20}px`,
                   paddingRight: `${currentUser?.pageHorizontalMargin ?? 20}px`,
@@ -399,15 +395,26 @@ const Preview = () => {
         >
           {currentUser && (
             <>
-              {currentUser.stackView ? (
+              {currentUser.viewMode === 'normal' ? (
+                <iframe
+                  ref={iframeRef}
+                  key={`${refreshKey}-${comprehensiveUserSnapshot}-${contentStructureSnapshot}`}
+                  seamless
+                  loading="lazy"
+                  title="preview"
+                  id="preview"
+                  className="w-full h-full"
+                  style={{ height: '100%' }}
+                  src={url}
+                />
+              ) : (
                 <>
-                  {/* Profile Header Section */}
+                  {/* Profile Header Section (shared between Stacked and Bento views) */}
                   <div
                     className="relative flex flex-col items-center w-full flex-shrink-0"
                     style={{
-                      // Apply headToPicturePadding dynamically to paddingTop
-                      paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`, // Default: 40
-                      paddingBottom: `${currentUser?.betweenCardsPadding ?? 16}px`, // Default: 16
+                      paddingTop: `${currentUser?.headToPicturePadding ?? 40}px`,
+                      paddingBottom: `${currentUser?.betweenCardsPadding ?? 16}px`,
                     }}
                   >
                     {/* Avatar */}
@@ -415,7 +422,6 @@ const Preview = () => {
                       className={`relative ${currentUser?.frameAnimation?.type && currentUser?.frameAnimation?.enabled ? `animate-frame-${currentUser.frameAnimation.type}` : ''}`}
                       style={{ zIndex: 5 }}
                     >
-                      {/* Use currentUser directly for avatar */}
                       <UserAvatarSetting isPreview={true} handle={currentUser?.handle} />
                     </div>
                     {/* Text content */}
@@ -423,8 +429,7 @@ const Preview = () => {
                       className={`relative text-center ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
                       style={{
                         zIndex: 15,
-                        marginTop: `${currentUser?.pictureToNamePadding ?? 16}px`, // Default: 16
-                        // Add animation styles if needed, simplified for preview
+                        marginTop: `${currentUser?.pictureToNamePadding ?? 16}px`,
                       }}
                     >
                       <p
@@ -441,7 +446,7 @@ const Preview = () => {
                         <div
                           className="w-full"
                           style={{
-                            marginTop: `${currentUser?.nameToBioPadding ?? 10}px`, // Default: 10
+                            marginTop: `${currentUser?.nameToBioPadding ?? 10}px`,
                           }}
                         >
                           <p
@@ -462,13 +467,12 @@ const Preview = () => {
                       <div
                         className={`flex flex-wrap justify-center gap-2 ${currentUser?.contentAnimation?.type ? `animate-${currentUser.contentAnimation.type}` : ''}`}
                         style={{
-                          marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`, // Default: 16
-                          // Add animation styles if needed, simplified for preview
+                          marginTop: `${currentUser?.bioToSocialPadding ?? 16}px`,
                         }}
                       >
                         {socialLinks.map(({ id, title, url }) => (
                           <SocialCards
-                            key={id} // Use ID for key
+                            key={id}
                             title={title}
                             url={url}
                             color={theme.accent}
@@ -480,34 +484,42 @@ const Preview = () => {
                     )}
                   </div>
 
-                  {/* Stacked Cards View Section */}
+                  {/* Content View - Conditionally render StackedCardsView or BentoCardsView */}
                   <div
                     className="flex-grow w-full flex items-center justify-center"
                     style={{ minHeight: '450px' }}
                   >
-                    <StackedCardsView
-                      items={combinedItems}
-                      fetchedUser={currentUser} // Pass latest currentUser
-                      theme={theme} // Pass latest theme
-                      registerClicks={handleRegisterClick}
-                      renderPhotoBook={renderPhotoBook}
-                      contentAnimation={currentUser?.contentAnimation}
-                    />
+                    {currentUser.viewMode === 'stacked' ? (
+                      <StackedCardsView
+                        items={combinedItems}
+                        fetchedUser={currentUser}
+                        theme={theme}
+                        registerClicks={handleRegisterClick}
+                        renderPhotoBook={renderPhotoBook}
+                        contentAnimation={currentUser?.contentAnimation}
+                      />
+                    ) : currentUser.viewMode === 'bento' ? (
+                      <BentoCardsView
+                        // Pass ALL links and texts, not just the filtered combinedItems
+                        items={[
+                          ...(userLinks?.filter(link => !link.archived) || []).map(l => ({
+                            ...l,
+                            type: 'link',
+                          })),
+                          ...(userTexts?.filter(text => !text.archived) || []).map(t => ({
+                            ...t,
+                            type: 'text',
+                          })),
+                        ]}
+                        photos={photos} // Pass the separate photos array
+                        fetchedUser={currentUser} // Pass the full user object with bentoItems
+                        theme={theme}
+                        registerClicks={handleRegisterClick}
+                        renderPhotoBook={renderPhotoBook} // Needed if photobook item exists
+                      />
+                    ) : null}
                   </div>
                 </>
-              ) : (
-                <iframe
-                  ref={iframeRef}
-                  // Keep the key here for iframe mode as it needs full state snapshot
-                  key={`${refreshKey}-${comprehensiveUserSnapshot}-${contentStructureSnapshot}`}
-                  seamless
-                  loading="lazy"
-                  title="preview"
-                  id="preview"
-                  className="w-full h-full"
-                  style={{ height: '100%' }}
-                  src={url}
-                />
               )}
             </>
           )}

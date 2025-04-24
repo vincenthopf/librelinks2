@@ -13,11 +13,12 @@
         "prepare": "husky install"
     },
     "dependencies": {
-        "@dnd-kit/core": "^6.0.8",
+        "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/modifiers": "^6.0.1",
         "@dnd-kit/sortable": "^7.0.2",
         "@dnd-kit/utilities": "^3.2.1",
         "@headlessui/react": "^2.2.2",
+        "@hello-pangea/dnd": "^18.0.1",
         "@heroicons/react": "^2.2.0",
         "@next-auth/prisma-adapter": "^1.0.7",
         "@prisma/client": "^5.2.0",
@@ -79,6 +80,7 @@
         "react-icons": "^4.8.0",
         "react-loader-spinner": "^5.3.4",
         "react-modern-drawer": "^1.2.0",
+        "react-resizable": "^3.0.5",
         "react-select": "^5.7.3",
         "react-wrap-balancer": "^1.0.0",
         "recharts": "^2.6.2",

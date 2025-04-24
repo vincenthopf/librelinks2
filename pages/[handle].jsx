@@ -26,6 +26,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { StackedCardsView } from '@/components/core/user-profile/stacked-cards-view';
+import BentoCardsView from '@/components/core/bento-view/bento-cards-view';
 
 // Object to store last click timestamps for each link ID
 const lastClickTimestamps = {};
@@ -93,7 +94,7 @@ const getContentAnimationProps = (contentAnimation, index) => {
 
 const ProfilePage = () => {
   const { query } = useRouter();
-  const { handle, photoBookLayout: queryLayout, stackView: queryStackView } = query;
+  const { handle, photoBookLayout: queryLayout, viewMode: queryViewMode } = query;
 
   // Initialize QueryClient at the top of the component
   const queryClient = useQueryClient();
@@ -197,71 +198,81 @@ const ProfilePage = () => {
       onError: error => {
         toast.error((error.response && error.response.data.message) || 'An error occurred');
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['links', fetchedUser?.id] });
-        queryClient.invalidateQueries({ queryKey: ['users', fetchedUser?.id] });
-      },
     }
   );
 
   const handleRegisterClick = async (linkId, linkUrl, linkTitle) => {
+    // Skip tracking if same link was clicked recently (debounce)
+    const now = Date.now();
+    const lastClickTime = lastClickTimestamps[linkId] || 0;
+    // 3 second debounce period
+    if (now - lastClickTime < 3000) {
+      return;
+    }
+    lastClickTimestamps[linkId] = now;
+
+    // Update clicks in the database
     try {
-      const now = Date.now();
-      const lastClickTime = lastClickTimestamps[linkId] || 0;
-      const debounceTime = 500; // milliseconds
-
-      // If called again for the same link within the debounce time, ignore it
-      if (now - lastClickTime < debounceTime) {
-        console.log(`Debounced click for link: ${linkId}`);
-        return;
-      }
-
-      // Update the timestamp for this link ID
-      lastClickTimestamps[linkId] = now;
-
-      console.log(`Handling click for link: ${linkTitle} (${linkUrl}) - ID: ${linkId}`);
-
-      // --- Manually Track with Plausible ---
-      if (typeof window !== 'undefined' && window.plausible) {
-        console.log('Tracking click with Plausible:', linkUrl);
-        window.plausible('Outbound Link: Click', { props: { url: linkUrl } });
-      } else {
-        console.warn('Plausible not available. Skipping Plausible tracking.');
-      }
+      mutation.mutate(linkId);
     } catch (error) {
-      console.error('Error in handleRegisterClick:', error);
-      // Optionally show a toast message or handle the error appropriately
-      // toast.error('Could not process link click.');
+      console.error('Error tracking click:', error);
+    }
+
+    // Determine if we should use fallback tracking
+    if (useFallback) {
+      // Use a local click tracking and console logging as fallback
+      console.log(`Tracked click on: ${linkTitle} (${linkId}) [FALLBACK MODE]`);
+    } else {
+      // Track the event using ProxyFlock
+      trackEvent({
+        event_name: 'link_clicked',
+        event_data: {
+          link_id: linkId,
+          link_title: linkTitle,
+          link_url: linkUrl,
+          user_id: fetchedUser?.id,
+        },
+      });
     }
   };
 
-  useEffect(() => {
-    if (fetchedUser && userLinks) {
-      setIsDataLoaded(true);
+  // Create the theme object based on user settings
+  const theme = useMemo(
+    () => ({
+      primary: fetchedUser?.themePalette?.palette?.[0] || '#ffffff',
+      secondary: fetchedUser?.themePalette?.palette?.[1] || '#f8f8f8',
+      accent: fetchedUser?.themePalette?.palette?.[2] || '#000000',
+      neutral: fetchedUser?.themePalette?.palette?.[3] || '#888888',
+      embedBackground: fetchedUser?.themePalette?.embedBackground || 'transparent',
+    }),
+    [fetchedUser?.themePalette]
+  );
+
+  // Determine the active view mode (from URL param or user setting)
+  const activeViewMode = useMemo(() => {
+    // URL parameter takes precedence over user setting
+    if (queryViewMode) {
+      // Handle stackView=true/false for backward compatibility
+      if (queryViewMode === 'true') return 'stacked';
+      if (queryViewMode === 'false') return 'normal';
+      // Otherwise, use the viewMode value directly
+      return queryViewMode;
     }
-  }, [fetchedUser, userLinks]);
 
-  if (isUserLoading) {
-    return <Loader message={'Loading...'} bgColor="black" textColor="black" />;
-  }
+    // For backward compatibility - use stackView boolean if viewMode isn't set
+    if (fetchedUser?.viewMode) {
+      return fetchedUser.viewMode;
+    }
 
-  if (!fetchedUser?.id) {
-    return <NotFound />;
-  }
+    // Legacy support for stackView boolean
+    if (fetchedUser?.stackView === true) {
+      return 'stacked';
+    }
 
-  const buttonStyle = fetchedUser?.buttonStyle;
-  const theme = {
-    primary: fetchedUser?.themePalette?.palette?.[0] || '#ffffff',
-    secondary: fetchedUser?.themePalette?.palette?.[1] || '#f8f8f8',
-    accent: fetchedUser?.themePalette?.palette?.[2] || '#000000',
-    neutral: fetchedUser?.themePalette?.palette?.[3] || '#888888',
-    base100: fetchedUser?.themePalette?.palette?.[4] || '#ffffff', // Added for base color
-  };
+    // Default to normal view
+    return 'normal';
+  }, [queryViewMode, fetchedUser?.viewMode, fetchedUser?.stackView]);
 
-  // Background image styles
-  // Include theme.primary as the background color behind the image
-  // This ensures the theme color shows while the image is loading
-  // and provides a fallback if the image fails to load
   const backgroundImageStyles = fetchedUser?.backgroundImage
     ? {
         backgroundColor: theme.primary,
@@ -325,25 +336,24 @@ const ProfilePage = () => {
 
   // If photo book should be shown and has a valid order, try to insert it
   if (photosExist && photoBookOrder !== null && photoBookOrder !== undefined) {
-    // Iterate through sorted links/texts and insert photo book placeholder
-    for (const item of allContentItems) {
-      // Insert photo book *before* the first item with order >= photoBookOrder
-      if (!photoBookInserted && item.order >= photoBookOrder) {
-        displayItems.push({
-          id: 'photobook-placeholder',
-          type: 'photobook',
-          order: photoBookOrder,
-        });
-        photoBookInserted = true;
-      }
-      displayItems.push(item);
+    // Determine the proper insertion point
+    const insertionIndex = Math.min(Math.max(0, photoBookOrder), allContentItems.length);
+
+    // Add items before the insertion point
+    for (let i = 0; i < insertionIndex; i++) {
+      displayItems.push(allContentItems[i]);
     }
-    // If photo book order is after all other items, or there are no other items
-    if (!photoBookInserted) {
-      displayItems.push({ id: 'photobook-placeholder', type: 'photobook', order: photoBookOrder });
+
+    // Insert the photobook placeholder
+    displayItems.push({ type: 'photobook', id: 'photobook' });
+    photoBookInserted = true;
+
+    // Add items after the insertion point
+    for (let i = insertionIndex; i < allContentItems.length; i++) {
+      displayItems.push(allContentItems[i]);
     }
   } else {
-    // If no photo book, just use the sorted links and texts
+    // Just add all content items in order
     displayItems.push(...allContentItems);
   }
 
@@ -519,8 +529,7 @@ const ProfilePage = () => {
                 gap: `${fetchedUser?.betweenCardsPadding ?? 16}px`,
               }}
             >
-              {queryStackView === 'true' ||
-              (queryStackView === undefined && fetchedUser?.stackView) ? (
+              {activeViewMode === 'stacked' ? (
                 <StackedCardsView
                   items={displayItems}
                   fetchedUser={fetchedUser}
@@ -528,6 +537,15 @@ const ProfilePage = () => {
                   registerClicks={handleRegisterClick}
                   renderPhotoBook={renderPhotoBook}
                   contentAnimation={fetchedUser?.contentAnimation}
+                />
+              ) : activeViewMode === 'bento' ? (
+                <BentoCardsView
+                  items={displayItems}
+                  fetchedUser={fetchedUser}
+                  theme={theme}
+                  registerClicks={handleRegisterClick}
+                  renderPhotoBook={renderPhotoBook}
+                  photos={photos}
                 />
               ) : (
                 displayItems.map((item, index) => {
