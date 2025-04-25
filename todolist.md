@@ -133,3 +133,72 @@
   - Document key differences between v1 and v2 APIs
   - Note any breaking changes or limitations
   - Include information about API constraints like views_per_visit
+
+# Bento View Feature Implementation Todolist
+
+## Database and Schema Changes
+
+- [x] Update user schema in Prisma to change `stackView` from boolean to string enum with values 'normal', 'stacked', and 'bento'
+- [x] Create migration script for existing data to convert boolean `stackView` to string `viewMode`
+
+## Component Development
+
+- [x] Create Core Bento View Components
+  - [x] Create `components/core/bento-view/media-item.jsx` for individual grid items
+  - [x] Create `components/core/bento-view/gallery-modal.jsx` for expanded view
+  - [x] Create `components/core/bento-view/bento-cards-view.jsx` as main component
+- [x] Create Three-Way Toggle Component
+  - [x] Develop `view-mode-toggle.jsx` for switching between Normal, Stacked, and Bento views
+  - [x] Add appropriate styling and animations
+
+## Integration
+
+- [x] Update Preview Components
+  - [x] Modify `components/shared/profile-preview/preview.jsx` to conditionally render based on viewMode
+  - [x] Modify `components/shared/profile-preview/preview-mobile.jsx` for consistent rendering
+- [x] Update Public Profile Page
+  - [x] Update `pages/[handle].jsx` to render Bento View based on user preferences
+- [x] Create Content Mapping Utilities
+  - [x] Develop utility functions to transform existing content into Bento grid items
+  - [x] Handle different content types (links, texts, images) appropriately
+
+## API Implementation
+
+- [x] Create/Update API Endpoints
+  - [x] Update `/api/users` endpoints to handle viewMode property
+  - [x] Create endpoints for saving Bento grid customizations
+  - [x] Update relevant queries and hooks
+
+## Animation and Interaction
+
+- [x] Install and Configure framer-motion
+- [x] Implement Drag Functionality
+  - [x] Create drag constraints based on grid layout
+  - [x] Implement item reordering through drag
+  - [x] Add visual feedback during drag operations
+- [x] Implement Modal Interactions
+  - [x] Create open/close animations for item details
+  - [x] Handle media navigation within modals
+  - [x] Add zoom functionality for images
+
+## Testing and Refinement
+
+- [ ] Cross-Device Testing
+  - [ ] Verify responsive behavior on mobile, tablet, and desktop
+  - [ ] Test touch interactions on mobile devices
+- [ ] Content Type Testing
+  - [ ] Test with various link types, images, and text content
+  - [ ] Verify embedding functionality works in Bento View
+- [ ] Performance Optimization
+  - [ ] Optimize animations for performance
+  - [ ] Implement lazy loading for media content
+  - [ ] Monitor and reduce unnecessary re-renders
+
+## Documentation
+
+- [ ] Update User Documentation
+  - [ ] Create help articles explaining Bento View
+  - [ ] Add usage examples and best practices
+- [x] Update Developer Documentation
+  - [x] Document component structure and APIs
+  - [x] Include customization options and extensibility notes

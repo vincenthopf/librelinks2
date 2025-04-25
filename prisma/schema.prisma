@@ -65,6 +65,10 @@ model User {
   backgroundImage      String?     // URL to the selected background image
   photoBookLayout      String      @default("grid") // Layout style for photo book: "portfolio", "masonry", "grid", or "carousel"
   photoBookOrder       Int?        @default(9999) // Position of the photo book in relation to links (high number = at the end)
+  // View mode settings
+  viewMode             String      @default("normal") // 'normal', 'stacked', or 'bento'
+  bentoItems           Json?       @default("[]") // Array of items with custom span settings for bento view
+  // Legacy field - to be removed after migration
   stackView            Boolean     @default(false) // Whether to display content items in card stack view
   accounts             Account[]
   images               UserImage[]

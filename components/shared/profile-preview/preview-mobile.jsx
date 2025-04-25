@@ -14,6 +14,7 @@ import { getCurrentBaseURL } from '@/utils/helpers';
 import useTexts from '@/hooks/useTexts';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { StackedCardsView } from '@/components/core/user-profile/stacked-cards-view';
+import BentoCardsView from '@/components/core/bento-view/bento-cards-view';
 // Import Photo Book Layouts
 import PortfolioLayout from '@/components/core/photo-book/layouts/portfolio-layout';
 import MasonryLayout from '@/components/core/photo-book/layouts/masonry-layout';
@@ -103,7 +104,8 @@ const PreviewMobile = ({ close }) => {
         betweenCards: currentUser.betweenCardsPadding,
         pageHorizontal: currentUser.pageHorizontalMargin,
       },
-      stackView: currentUser.stackView,
+      viewMode: currentUser.viewMode,
+      bentoItems: currentUser.bentoItems,
       photoBookLayout: currentUser.photoBookLayout,
       photoBookOrder: currentUser.photoBookOrder,
       linkAlwaysExpandEmbed: currentUser.linkAlwaysExpandEmbed,
@@ -189,7 +191,7 @@ const PreviewMobile = ({ close }) => {
   const refreshDependencies = [
     currentUser?.handle,
     currentUser?.photoBookLayout,
-    currentUser?.stackView,
+    currentUser?.viewMode,
     userTexts?.length,
     photos?.length,
     linksSnapshot, // Use the comprehensive snapshot
@@ -239,8 +241,8 @@ const PreviewMobile = ({ close }) => {
         event.data &&
         typeof event.data === 'string' &&
         ['refresh', 'update_user', 'update_links'].includes(event.data) && // Re-add 'refresh'
-        // NOTE: No longer checking iframeRef.current here for 'update_user' in Stacked View
-        (iframeRef.current || currentUser?.stackView)
+        // NOTE: No longer checking iframeRef.current here for 'update_user' in custom views
+        (iframeRef.current || currentUser?.viewMode !== 'normal')
       ) {
         // Handle 'refresh' by updating the key (primarily for iframe)
         if (event.data === 'refresh') {
@@ -248,24 +250,28 @@ const PreviewMobile = ({ close }) => {
           setRefreshKey(prev => prev + 1);
           // Handle 'update_user' or 'update_links'
         } else {
-          // If NOT in Stacked View, forward message to iframe
-          if (!currentUser?.stackView && iframeRef.current && iframeRef.current.contentWindow) {
+          // If in Normal View, forward message to iframe
+          if (
+            currentUser?.viewMode === 'normal' &&
+            iframeRef.current &&
+            iframeRef.current.contentWindow
+          ) {
             try {
               iframeRef.current.contentWindow.postMessage(event.data, '*');
               console.log('Mobile Preview: Forwarded string message to iframe:', event.data);
             } catch (error) {
               console.error('Mobile Preview: Error forwarding string message:', error);
             }
-            // If IN Stacked View and message is 'update_user', rely on data propagation (NO explicit refreshKey change)
-          } else if (currentUser?.stackView && event.data === 'update_user') {
+            // If in custom view and message is 'update_user', rely on data propagation (NO explicit refreshKey change)
+          } else if (currentUser?.viewMode !== 'normal' && event.data === 'update_user') {
             console.log(
-              'Mobile Preview: Received update_user in Stacked View. Relying on data update.'
+              'Mobile Preview: Received update_user in custom view. Relying on data update.'
             );
             // NO ACTION NEEDED HERE - Let useCurrentUser update trigger re-render
           }
-          // Note: 'update_links' in Stacked View might need specific handling if required later
+          // Note: 'update_links' in custom view might need specific handling if required later
         }
-        return; // Message handled (or intentionally ignored for Stacked View data propagation)
+        return; // Message handled (or intentionally ignored for custom view data propagation)
       }
 
       // Handle structured messages (like update_dimensions)
@@ -289,12 +295,8 @@ const PreviewMobile = ({ close }) => {
     window.addEventListener('message', handleMessage);
     return () => {
       window.removeEventListener('message', handleMessage);
-      // Keep timeout cleanup if needed, though dimensionUpdateTimeoutRef is no longer used here
-      // if (dimensionUpdateTimeoutRef.current) {
-      //   clearTimeout(dimensionUpdateTimeoutRef.current);
-      // }
     };
-  }, []);
+  }, [currentUser?.viewMode]);
 
   // Restore effects (but this refresh might still be problematic - monitor)
   useEffect(() => {
@@ -363,12 +365,12 @@ const PreviewMobile = ({ close }) => {
 
   // Construct URL only when currentUser is available
   const baseURL = getCurrentBaseURL();
-  const url = `${baseURL}/${currentUser.handle}?isIframe=true&photoBookLayout=${currentUser.photoBookLayout || 'grid'}&stackView=${currentUser?.stackView ? 'true' : 'false'}`;
+  const url = `${baseURL}/${currentUser.handle}?isIframe=true&photoBookLayout=${currentUser.photoBookLayout || 'grid'}&viewMode=${currentUser?.viewMode || 'normal'}`;
 
   // --- Conditional Background Style ---
   const sectionStyle = {};
 
-  if (currentUser?.stackView) {
+  if (currentUser?.viewMode !== 'normal') {
     // Set base background color from theme first
     sectionStyle.backgroundColor = theme.primary;
 
@@ -381,7 +383,7 @@ const PreviewMobile = ({ close }) => {
       sectionStyle.backgroundAttachment = 'fixed';
     }
   } else {
-    // Apply only the primary theme color if not stackView
+    // Apply only the primary theme color if in Normal view
     sectionStyle.backgroundColor = theme.primary;
   }
 
@@ -391,7 +393,19 @@ const PreviewMobile = ({ close }) => {
         style={sectionStyle}
         className="h-[100vh] w-full overflow-y-auto relative flex flex-col items-center"
       >
-        {currentUser?.stackView ? (
+        {currentUser?.viewMode === 'normal' ? (
+          <iframe
+            ref={iframeRef}
+            key={`${refreshKey}-${comprehensiveUserSnapshot}-${contentStructureSnapshot}`}
+            seamless
+            loading="lazy"
+            title="preview"
+            id="preview-mobile"
+            className="w-full h-full"
+            style={{ height: '100%' }}
+            src={url}
+          />
+        ) : (
           <>
             <div
               className="w-full flex flex-col items-center"
@@ -478,29 +492,28 @@ const PreviewMobile = ({ close }) => {
                 className="flex-grow w-full flex items-center justify-center"
                 style={{ minHeight: '450px' }}
               >
-                <StackedCardsView
-                  items={combinedItems}
-                  fetchedUser={currentUser}
-                  theme={theme}
-                  registerClicks={handleRegisterClick}
-                  renderPhotoBook={renderPhotoBook}
-                  contentAnimation={currentUser?.contentAnimation}
-                />
+                {currentUser.viewMode === 'stacked' ? (
+                  <StackedCardsView
+                    items={combinedItems}
+                    fetchedUser={currentUser}
+                    theme={theme}
+                    registerClicks={handleRegisterClick}
+                    renderPhotoBook={renderPhotoBook}
+                    contentAnimation={currentUser?.contentAnimation}
+                  />
+                ) : currentUser.viewMode === 'bento' ? (
+                  <BentoCardsView
+                    userLinks={userLinks}
+                    userTexts={userTexts}
+                    photos={photos}
+                    fetchedUser={currentUser}
+                    theme={theme}
+                    registerClicks={handleRegisterClick}
+                  />
+                ) : null}
               </div>
             </div>
           </>
-        ) : (
-          <iframe
-            ref={iframeRef}
-            key={`${refreshKey}-${comprehensiveUserSnapshot}-${contentStructureSnapshot}`}
-            seamless
-            loading="lazy"
-            title="preview"
-            id="preview-mobile"
-            className="w-full h-full"
-            style={{ height: '100%' }}
-            src={url}
-          />
         )}
         <div className="fixed top-4 right-4 z-[100]">
           <button
