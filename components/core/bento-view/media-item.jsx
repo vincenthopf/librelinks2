@@ -2,6 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { GOOGLE_FAVICON_URL } from '@/utils/constants';
+import { getApexDomain } from '@/utils/helpers';
+import { Fullscreen } from 'lucide-react';
 
 // MediaItemType is now adapted for our application content types
 // It will handle links, texts, photos, and embedded videos
@@ -27,6 +30,12 @@ const MediaItem = ({ item, className, onClick }) => {
         item.url.endsWith('.jpeg') ||
         item.url.endsWith('.png') ||
         item.url.endsWith('.webp')));
+
+  const hasEmbed = item.embedHtml && item.embedHtml.trim().length > 0;
+
+  // Get apex domain for the favicon
+  const apexDomain = item.url ? getApexDomain(item.url) : null;
+  const faviconUrl = apexDomain ? `${GOOGLE_FAVICON_URL}${apexDomain}` : null;
 
   // Set up IntersectionObserver for video playback
   useEffect(() => {
@@ -99,6 +108,39 @@ const MediaItem = ({ item, className, onClick }) => {
     };
   }, [isInView, isVideo]);
 
+  // For links (including those with embeds) - show favicon and title
+  if (item.type === 'link' || hasEmbed) {
+    return (
+      <div
+        className={`${className} flex flex-col justify-center items-center p-4 cursor-pointer relative overflow-hidden`}
+        onClick={onClick}
+        style={{
+          background: `linear-gradient(135deg, ${item.gradient?.[0] || '#4776E6'}, ${item.gradient?.[1] || '#8E54E9'})`,
+        }}
+      >
+        {/* Display favicon using Google's favicon service */}
+        {faviconUrl && (
+          <img
+            src={faviconUrl}
+            alt=""
+            className="w-8 h-8 mb-2 rounded-sm object-contain"
+            onError={e => {
+              e.target.style.display = 'none';
+            }}
+          />
+        )}
+        {/* Title and optional Fullscreen Icon */}
+        <div className="flex items-center justify-center gap-1.5 text-center">
+          <h3 className="text-white text-base font-medium line-clamp-2">
+            {item.title || item.url}
+          </h3>
+          {/* Display Fullscreen icon next to title if embeddable */}
+          {hasEmbed && <Fullscreen size={14} className="text-white/80 flex-shrink-0" />}
+        </div>
+      </div>
+    );
+  }
+
   // Render content based on type
   if (isVideo) {
     return (
@@ -142,7 +184,7 @@ const MediaItem = ({ item, className, onClick }) => {
     );
   }
 
-  // For text items or link items without images
+  // For text items or other items without images
   return (
     <div
       className={`${className} flex flex-col justify-center items-center p-4 cursor-pointer`}

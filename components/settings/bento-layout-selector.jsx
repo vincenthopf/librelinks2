@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { LayoutGrid, GripHorizontal } from 'lucide-react';
+import { LayoutGrid, GripHorizontal, X, Fullscreen } from 'lucide-react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import useCurrentUser from '@/hooks/useCurrentUser';
@@ -10,6 +10,8 @@ import useLinks from '@/hooks/useLinks';
 import useTexts from '@/hooks/useTexts';
 import { usePhotoBook } from '@/hooks/usePhotoBook';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { getApexDomain } from '@/utils/helpers';
+import { GOOGLE_FAVICON_URL } from '@/utils/constants';
 
 // Size options that match what the BentoCardsView component and utils/bento-helpers.js expect
 const BENTO_SIZES = [
@@ -58,6 +60,7 @@ const BentoLayoutSelector = ({ theme }) => {
   const { data: userTexts } = useTexts(currentUser?.id);
   const { photos } = usePhotoBook();
   const [bentoItems, setBentoItems] = useState([]);
+  const [previewItem, setPreviewItem] = useState(null);
 
   // Initialize bento items from user data or create default items from all available content
   useEffect(() => {
@@ -184,25 +187,43 @@ const BentoLayoutSelector = ({ theme }) => {
     updateBentoSpans.mutate(updatedItems);
   };
 
+  // Open preview modal for an item
+  const handlePreviewClick = itemId => {
+    const link = userLinks?.find(l => l.id === itemId);
+    if (link && link.embedHtml) {
+      setPreviewItem(link);
+    }
+  };
+
   // Get item preview content
   const getItemPreview = item => {
     const link = userLinks?.find(l => l.id === item.id);
     if (link) {
-      // For links
+      // For links - get the favicon from Google's favicon service using apex domain
+      const apexDomain = link.url ? getApexDomain(link.url) : null;
+      const faviconUrl = apexDomain ? `${GOOGLE_FAVICON_URL}${apexDomain}` : null;
+      const hasEmbed = link.embedHtml && link.embedHtml.trim().length > 0;
+
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-gray-100 rounded-lg">
-          {link.favicon && (
+        <div
+          className="w-full h-full flex flex-col items-center justify-center p-2 bg-gray-100 rounded-lg overflow-hidden relative group"
+          onClick={() => hasEmbed && handlePreviewClick(item.id)}
+        >
+          {faviconUrl && (
             <img
-              src={link.favicon}
+              src={faviconUrl}
               alt=""
-              className="w-6 h-6 mb-2 rounded-sm"
+              className="w-8 h-8 mb-2 rounded-sm object-contain"
               onError={e => {
                 e.target.style.display = 'none';
               }}
             />
           )}
-          <div className="text-sm font-medium text-gray-800 text-center">
-            {link.title || link.url}
+          {/* Title and optional Fullscreen Icon */}
+          <div className="flex items-center justify-center gap-1 text-center">
+            <div className="text-sm font-medium text-gray-800">{link.title || link.url}</div>
+            {/* Display Fullscreen icon next to title if embeddable */}
+            {hasEmbed && <Fullscreen size={12} className="text-gray-500 flex-shrink-0" />}
           </div>
         </div>
       );
@@ -281,7 +302,7 @@ const BentoLayoutSelector = ({ theme }) => {
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="grid grid-cols-4 auto-rows-[60px] gap-4"
+              className="grid grid-cols-4 gap-4 auto-rows-[80px]"
             >
               {bentoItems.map((item, index) => {
                 // Get the display span for this item in the editor grid
@@ -336,6 +357,30 @@ const BentoLayoutSelector = ({ theme }) => {
           )}
         </Droppable>
       </DragDropContext>
+
+      {/* Embed Preview Modal */}
+      {previewItem && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 p-4">
+          <div className="relative bg-white rounded-lg w-full max-w-3xl h-[80vh] max-h-[600px] flex flex-col overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-medium">{previewItem.title || 'Content Preview'}</h3>
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <div
+                className="w-full h-full"
+                style={{ backgroundColor: theme?.embedBackground || 'white' }}
+                dangerouslySetInnerHTML={{ __html: previewItem.embedHtml }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

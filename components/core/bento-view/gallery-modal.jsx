@@ -63,10 +63,21 @@ const GalleryModal = ({
                   transition: { duration: 0.15 },
                 }}
               >
-                <MediaItem
-                  item={selectedItem}
-                  className="w-full h-full object-contain bg-gray-900/20"
-                />
+                {selectedItem.embedHtml ? (
+                  <div
+                    className="w-full h-full overflow-hidden bg-white"
+                    style={{
+                      backgroundColor: theme?.embedBackground || 'white',
+                      minHeight: '300px',
+                    }}
+                    dangerouslySetInnerHTML={{ __html: selectedItem.embedHtml }}
+                  />
+                ) : (
+                  <MediaItem
+                    item={selectedItem}
+                    className="w-full h-full object-contain bg-gray-900/20"
+                  />
+                )}
                 <div
                   className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4 
                           bg-gradient-to-t from-black/50 to-transparent"
