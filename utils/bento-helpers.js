@@ -169,6 +169,10 @@ export const mapContentToBentoItems = (
           desc: contentItem.content || contentItem.description || '',
           fontFamily: contentItem.fontFamily,
           fontSize: contentItem.fontSize,
+          // Ensure URL is included for favicon generation
+          url: contentItem.url || '',
+          // Include embedHtml for rich content detection
+          embedHtml: contentItem.embedHtml || '',
         };
       })
       .filter(item => item !== null); // Remove null items (where content wasn't found)
@@ -203,6 +207,10 @@ export const mapContentToBentoItems = (
       gradient,
       order: index, // Assign order based on the combined list
       desc: item.content || item.description || '',
+      // Ensure URL is included for favicon generation
+      url: item.url || '',
+      // Include embedHtml for rich content detection
+      embedHtml: item.embedHtml || '',
     };
   });
 };

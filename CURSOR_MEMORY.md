@@ -50,3 +50,23 @@
 - **Schema**:
   - User preferences and settings are defined in `prisma/schema.prisma`
   - All spacing/dimension values are stored in pixel units (as integers)
+
+## Bento View Implementation
+
+- **Component Structure**:
+
+  - Bento view is implemented in `components/core/bento-view/bento-cards-view.jsx`
+  - Individual media items are rendered using `components/core/bento-view/media-item.jsx`
+  - Bento grid layout configuration is handled in `components/settings/bento-layout-selector.jsx`
+
+- **Data Mapping**:
+
+  - Content mapping utilities for Bento view are in `utils/bento-helpers.js`
+  - The `mapContentToBentoItems` function transforms user content into Bento grid-compatible format
+  - When modifying Bento item data structure, ensure the changes are reflected in both the view component and mapping utility
+
+- **Favicons**:
+  - Favicons for links are generated using Google's favicon service: `https://www.google.com/s2/favicons?domain=`
+  - The apex domain is extracted from the link URL using `getApexDomain` from `utils/helpers.js`
+  - When implementing link cards in any view (Normal, Stacked, Bento), always ensure favicons are displayed consistently
+  - The `GOOGLE_FAVICON_URL` constant is defined in `utils/constants.js` and should be used instead of hardcoding the URL
